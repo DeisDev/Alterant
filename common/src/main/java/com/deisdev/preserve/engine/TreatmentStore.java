@@ -1,0 +1,92 @@
+package com.deisdev.preserve.engine;
+
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import net.minecraft.core.BlockPos;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.datafix.DataFixTypes;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.saveddata.SavedData;
+import net.minecraft.world.level.saveddata.SavedDataType;
+import org.jspecify.annotations.Nullable;
+
+/** Per-dimension, sparse chunk index. Contains values only, never live levels or block entities. */
+public final class TreatmentStore extends SavedData {
+    public static final int SCHEMA = 1;
+    private record Payload(int schema, List<Treatment> records) {}
+    private static final Codec<Payload> PAYLOAD = RecordCodecBuilder.create(instance -> instance.group(
+            Codec.INT.fieldOf("schema").forGetter(Payload::schema),
+            Treatment.CODEC.listOf().fieldOf("records").forGetter(Payload::records)
+    ).apply(instance, Payload::new));
+    public static final Codec<TreatmentStore> CODEC = PAYLOAD.flatXmap(TreatmentStore::decode,
+            store -> DataResult.success(new Payload(SCHEMA, store.snapshot())));
+    public static final SavedDataType<TreatmentStore> TYPE = new SavedDataType<>(
+            Identifier.fromNamespaceAndPath("deisdev", "treatments"), TreatmentStore::new, CODEC, DataFixTypes.LEVEL);
+
+    private final Long2ObjectMap<Long2ObjectMap<Treatment>> chunks = new Long2ObjectOpenHashMap<>();
+    private int size;
+
+    private static DataResult<TreatmentStore> decode(Payload payload) {
+        if (payload.schema != SCHEMA) {
+            return DataResult.error(() -> "Unsupported Preserve save schema " + payload.schema + "; expected " + SCHEMA);
+        }
+        var store = new TreatmentStore();
+        for (Treatment treatment : payload.records) {
+            if (store.get(treatment.position()) != null) {
+                return DataResult.error(() -> "Duplicate Preserve position " + treatment.position());
+            }
+            store.put(treatment);
+        }
+        store.setDirty(false);
+        return DataResult.success(store);
+    }
+
+    public @Nullable Treatment get(long position) {
+        var chunk = chunks.get(chunkKey(position));
+        return chunk == null ? null : chunk.get(position);
+    }
+
+    public void put(Treatment treatment) {
+        var chunk = chunks.computeIfAbsent(chunkKey(treatment.position()), key -> new Long2ObjectOpenHashMap<>());
+        if (chunk.put(treatment.position(), treatment) == null) { size++; }
+        setDirty();
+    }
+
+    public @Nullable Treatment remove(long position) {
+        long key = chunkKey(position);
+        var chunk = chunks.get(key);
+        if (chunk == null) { return null; }
+        Treatment removed = chunk.remove(position);
+        if (removed != null) {
+            size--;
+            if (chunk.isEmpty()) { chunks.remove(key); }
+            setDirty();
+        }
+        return removed;
+    }
+
+    public int size() { return size; }
+
+    public List<Treatment> chunkSnapshot(long chunkKey) {
+        var chunk = chunks.get(chunkKey);
+        return chunk == null ? List.of() : List.copyOf(chunk.values());
+    }
+
+    /** Saving/explicit inspection only; never call this from a tick gate. */
+    public List<Treatment> snapshot() {
+        var result = new ArrayList<Treatment>(size);
+        chunks.values().forEach(chunk -> result.addAll(chunk.values()));
+        result.sort(Comparator.comparingLong(Treatment::position));
+        return List.copyOf(result);
+    }
+
+    public static long chunkKey(long position) {
+        return ChunkPos.pack(BlockPos.getX(position) >> 4, BlockPos.getZ(position) >> 4);
+    }
+}

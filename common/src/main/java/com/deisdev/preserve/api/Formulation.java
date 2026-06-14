@@ -1,0 +1,26 @@
+package com.deisdev.preserve.api;
+
+import com.mojang.serialization.Codec;
+import net.minecraft.util.StringRepresentable;
+
+/** Stable identifiers and initial jar capacities; these are distinct policies, not levels. */
+public enum Formulation implements StringRepresentable {
+    GROWTH_INHIBITOR("growth_inhibitor", 32),
+    PRESERVING_SEALANT("preserving_sealant", 16),
+    STRUCTURAL_STASIS("structural_stasis", 8),
+    TEMPORAL_STASIS("temporal_stasis", 4);
+
+    public static final Codec<Formulation> CODEC = StringRepresentable.fromEnum(Formulation::values);
+    private final String id;
+    private final int capacity;
+
+    Formulation(String id, int capacity) {
+        this.id = id;
+        this.capacity = capacity;
+    }
+
+    @Override
+    public String getSerializedName() { return id; }
+
+    public int capacity() { return capacity; }
+}
