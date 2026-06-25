@@ -5,7 +5,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.resources.Identifier;
 
 /** One native scheduler identity, with delay measured at suspension, never elapsed pause time. */
-public record DeferredTick(boolean fluid, Identifier type, long remainingDelay, int priority, long order) {
+public record DeferredTick(boolean fluid, Identifier type, long remainingDelay, int priority, long order, boolean collected) {
     public static final Codec<DeferredTick> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Codec.BOOL.fieldOf("fluid").forGetter(DeferredTick::fluid),
             Identifier.CODEC.fieldOf("type").forGetter(DeferredTick::type),
@@ -13,8 +13,13 @@ public record DeferredTick(boolean fluid, Identifier type, long remainingDelay, 
                     : com.mojang.serialization.DataResult.error(() -> "Negative retained delay"))
                     .fieldOf("remaining_delay").forGetter(DeferredTick::remainingDelay),
             Codec.intRange(-3, 3).fieldOf("priority").forGetter(DeferredTick::priority),
-            Codec.LONG.fieldOf("order").forGetter(DeferredTick::order)
+            Codec.LONG.fieldOf("order").forGetter(DeferredTick::order),
+            Codec.BOOL.optionalFieldOf("collected", false).forGetter(DeferredTick::collected)
     ).apply(instance, DeferredTick::new));
+
+    public DeferredTick(boolean fluid, Identifier type, long remainingDelay, int priority, long order) {
+        this(fluid, type, remainingDelay, priority, order, false);
+    }
 
     public DeferredTick {
         java.util.Objects.requireNonNull(type);
@@ -24,7 +29,7 @@ public record DeferredTick(boolean fluid, Identifier type, long remainingDelay, 
     }
 
     public boolean sameIdentity(DeferredTick other) {
-        return fluid == other.fluid && type.equals(other.type);
+        return fluid == other.fluid && type.equals(other.type) && collected == other.collected;
     }
 
     public long resumeTime(long now) {

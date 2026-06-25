@@ -20,7 +20,7 @@ public record Treatment(long position, Formulation formulation, Identifier block
             Identifier.CODEC.fieldOf("block").forGetter(Treatment::blockId),
             Action.CODEC.listOf().xmap(Set::copyOf, List::copyOf).fieldOf("actions").forGetter(Treatment::actions),
             Codec.unboundedMap(Codec.STRING, Codec.STRING).fieldOf("structure").forGetter(Treatment::structure),
-            DeferredTick.CODEC.listOf(0, 2).fieldOf("deferred").forGetter(Treatment::deferred),
+            DeferredTick.CODEC.listOf(0, 4).fieldOf("deferred").forGetter(Treatment::deferred),
             Codec.STRING.listOf().fieldOf("profiles").forGetter(Treatment::profiles),
             Codec.unboundedMap(Codec.STRING, Codec.STRING).fieldOf("adapter_data").forGetter(Treatment::adapterData),
             Codec.STRING.fieldOf("owner").forGetter(Treatment::owner)
@@ -35,8 +35,8 @@ public record Treatment(long position, Formulation formulation, Identifier block
         deferred = List.copyOf(deferred);
         profiles = List.copyOf(profiles);
         adapterData = Map.copyOf(adapterData);
-        if (deferred.size() > 2 || deferred.stream().map(DeferredTick::fluid).distinct().count() != deferred.size()) {
-            throw new IllegalArgumentException("A target can retain one matching block tick and one fluid tick");
+        if (deferred.size() > 4 || deferred.stream().map(tick -> (tick.fluid() ? 2 : 0) + (tick.collected() ? 1 : 0)).distinct().count() != deferred.size()) {
+            throw new IllegalArgumentException("A target can retain collected and queued work for its block and fluid");
         }
     }
 

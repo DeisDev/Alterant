@@ -56,7 +56,7 @@ public abstract class LevelTicksMixin<T> implements TickScheduler<T> {
     private boolean preserve$retainBeforeDispatch(java.util.function.BiConsumer<BlockPos, T> output,
             Object pos, Object type, @Local ScheduledTick<T> tick) {
         // Last execution boundary: never silently lose a callback inserted through another integration.
-        return preserve$service == null || !preserve$service.retain(tick, preserve$fluid);
+        return preserve$service == null || !preserve$service.retain(tick, preserve$fluid, true);
     }
 
     @Inject(method = "schedule", at = @At("HEAD"), cancellable = true)
@@ -72,13 +72,13 @@ public abstract class LevelTicksMixin<T> implements TickScheduler<T> {
     }
 
     @Override
-    public List<ScheduledTick<T>> preserve$take(BlockPos pos) {
+    public List<Pending<T>> preserve$take(BlockPos pos) {
         // Called on apply/chunk readiness, never per tick. Include already-collected, not-yet-executed work.
-        var result = new ArrayList<ScheduledTick<T>>();
+        var result = new ArrayList<Pending<T>>();
         long chunkKey = ChunkPos.pack(pos);
         var container = allContainers.get(chunkKey);
         if (container != null) {
-            container.getAll().filter(tick -> tick.pos().equals(pos)).forEach(result::add);
+            container.getAll().filter(tick -> tick.pos().equals(pos)).forEach(tick -> result.add(new Pending<>(tick, false)));
             container.removeIf(tick -> tick.pos().equals(pos));
             var next = container.peek();
             if (next == null) { nextTickForContainer.remove(chunkKey); }
@@ -86,11 +86,11 @@ public abstract class LevelTicksMixin<T> implements TickScheduler<T> {
         }
         toRunThisTick.removeIf(tick -> {
             if (!tick.pos().equals(pos)) { return false; }
-            result.add(tick);
+            result.add(new Pending<>(tick, true));
             toRunThisTickSet.remove(tick);
             return true;
         });
-        result.sort(ScheduledTick.DRAIN_ORDER);
+        result.sort((left, right) -> ScheduledTick.DRAIN_ORDER.compare(left.tick(), right.tick()));
         return List.copyOf(result);
     }
 }

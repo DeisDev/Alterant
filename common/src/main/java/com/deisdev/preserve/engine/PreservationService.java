@@ -25,6 +25,7 @@ public final class PreservationService {
     public record Result(boolean changed, String message) {}
     private final ServerLevel level;
     private final TreatmentStore store;
+    private final DeferredTickStore deferred;
     private final LongOpenHashSet inProgress = new LongOpenHashSet();
 
     public PreservationService(ServerLevel level) {
@@ -39,6 +40,7 @@ public final class PreservationService {
                     + ". Restore a backup or use the matching Preserve version; the file was not overwritten.");
         }
         store = loaded == null ? storage.computeIfAbsent(TreatmentStore.TYPE) : loaded;
+        deferred = new DeferredTickStore(level, store);
         ((PreservationLevel) level).preserve$setTreatments(store);
         scheduler(false).preserve$bind(this, false);
         scheduler(true).preserve$bind(this, true);
@@ -49,6 +51,8 @@ public final class PreservationService {
     }
 
     public TreatmentStore store() { return store; }
+    public void tickResumptions() { deferred.tick(); }
+    public void chunkUnloaded(net.minecraft.world.level.ChunkPos chunk) { deferred.chunkUnloaded(chunk.pack()); }
 
     @SuppressWarnings("unchecked")
     private <T> TickScheduler<T> scheduler(boolean fluid) {
@@ -65,6 +69,7 @@ public final class PreservationService {
             return new Result(false, "This target cannot be preserved safely");
         }
         Treatment old = store.get(pos.asLong());
+        if (store.resuming(pos.asLong()) != null) { return new Result(false, "Pending work is resuming; try again shortly"); }
         if (old != null && old.formulation() == Formulation.TEMPORAL_STASIS) { return new Result(false, "Already treated"); }
         if (old != null && !replace) { return new Result(false, "Remove the existing coating first"); }
         if (!inProgress.add(pos.asLong())) { return new Result(false, "Target is busy"); }
@@ -92,9 +97,7 @@ public final class PreservationService {
             Treatment treatment = store.remove(pos.asLong());
             if (treatment == null) { return new Result(false, "No coating here"); }
             if (matches(pos, treatment)) {
-                // At most two entries per target; scheduling once is bounded and retains native priority/order.
-                treatment.deferred().stream().sorted(java.util.Comparator.comparingLong(DeferredTick::order))
-                        .forEach(tick -> resume(pos, tick));
+                deferred.start(treatment);
             }
             level.getChunkAt(pos).markUnsaved();
             return new Result(true, "Coating removed");
@@ -107,6 +110,7 @@ public final class PreservationService {
     public void destroyed(BlockPos pos) {
         checkThread();
         store.remove(pos.asLong());
+        deferred.cancel(pos.asLong());
     }
 
     private boolean matches(BlockPos pos, Treatment record) {
@@ -114,15 +118,31 @@ public final class PreservationService {
     }
 
     public void capturePending(BlockPos pos) {
-        for (ScheduledTick<Object> tick : this.<Object>scheduler(false).preserve$take(pos)) { retain(tick, false); }
-        for (ScheduledTick<Object> tick : this.<Object>scheduler(true).preserve$take(pos)) { retain(tick, true); }
+        var treatment = store.get(pos.asLong());
+        if (treatment == null) { return; }
+        if (treatment.actions().contains(Action.SCHEDULED_BLOCK_TICK)) {
+            for (var pending : this.<Object>scheduler(false).preserve$take(pos)) { retain(pending.tick(), false, pending.collected()); }
+        }
+        if (treatment.actions().contains(Action.SCHEDULED_FLUID_TICK)) {
+            for (var pending : this.<Object>scheduler(true).preserve$take(pos)) { retain(pending.tick(), true, pending.collected()); }
+        }
     }
 
     /** Returns true for suspended targets, including obsolete identities the vanilla dispatch would skip. */
     public boolean retain(ScheduledTick<?> tick, boolean fluid) {
+        return retain(tick, fluid, false);
+    }
+
+    public boolean retain(ScheduledTick<?> tick, boolean fluid, boolean collected) {
+        var resuming = store.resuming(tick.pos().asLong());
+        if (resuming != null && !deferred.isReturning() && !collected && hasRetained(tick.pos(), tick.type(), fluid)) {
+            // A future native identity remains occupied while the already-collected callback resumes first.
+            return true;
+        }
         Treatment record = store.get(tick.pos().asLong());
         Action route = fluid ? Action.SCHEDULED_FLUID_TICK : Action.SCHEDULED_BLOCK_TICK;
         if (record == null || !record.actions().contains(route)) { return false; }
+        checkThread();
         if (!level.hasChunkAt(tick.pos())) { return false; }
         BlockState state = level.getBlockState(tick.pos());
         Object expected = fluid ? state.getFluidState().getType() : state.getBlock();
@@ -130,16 +150,19 @@ public final class PreservationService {
         Identifier id = fluid ? BuiltInRegistries.FLUID.getKey((Fluid) tick.type()) : BuiltInRegistries.BLOCK.getKey((Block) tick.type());
         long now = level.getGameTime();
         long delay = tick.triggerTick() <= now ? 0 : tick.triggerTick() - now;
-        Treatment retained = record.retain(new DeferredTick(fluid, id, delay, tick.priority().getValue(), tick.subTickOrder()));
+        Treatment retained = record.retain(new DeferredTick(fluid, id, delay, tick.priority().getValue(), tick.subTickOrder(), collected));
         if (retained != record) { store.put(retained); }
         return true;
     }
 
     public boolean hasRetained(BlockPos pos, Object type, boolean fluid) {
+        if (deferred.isReturning()) { return false; }
         Treatment record = store.get(pos.asLong());
-        if (record == null) { return false; }
+        var resuming = store.resuming(pos.asLong());
+        if (record == null && resuming == null) { return false; }
         Identifier id = fluid ? BuiltInRegistries.FLUID.getKey((Fluid) type) : BuiltInRegistries.BLOCK.getKey((Block) type);
-        return record.deferred().stream().anyMatch(tick -> tick.fluid() == fluid && tick.type().equals(id));
+        var pending = record != null ? record.deferred() : resuming.ticks();
+        return pending.stream().anyMatch(tick -> !tick.collected() && tick.fluid() == fluid && tick.type().equals(id));
     }
 
     public void chunkReady(net.minecraft.world.level.chunk.LevelChunk chunk) {
@@ -148,22 +171,7 @@ public final class PreservationService {
             if (!matches(pos, record)) { store.remove(record.position()); }
             else { capturePending(pos); }
         }
-    }
-
-    private void resume(BlockPos pos, DeferredTick tick) {
-        if (tick.fluid()) {
-            var current = level.getFluidState(pos).getType();
-            if (BuiltInRegistries.FLUID.getKey(current).equals(tick.type())) {
-                level.getFluidTicks().schedule(new ScheduledTick<>(current, pos.immutable(), tick.resumeTime(level.getGameTime()),
-                        TickPriority.byValue(tick.priority()), level.nextSubTickCount()));
-            }
-        } else {
-            var current = level.getBlockState(pos).getBlock();
-            if (BuiltInRegistries.BLOCK.getKey(current).equals(tick.type())) {
-                level.getBlockTicks().schedule(new ScheduledTick<>(current, pos.immutable(), tick.resumeTime(level.getGameTime()),
-                        TickPriority.byValue(tick.priority()), level.nextSubTickCount()));
-            }
-        }
+        deferred.chunkReady(chunk.getPos().pack());
     }
 
     private void checkThread() {

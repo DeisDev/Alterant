@@ -5,6 +5,7 @@ import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -19,17 +20,20 @@ import org.jspecify.annotations.Nullable;
 /** Per-dimension, sparse chunk index. Contains values only, never live levels or block entities. */
 public final class TreatmentStore extends SavedData {
     public static final int SCHEMA = 1;
-    private record Payload(int schema, List<Treatment> records) {}
+    private record Payload(int schema, List<Treatment> records, List<ResumingTicks> resuming) {}
     private static final Codec<Payload> PAYLOAD = RecordCodecBuilder.create(instance -> instance.group(
             Codec.INT.fieldOf("schema").forGetter(Payload::schema),
-            Treatment.CODEC.listOf().fieldOf("records").forGetter(Payload::records)
+            Treatment.CODEC.listOf().fieldOf("records").forGetter(Payload::records),
+            ResumingTicks.CODEC.listOf().optionalFieldOf("resuming", List.of()).forGetter(Payload::resuming)
     ).apply(instance, Payload::new));
     public static final Codec<TreatmentStore> CODEC = PAYLOAD.flatXmap(TreatmentStore::decode,
-            store -> DataResult.success(new Payload(SCHEMA, store.snapshot())));
+            store -> DataResult.success(new Payload(SCHEMA, store.snapshot(), List.copyOf(store.resuming.values()))));
     public static final SavedDataType<TreatmentStore> TYPE = new SavedDataType<>(
             Identifier.fromNamespaceAndPath("deisdev", "treatments"), TreatmentStore::new, CODEC, DataFixTypes.LEVEL);
 
     private final Long2ObjectMap<Long2ObjectMap<Treatment>> chunks = new Long2ObjectOpenHashMap<>();
+    private final Long2ObjectMap<ResumingTicks> resuming = new Long2ObjectOpenHashMap<>();
+    private final Long2ObjectMap<LongOpenHashSet> resumingChunks = new Long2ObjectOpenHashMap<>();
     private int size;
 
     private static DataResult<TreatmentStore> decode(Payload payload) {
@@ -42,6 +46,12 @@ public final class TreatmentStore extends SavedData {
                 return DataResult.error(() -> "Duplicate Preserve position " + treatment.position());
             }
             store.put(treatment);
+        }
+        for (ResumingTicks work : payload.resuming) {
+            if (store.resuming(work.position()) != null || store.get(work.position()) != null) {
+                return DataResult.error(() -> "Duplicate or conflicting Preserve resumption " + work.position());
+            }
+            store.putResuming(work);
         }
         store.setDirty(false);
         return DataResult.success(store);
@@ -72,6 +82,31 @@ public final class TreatmentStore extends SavedData {
     }
 
     public int size() { return size; }
+
+    public @Nullable ResumingTicks resuming(long position) { return resuming.get(position); }
+
+    public void putResuming(ResumingTicks work) {
+        resuming.put(work.position(), work);
+        resumingChunks.computeIfAbsent(chunkKey(work.position()), key -> new LongOpenHashSet()).add(work.position());
+        setDirty();
+    }
+
+    public void removeResuming(long position) {
+        if (resuming.remove(position) == null) { return; }
+        long chunkKey = chunkKey(position);
+        var positions = resumingChunks.get(chunkKey);
+        positions.remove(position);
+        if (positions.isEmpty()) { resumingChunks.remove(chunkKey); }
+        setDirty();
+    }
+
+    public List<ResumingTicks> chunkResumptions(long chunkKey) {
+        var positions = resumingChunks.get(chunkKey);
+        if (positions == null) { return List.of(); }
+        var result = new ArrayList<ResumingTicks>(positions.size());
+        for (long position : positions) { result.add(resuming.get(position)); }
+        return List.copyOf(result);
+    }
 
     public List<Treatment> chunkSnapshot(long chunkKey) {
         var chunk = chunks.get(chunkKey);

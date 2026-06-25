@@ -27,6 +27,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(ServerLevel.class)
 public abstract class ServerLevelMixin {
+    @Inject(method = "tick", at = @At("TAIL"))
+    private void preserve$resumeBounded(java.util.function.BooleanSupplier hasTimeLeft, CallbackInfo ci) {
+        // Return deferred identities only when their predecessor has left the native scheduler.
+        PreservationService.get((ServerLevel) (Object) this).tickResumptions();
+    }
+
     @Inject(method = "<init>", at = @At("RETURN"))
     private void preserve$load(CallbackInfo ci) {
         var level = (ServerLevel) (Object) this;
