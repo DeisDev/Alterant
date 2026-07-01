@@ -36,7 +36,8 @@ public abstract class LevelChunkMixin {
         if (old.getBlock() != state.getBlock()) {
             var access = (PreservationLevel) level;
             if (access.preserve$service() != null) { access.preserve$service().destroyed(pos); }
-            else { access.preserve$treatments().remove(pos.asLong()); }
+            // Clients receive authoritative removals. A batched block update can follow an apply delta;
+            // clearing locally here would erase a valid coating and its revision without another snapshot.
         }
         return old;
     }

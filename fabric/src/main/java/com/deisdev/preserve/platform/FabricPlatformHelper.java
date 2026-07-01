@@ -4,6 +4,11 @@ import com.deisdev.preserve.platform.services.IPlatformHelper;
 import net.fabricmc.loader.api.FabricLoader;
 
 public class FabricPlatformHelper implements IPlatformHelper {
+    @Override public void sendTreatments(net.minecraft.server.level.ServerPlayer player, com.deisdev.preserve.network.ChunkTreatmentsPayload payload) {
+        if (net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.canSend(player, payload.type())) {
+            net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(player, payload);
+        }
+    }
 
     @Override
     public String getPlatformName() {

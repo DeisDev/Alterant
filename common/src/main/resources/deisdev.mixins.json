@@ -10,9 +10,10 @@
     "LevelChunkTicksMixin",
     "ServerLevelMixin",
     "LevelChunkMixin",
-    "PistonMixin"
+    "PistonMixin",
+    "PlayerChunkSenderMixin"
   ],
-  "client": [],
+  "client": ["client.ClientLevelMixin", "client.ClientChunkCacheMixin"],
   "server": [],
   "injectors": {
     "defaultRequire": 1

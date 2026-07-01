@@ -2,6 +2,8 @@ package com.deisdev.preserve.engine;
 
 import com.deisdev.preserve.api.Action;
 import com.deisdev.preserve.api.Formulation;
+import com.deisdev.preserve.network.TreatmentSync;
+import com.deisdev.preserve.network.ChunkTreatmentsPayload;
 import com.deisdev.preserve.mixin.SavedDataStorageAccessor;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import java.nio.file.Files;
@@ -69,6 +71,9 @@ public final class PreservationService {
             return new Result(false, "This target cannot be preserved safely");
         }
         Treatment old = store.get(pos.asLong());
+        if (old == null && store.chunkSize(net.minecraft.world.level.ChunkPos.pack(pos)) >= ChunkTreatmentsPayload.MAX_ENTRIES) {
+            return new Result(false, "This chunk has reached its coating limit");
+        }
         if (store.resuming(pos.asLong()) != null) { return new Result(false, "Pending work is resuming; try again shortly"); }
         if (old != null && old.formulation() == Formulation.TEMPORAL_STASIS) { return new Result(false, "Already treated"); }
         if (old != null && !replace) { return new Result(false, "Remove the existing coating first"); }
@@ -83,6 +88,7 @@ public final class PreservationService {
             store.put(record);
             capturePending(pos);
             level.getChunkAt(pos).markUnsaved();
+            TreatmentSync.changed(level, pos);
             return new Result(true, "Standard ticks paused; external controllers and absolute-time work require integration");
         } finally {
             inProgress.remove(pos.asLong());
@@ -100,6 +106,7 @@ public final class PreservationService {
                 deferred.start(treatment);
             }
             level.getChunkAt(pos).markUnsaved();
+            TreatmentSync.changed(level, pos);
             return new Result(true, "Coating removed");
         } finally {
             inProgress.remove(pos.asLong());
@@ -109,8 +116,9 @@ public final class PreservationService {
     /** Real removal/replacement discards obsolete work, without invoking any machine lifecycle method. */
     public void destroyed(BlockPos pos) {
         checkThread();
-        store.remove(pos.asLong());
+        var removed = store.remove(pos.asLong());
         deferred.cancel(pos.asLong());
+        if (removed != null) { TreatmentSync.changed(level, pos); }
     }
 
     private boolean matches(BlockPos pos, Treatment record) {

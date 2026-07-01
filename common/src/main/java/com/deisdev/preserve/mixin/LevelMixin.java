@@ -16,11 +16,16 @@ import org.spongepowered.asm.mixin.injection.At;
 public abstract class LevelMixin implements PreservationLevel {
     @Unique private TreatmentStore preserve$treatments = new TreatmentStore();
     @Unique private PreservationService preserve$service;
+    @Unique private com.deisdev.preserve.network.ClientTreatments preserve$clientTreatments;
 
     @Override public TreatmentStore preserve$treatments() { return preserve$treatments; }
     @Override public void preserve$setTreatments(TreatmentStore store) { preserve$treatments = store; }
     @Override public PreservationService preserve$service() { return preserve$service; }
     @Override public void preserve$setService(PreservationService service) { preserve$service = service; }
+    @Override public com.deisdev.preserve.network.ClientTreatments preserve$clientTreatments() {
+        if (preserve$clientTreatments == null) { preserve$clientTreatments = new com.deisdev.preserve.network.ClientTreatments(preserve$treatments); }
+        return preserve$clientTreatments;
+    }
 
     @WrapWithCondition(method = "tickBlockEntities", at = @At(value = "INVOKE",
             target = "Lnet/minecraft/world/level/block/entity/TickingBlockEntity;tick()V"))

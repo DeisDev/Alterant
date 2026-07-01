@@ -8,4 +8,5 @@ public interface PreservationLevel {
     void preserve$setTreatments(TreatmentStore store);
     @Nullable PreservationService preserve$service();
     void preserve$setService(PreservationService service);
+    com.deisdev.preserve.network.ClientTreatments preserve$clientTreatments();
 }

@@ -10,6 +10,9 @@ import net.neoforged.neoforge.event.RegisterCommandsEvent;
 public final class PreserveMod {
 
     public PreserveMod(IEventBus eventBus) {
+        eventBus.addListener((net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent event) ->
+                event.registrar("1").playToClient(com.deisdev.preserve.network.ChunkTreatmentsPayload.TYPE,
+                        com.deisdev.preserve.network.ChunkTreatmentsPayload.STREAM_CODEC));
         Preserve.init();
         NeoForge.EVENT_BUS.addListener((RegisterCommandsEvent event) -> PreserveCommands.register(event.getDispatcher()));
     }

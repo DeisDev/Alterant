@@ -10,6 +10,7 @@
   "license": "${license}",
   "environment": "*",
   "entrypoints": {
+    "client": ["com.deisdev.preserve.client.PreserveClient"],
     "main": [
       "com.deisdev.preserve.PreserveMod"
     ]

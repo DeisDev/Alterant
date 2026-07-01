@@ -35,6 +35,7 @@ public final class TreatmentStore extends SavedData {
     private final Long2ObjectMap<ResumingTicks> resuming = new Long2ObjectOpenHashMap<>();
     private final Long2ObjectMap<LongOpenHashSet> resumingChunks = new Long2ObjectOpenHashMap<>();
     private int size;
+    private long revision;
 
     private static DataResult<TreatmentStore> decode(Payload payload) {
         if (payload.schema != SCHEMA) {
@@ -66,6 +67,7 @@ public final class TreatmentStore extends SavedData {
         var chunk = chunks.computeIfAbsent(chunkKey(treatment.position()), key -> new Long2ObjectOpenHashMap<>());
         if (chunk.put(treatment.position(), treatment) == null) { size++; }
         setDirty();
+        revision++;
     }
 
     public @Nullable Treatment remove(long position) {
@@ -77,11 +79,18 @@ public final class TreatmentStore extends SavedData {
             size--;
             if (chunk.isEmpty()) { chunks.remove(key); }
             setDirty();
+            revision++;
         }
         return removed;
     }
 
     public int size() { return size; }
+    public long revision() { return revision; }
+
+    public int chunkSize(long chunkKey) {
+        var chunk = chunks.get(chunkKey);
+        return chunk == null ? 0 : chunk.size();
+    }
 
     public @Nullable ResumingTicks resuming(long position) { return resuming.get(position); }
 

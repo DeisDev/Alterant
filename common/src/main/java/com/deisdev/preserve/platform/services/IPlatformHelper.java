@@ -2,6 +2,8 @@ package com.deisdev.preserve.platform.services;
 
 public interface IPlatformHelper {
 
+    void sendTreatments(net.minecraft.server.level.ServerPlayer player, com.deisdev.preserve.network.ChunkTreatmentsPayload payload);
+
     /**
      * Gets the name of the current platform
      *
