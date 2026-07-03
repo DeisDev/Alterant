@@ -3,7 +3,8 @@ package com.deisdev.preserve.engine;
 import com.deisdev.preserve.api.Action;
 import com.deisdev.preserve.api.Formulation;
 import com.deisdev.preserve.network.TreatmentSync;
-import com.deisdev.preserve.network.ChunkTreatmentsPayload;
+import com.deisdev.preserve.rules.RuleRegistry;
+import com.deisdev.preserve.rules.BlockCondition;
 import com.deisdev.preserve.mixin.SavedDataStorageAccessor;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import java.nio.file.Files;
@@ -20,7 +21,6 @@ import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.ticks.ScheduledTick;
-import net.minecraft.world.ticks.TickPriority;
 
 /** Authoritative operations, called only on the server thread; tick gates only read the store. */
 public final class PreservationService {
@@ -32,6 +32,7 @@ public final class PreservationService {
 
     public PreservationService(ServerLevel level) {
         this.level = level;
+        RuleRegistry.get(level.getServer());
         var storage = level.getDataStorage();
         var file = TreatmentStore.TYPE.id().withSuffix(".dat")
                 .resolveAgainst(((SavedDataStorageAccessor) storage).preserve$dataFolder());
@@ -62,6 +63,10 @@ public final class PreservationService {
     }
 
     public Result applyTemporal(BlockPos pos, String owner, boolean replace) {
+        return apply(pos, Formulation.TEMPORAL_STASIS, owner, replace);
+    }
+
+    public Result apply(BlockPos pos, Formulation formulation, String owner, boolean replace) {
         checkThread();
         if (!level.hasChunkAt(pos) || level.isOutsideBuildHeight(pos)) { return new Result(false, "Target is not loaded"); }
         BlockState state = level.getBlockState(pos);
@@ -70,26 +75,43 @@ public final class PreservationService {
                 || state.is(Blocks.END_PORTAL) || state.is(Blocks.END_GATEWAY)) {
             return new Result(false, "This target cannot be preserved safely");
         }
+        var rules = RuleRegistry.get(level.getServer());
+        var decision = rules.evaluate(state, formulation);
+        if (!decision.allowed()) { return new Result(false, decision.denial()); }
+        if (formulation == Formulation.TEMPORAL_STASIS && !rules.policy().allowPartial()) {
+            return new Result(false, "The server requires a verified integration for this target");
+        }
         Treatment old = store.get(pos.asLong());
-        if (old == null && store.chunkSize(net.minecraft.world.level.ChunkPos.pack(pos)) >= ChunkTreatmentsPayload.MAX_ENTRIES) {
+        if (old == null && store.chunkSize(net.minecraft.world.level.ChunkPos.pack(pos)) >= rules.policy().chunkLimit()) {
             return new Result(false, "This chunk has reached its coating limit");
         }
         if (store.resuming(pos.asLong()) != null) { return new Result(false, "Pending work is resuming; try again shortly"); }
-        if (old != null && old.formulation() == Formulation.TEMPORAL_STASIS) { return new Result(false, "Already treated"); }
+        if (old != null && old.formulation() == formulation) { return new Result(false, "Already treated"); }
         if (old != null && !replace) { return new Result(false, "Remove the existing coating first"); }
         if (!inProgress.add(pos.asLong())) { return new Result(false, "Target is busy"); }
         try {
-            var actions = EnumSet.of(Action.BLOCK_ENTITY_TICK, Action.SCHEDULED_BLOCK_TICK,
-                    Action.RANDOM_BLOCK_TICK, Action.SCHEDULED_FLUID_TICK, Action.RANDOM_FLUID_TICK,
-                    Action.PRECIPITATION, Action.CLIENT_TICK, Action.BLOCK_EVENT, Action.PISTON_MOVEMENT);
-            var record = new Treatment(pos.asLong(), Formulation.TEMPORAL_STASIS,
-                    BuiltInRegistries.BLOCK.getKey(state.getBlock()), actions, Map.of(), List.of(),
-                    List.of("deisdev:standard_ticks"), Map.of(), owner);
+            var actions = EnumSet.noneOf(Action.class);
+            var structure = new java.util.HashMap<String, String>();
+            for (var protection : decision.protections()) {
+                actions.add(protection.action());
+                for (String property : protection.properties()) {
+                    structure.put(property, BlockCondition.valueName(state, state.getBlock().getStateDefinition().getProperty(property)));
+                }
+            }
+            // A future deliberate switch must retain existing queued work; its normal resumption is coordinated on removal.
+            if (old != null && !old.deferred().isEmpty() && !actions.containsAll(old.actions())) {
+                return new Result(false, "Remove the existing coating before switching its suspended tick routes");
+            }
+            var record = new Treatment(pos.asLong(), formulation,
+                    BuiltInRegistries.BLOCK.getKey(state.getBlock()), actions, structure, old == null ? List.of() : old.deferred(),
+                    decision.protections().stream().map(protection -> protection.rule().toString()).distinct().toList(), Map.of(), owner,
+                    decision.protections());
             store.put(record);
             capturePending(pos);
             level.getChunkAt(pos).markUnsaved();
             TreatmentSync.changed(level, pos);
-            return new Result(true, "Standard ticks paused; external controllers and absolute-time work require integration");
+            return new Result(true, formulation == Formulation.TEMPORAL_STASIS
+                    ? "Standard ticks paused; external controllers and absolute-time work require integration" : "Coating applied");
         } finally {
             inProgress.remove(pos.asLong());
         }

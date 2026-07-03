@@ -17,6 +17,11 @@ public record RuleLoad(CompiledRules rules, String error) {
     public static final Identifier ID = Identifier.parse("deisdev:rules");
     public static final Identifier SETTINGS = Identifier.parse("deisdev:deisdev/settings.json");
 
+    public RuleLoad requireValid() {
+        if (rules == null) { throw new IllegalStateException("Invalid Preserve data pack rules: " + error); }
+        return this;
+    }
+
     public static RuleLoad prepare(ResourceManager manager, HolderLookup.Provider registries, Predicate<String> modLoaded) {
         try {
             var converter = FileToIdConverter.json("deisdev/rules");
@@ -31,8 +36,20 @@ public record RuleLoad(CompiledRules rules, String error) {
                 } catch (Exception error) { throw new IllegalArgumentException(entry.getKey() + ": " + error.getMessage(), error); }
             }
             var settings = manager.getResource(SETTINGS);
+            if (definitions.stream().noneMatch(rule -> rule.id().equals(Identifier.parse("deisdev:standard_ticks")))) {
+                throw new IllegalArgumentException("Required rule deisdev:standard_ticks is missing; restore it or explicitly disable formulations in settings");
+            }
             var policy = settings.isPresent() ? read(settings.get(), ServerPolicy.CODEC) : ServerPolicy.DEFAULT;
-            return new RuleLoad(CompiledRules.compile(definitions, policy, registries, modLoaded), "");
+            // 26.2's pending lookup exposes tag names, but Named holder contents bind only after the whole reload.
+            // Resolve contents using vanilla's pack/tag rules without mutating that live registry during preparation.
+            var blockRegistry = net.minecraft.core.registries.Registries.BLOCK;
+            var tags = net.minecraft.tags.TagLoader.loadTagsForRegistry(manager, blockRegistry,
+                    (id, required) -> registries.lookupOrThrow(blockRegistry).get(net.minecraft.resources.ResourceKey.create(blockRegistry, id)));
+            return new RuleLoad(CompiledRules.compile(definitions, policy, registries, modLoaded, id -> {
+                var values = tags.get(net.minecraft.tags.TagKey.create(blockRegistry, id));
+                if (values == null) { throw new IllegalArgumentException("Missing or invalid block tag " + id); }
+                return values.stream().map(net.minecraft.core.Holder::value).collect(java.util.stream.Collectors.toUnmodifiableSet());
+            }), "");
         } catch (Exception error) { return new RuleLoad(null, error.getMessage()); }
     }
 

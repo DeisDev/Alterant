@@ -1,0 +1,6 @@
+{
+  "disabled_formulations": [],
+  "allow_partial_coverage": true,
+  "coatings_per_chunk": 4096,
+  "area_limit": 9
+}

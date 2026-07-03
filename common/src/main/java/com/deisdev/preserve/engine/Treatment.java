@@ -13,7 +13,8 @@ import net.minecraft.resources.Identifier;
 /** Immutable snapshot. Rules reload without changing an existing coating's behavior. */
 public record Treatment(long position, Formulation formulation, Identifier blockId, Set<Action> actions,
                         Map<String, String> structure, List<DeferredTick> deferred,
-                        List<String> profiles, Map<String, String> adapterData, String owner) {
+                        List<String> profiles, Map<String, String> adapterData, String owner,
+                        List<com.deisdev.preserve.rules.Protection> protections) {
     public static final Codec<Treatment> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Codec.LONG.fieldOf("position").forGetter(Treatment::position),
             Formulation.CODEC.fieldOf("formulation").forGetter(Treatment::formulation),
@@ -23,7 +24,8 @@ public record Treatment(long position, Formulation formulation, Identifier block
             DeferredTick.CODEC.listOf(0, 4).fieldOf("deferred").forGetter(Treatment::deferred),
             Codec.STRING.listOf().fieldOf("profiles").forGetter(Treatment::profiles),
             Codec.unboundedMap(Codec.STRING, Codec.STRING).fieldOf("adapter_data").forGetter(Treatment::adapterData),
-            Codec.STRING.fieldOf("owner").forGetter(Treatment::owner)
+            Codec.STRING.fieldOf("owner").forGetter(Treatment::owner),
+            com.deisdev.preserve.rules.Protection.CODEC.listOf(0, 14).optionalFieldOf("protections", List.of()).forGetter(Treatment::protections)
     ).apply(instance, Treatment::new));
 
     public Treatment {
@@ -35,9 +37,17 @@ public record Treatment(long position, Formulation formulation, Identifier block
         deferred = List.copyOf(deferred);
         profiles = List.copyOf(profiles);
         adapterData = Map.copyOf(adapterData);
+        protections = List.copyOf(protections);
         if (deferred.size() > 4 || deferred.stream().map(tick -> (tick.fluid() ? 2 : 0) + (tick.collected() ? 1 : 0)).distinct().count() != deferred.size()) {
             throw new IllegalArgumentException("A target can retain collected and queued work for its block and fluid");
         }
+    }
+
+    /** Schema 1's first payloads predate semantic policy snapshots; their standard action gates remain valid. */
+    public Treatment(long position, Formulation formulation, Identifier blockId, Set<Action> actions,
+                     Map<String, String> structure, List<DeferredTick> deferred, List<String> profiles,
+                     Map<String, String> adapterData, String owner) {
+        this(position, formulation, blockId, actions, structure, deferred, profiles, adapterData, owner, List.of());
     }
 
     public Treatment retain(DeferredTick tick) {
@@ -45,6 +55,6 @@ public record Treatment(long position, Formulation formulation, Identifier block
         if (deferred.stream().anyMatch(previous -> previous.sameIdentity(tick))) { return this; }
         var next = new ArrayList<>(deferred);
         next.add(tick);
-        return new Treatment(position, formulation, blockId, actions, structure, next, profiles, adapterData, owner);
+        return new Treatment(position, formulation, blockId, actions, structure, next, profiles, adapterData, owner, protections);
     }
 }

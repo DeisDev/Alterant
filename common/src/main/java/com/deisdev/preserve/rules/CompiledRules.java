@@ -38,6 +38,17 @@ public final class CompiledRules {
 
     public static CompiledRules compile(List<RuleDefinition> definitions, ServerPolicy policy,
                                         HolderLookup.Provider registries, Predicate<String> modLoaded) {
+        return compile(definitions, policy, registries, modLoaded, id -> {
+            var result = new HashSet<Block>();
+            registries.lookupOrThrow(Registries.BLOCK).get(TagKey.create(Registries.BLOCK, id))
+                    .orElseThrow(() -> new IllegalArgumentException("Missing block tag " + id)).forEach(holder -> result.add(holder.value()));
+            return Set.copyOf(result);
+        });
+    }
+
+    public static CompiledRules compile(List<RuleDefinition> definitions, ServerPolicy policy,
+                                        HolderLookup.Provider registries, Predicate<String> modLoaded,
+                                        java.util.function.Function<net.minecraft.resources.Identifier, Set<Block>> tags) {
         if (definitions.size() > 1024) { throw new IllegalArgumentException("At most 1024 Preserve rules are supported"); }
         var ids = new HashSet<net.minecraft.resources.Identifier>();
         var index = new HashMap<Block, List<Rule>>();
@@ -48,7 +59,7 @@ public final class CompiledRules {
                 throw new IllegalArgumentException(definition.id() + " requires missing mods: " + definition.requiresMods());
             }
             try {
-                var selector = resolve(definition.selector(), registries);
+                var selector = resolve(definition.selector(), registries, tags);
                 for (Block block : selector.blocks()) {
                     for (String property : definition.structuralProperties()) {
                         if (block.getStateDefinition().getProperty(property) == null) {
@@ -56,8 +67,8 @@ public final class CompiledRules {
                         }
                     }
                 }
-                var source = definition.source().map(value -> resolve(value, registries).condition()).orElse(BlockCondition.ANY);
-                var target = definition.target().map(value -> resolve(value, registries).condition()).orElse(BlockCondition.ANY);
+                var source = definition.source().map(value -> resolve(value, registries, tags).condition()).orElse(BlockCondition.ANY);
+                var target = definition.target().map(value -> resolve(value, registries, tags).condition()).orElse(BlockCondition.ANY);
                 var rule = new Rule(definition, selector.condition(), source, target);
                 for (Block block : selector.blocks()) {
                     var rules = index.computeIfAbsent(block, ignored -> new ArrayList<>());
@@ -90,7 +101,8 @@ public final class CompiledRules {
         return new Decision(List.copyOf(actions.values()), actions.isEmpty() ? "No supported protection applies to this target" : "");
     }
 
-    private static Selector resolve(BlockSelector selector, HolderLookup.Provider registries) {
+    private static Selector resolve(BlockSelector selector, HolderLookup.Provider registries,
+                                    java.util.function.Function<net.minecraft.resources.Identifier, Set<Block>> tags) {
         var blocks = new HashSet<Block>();
         var lookup = registries.lookupOrThrow(Registries.BLOCK);
         if (selector.all() || (selector.blocks().isEmpty() && selector.tags().isEmpty())) {
@@ -101,8 +113,7 @@ public final class CompiledRules {
             blocks.add(lookup.get(key).orElseThrow(() -> new IllegalArgumentException("Missing block " + id)).value());
         }
         for (var id : selector.tags()) {
-            lookup.get(TagKey.create(Registries.BLOCK, id)).orElseThrow(() -> new IllegalArgumentException("Missing block tag " + id))
-                    .forEach(holder -> blocks.add(holder.value()));
+            blocks.addAll(tags.apply(id));
         }
         if (!selector.blockEntityTypes().isEmpty()) {
             var types = selector.blockEntityTypes().stream().map(id -> BuiltInRegistries.BLOCK_ENTITY_TYPE.get(id)

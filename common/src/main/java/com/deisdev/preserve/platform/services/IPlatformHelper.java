@@ -2,6 +2,8 @@ package com.deisdev.preserve.platform.services;
 
 public interface IPlatformHelper {
 
+    com.deisdev.preserve.rules.RuleLoad loadedRules(net.minecraft.server.MinecraftServer server);
+
     void sendTreatments(net.minecraft.server.level.ServerPlayer player, com.deisdev.preserve.network.ChunkTreatmentsPayload payload);
 
     /**
