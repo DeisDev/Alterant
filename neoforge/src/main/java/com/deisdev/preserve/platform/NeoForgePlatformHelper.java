@@ -5,6 +5,10 @@ import net.neoforged.fml.ModList;
 import net.neoforged.fml.loading.FMLLoader;
 
 public class NeoForgePlatformHelper implements IPlatformHelper {
+    @Override public boolean transferInProgress() {
+        return net.neoforged.neoforge.transfer.transaction.Transaction.getLifecycle()
+                != net.neoforged.neoforge.transfer.transaction.Transaction.Lifecycle.NONE;
+    }
     @Override public com.deisdev.preserve.rules.RuleLoad loadedRules(net.minecraft.server.MinecraftServer server) {
         return com.deisdev.preserve.rules.NeoForgeRules.get(server);
     }

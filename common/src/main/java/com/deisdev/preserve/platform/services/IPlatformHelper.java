@@ -1,6 +1,7 @@
 package com.deisdev.preserve.platform.services;
 
 public interface IPlatformHelper {
+    boolean transferInProgress();
 
     com.deisdev.preserve.rules.RuleLoad loadedRules(net.minecraft.server.MinecraftServer server);
 

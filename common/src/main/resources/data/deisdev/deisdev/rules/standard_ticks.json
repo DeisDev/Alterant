@@ -7,6 +7,6 @@
   "actions": [
     "block_entity_tick", "scheduled_block_tick", "random_block_tick",
     "scheduled_fluid_tick", "random_fluid_tick", "precipitation",
-    "client_tick", "block_event", "piston_movement"
+    "client_tick", "block_event", "piston_movement", "player_use", "resource_transfer"
   ]
 }

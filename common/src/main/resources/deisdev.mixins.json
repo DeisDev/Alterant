@@ -6,6 +6,11 @@
   "mixins": [
     "SavedDataStorageAccessor",
     "MinecraftServerMixin",
+    "CompoundContainerMixin",
+    "HopperMixin",
+    "ContainerMixin",
+    "ContainerMenuMixin",
+    "PlayerUseMixin",
     "LevelMixin",
     "LevelTicksMixin",
     "LevelChunkTicksMixin",

@@ -68,6 +68,7 @@ public final class PreservationService {
 
     public Result apply(BlockPos pos, Formulation formulation, String owner, boolean replace) {
         checkThread();
+        if (com.deisdev.preserve.platform.Services.PLATFORM.transferInProgress()) { return new Result(false, "Wait for the current transfer to finish"); }
         if (!level.hasChunkAt(pos) || level.isOutsideBuildHeight(pos)) { return new Result(false, "Target is not loaded"); }
         BlockState state = level.getBlockState(pos);
         if (state.isAir() || state.getBlock() instanceof LiquidBlock || state.is(Blocks.MOVING_PISTON)
@@ -119,6 +120,7 @@ public final class PreservationService {
 
     public Result remove(BlockPos pos) {
         checkThread();
+        if (com.deisdev.preserve.platform.Services.PLATFORM.transferInProgress()) { return new Result(false, "Wait for the current transfer to finish"); }
         if (!level.hasChunkAt(pos)) { return new Result(false, "Target is not loaded"); }
         if (!inProgress.add(pos.asLong())) { return new Result(false, "Target is busy"); }
         try {

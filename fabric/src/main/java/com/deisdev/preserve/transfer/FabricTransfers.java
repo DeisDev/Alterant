@@ -1,0 +1,20 @@
+package com.deisdev.preserve.transfer;
+
+import com.deisdev.preserve.engine.TransferGuard;
+import net.fabricmc.fabric.api.lookup.v1.block.BlockApiLookup;
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemStorage;
+import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
+
+public final class FabricTransfers {
+    private FabricTransfers() {}
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    public static Object wrap(BlockApiLookup<?, ?> lookup, Object result, Level level, BlockPos pos) {
+        if (result != null && (lookup == ItemStorage.SIDED || lookup == FluidStorage.SIDED)) {
+            return GuardedStorage.wrap((Storage) result, new TransferGuard(level, pos));
+        }
+        return result;
+    }
+}

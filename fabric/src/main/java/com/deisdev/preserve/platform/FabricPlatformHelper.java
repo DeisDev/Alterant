@@ -4,6 +4,10 @@ import com.deisdev.preserve.platform.services.IPlatformHelper;
 import net.fabricmc.loader.api.FabricLoader;
 
 public class FabricPlatformHelper implements IPlatformHelper {
+    @Override public boolean transferInProgress() {
+        return net.fabricmc.fabric.api.transfer.v1.transaction.Transaction.getLifecycle()
+                != net.fabricmc.fabric.api.transfer.v1.transaction.Transaction.Lifecycle.NONE;
+    }
     @Override public com.deisdev.preserve.rules.RuleLoad loadedRules(net.minecraft.server.MinecraftServer server) {
         return com.deisdev.preserve.rules.FabricRules.get(server);
     }
