@@ -2,6 +2,7 @@ package com.deisdev.preserve.engine;
 
 import com.deisdev.preserve.api.Action;
 import com.deisdev.preserve.api.Formulation;
+import com.deisdev.preserve.integration.AdapterSnapshot;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import java.util.ArrayList;
@@ -14,7 +15,7 @@ import net.minecraft.resources.Identifier;
 public record Treatment(long position, Formulation formulation, Identifier blockId, Set<Action> actions,
                         Map<String, String> structure, List<DeferredTick> deferred,
                         List<String> profiles, Map<String, String> adapterData, String owner,
-                        List<com.deisdev.preserve.rules.Protection> protections) {
+                        List<com.deisdev.preserve.rules.Protection> protections, List<AdapterSnapshot> adapters) {
     public static final Codec<Treatment> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Codec.LONG.fieldOf("position").forGetter(Treatment::position),
             Formulation.CODEC.fieldOf("formulation").forGetter(Treatment::formulation),
@@ -25,7 +26,8 @@ public record Treatment(long position, Formulation formulation, Identifier block
             Codec.STRING.listOf().fieldOf("profiles").forGetter(Treatment::profiles),
             Codec.unboundedMap(Codec.STRING, Codec.STRING).fieldOf("adapter_data").forGetter(Treatment::adapterData),
             Codec.STRING.fieldOf("owner").forGetter(Treatment::owner),
-            com.deisdev.preserve.rules.Protection.CODEC.listOf(0, 14).optionalFieldOf("protections", List.of()).forGetter(Treatment::protections)
+            com.deisdev.preserve.rules.Protection.CODEC.listOf(0, 14).optionalFieldOf("protections", List.of()).forGetter(Treatment::protections),
+            AdapterSnapshot.CODEC.listOf(0, 16).optionalFieldOf("adapters", List.of()).forGetter(Treatment::adapters)
     ).apply(instance, Treatment::new));
 
     public Treatment {
@@ -38,6 +40,10 @@ public record Treatment(long position, Formulation formulation, Identifier block
         profiles = List.copyOf(profiles);
         adapterData = Map.copyOf(adapterData);
         protections = List.copyOf(protections);
+        adapters = List.copyOf(adapters);
+        if (adapters.size() > 16 || adapters.stream().map(AdapterSnapshot::id).distinct().count() != adapters.size()) {
+            throw new IllegalArgumentException("Adapter identities must be unique and bounded");
+        }
         if (deferred.size() > 4 || deferred.stream().map(tick -> (tick.fluid() ? 2 : 0) + (tick.collected() ? 1 : 0)).distinct().count() != deferred.size()) {
             throw new IllegalArgumentException("A target can retain collected and queued work for its block and fluid");
         }
@@ -47,7 +53,13 @@ public record Treatment(long position, Formulation formulation, Identifier block
     public Treatment(long position, Formulation formulation, Identifier blockId, Set<Action> actions,
                      Map<String, String> structure, List<DeferredTick> deferred, List<String> profiles,
                      Map<String, String> adapterData, String owner) {
-        this(position, formulation, blockId, actions, structure, deferred, profiles, adapterData, owner, List.of());
+        this(position, formulation, blockId, actions, structure, deferred, profiles, adapterData, owner, List.of(), List.of());
+    }
+
+    public Treatment(long position, Formulation formulation, Identifier blockId, Set<Action> actions,
+                     Map<String, String> structure, List<DeferredTick> deferred, List<String> profiles,
+                     Map<String, String> adapterData, String owner, List<com.deisdev.preserve.rules.Protection> protections) {
+        this(position, formulation, blockId, actions, structure, deferred, profiles, adapterData, owner, protections, List.of());
     }
 
     public Treatment retain(DeferredTick tick) {
@@ -55,6 +67,6 @@ public record Treatment(long position, Formulation formulation, Identifier block
         if (deferred.stream().anyMatch(previous -> previous.sameIdentity(tick))) { return this; }
         var next = new ArrayList<>(deferred);
         next.add(tick);
-        return new Treatment(position, formulation, blockId, actions, structure, next, profiles, adapterData, owner, protections);
+        return new Treatment(position, formulation, blockId, actions, structure, next, profiles, adapterData, owner, protections, adapters);
     }
 }

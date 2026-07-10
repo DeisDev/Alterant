@@ -24,6 +24,8 @@ public final class PreserveCommands {
                         source.sendSuccess(() -> Component.literal(treatment.formulation().getSerializedName() + " at " + pos.toShortString()
                                 + "; routes: " + treatment.actions() + "; profiles: " + treatment.profiles()
                                 + "; retained work: " + treatment.deferred().size()
+                                + "; adapters: " + treatment.adapters().stream().map(adapter -> adapter.id().toString()).toList()
+                                + (com.deisdev.preserve.integration.IntegrationRegistry.available(treatment.adapters()) ? "" : "; restore missing adapter before thawing")
                                 + ". External controllers and absolute-time machines require integration."), false);
                     }
                     return treatment == null ? 0 : 1;

@@ -2,6 +2,8 @@ package com.deisdev.preserve.engine;
 
 import com.deisdev.preserve.api.Action;
 import com.deisdev.preserve.api.Formulation;
+import com.deisdev.preserve.api.PreservationContext;
+import com.deisdev.preserve.integration.IntegrationRegistry;
 import com.deisdev.preserve.network.TreatmentSync;
 import com.deisdev.preserve.rules.RuleRegistry;
 import com.deisdev.preserve.rules.BlockCondition;
@@ -32,6 +34,7 @@ public final class PreservationService {
 
     public PreservationService(ServerLevel level) {
         this.level = level;
+        IntegrationRegistry.lock();
         RuleRegistry.get(level.getServer());
         var storage = level.getDataStorage();
         var file = TreatmentStore.TYPE.id().withSuffix(".dat")
@@ -79,9 +82,6 @@ public final class PreservationService {
         var rules = RuleRegistry.get(level.getServer());
         var decision = rules.evaluate(state, formulation);
         if (!decision.allowed()) { return new Result(false, decision.denial()); }
-        if (formulation == Formulation.TEMPORAL_STASIS && !rules.policy().allowPartial()) {
-            return new Result(false, "The server requires a verified integration for this target");
-        }
         Treatment old = store.get(pos.asLong());
         if (old == null && store.chunkSize(net.minecraft.world.level.ChunkPos.pack(pos)) >= rules.policy().chunkLimit()) {
             return new Result(false, "This chunk has reached its coating limit");
@@ -89,8 +89,20 @@ public final class PreservationService {
         if (store.resuming(pos.asLong()) != null) { return new Result(false, "Pending work is resuming; try again shortly"); }
         if (old != null && old.formulation() == formulation) { return new Result(false, "Already treated"); }
         if (old != null && !replace) { return new Result(false, "Remove the existing coating first"); }
+        if (old != null && !old.adapters().isEmpty()) { return new Result(false, "Remove the integrated coating before switching formulations"); }
         if (!inProgress.add(pos.asLong())) { return new Result(false, "Target is busy"); }
         try {
+            var context = new PreservationContext(level, pos, state, formulation, owner);
+            var blockEntity = level.getBlockEntity(pos);
+            IntegrationRegistry.Prepared prepared;
+            try { prepared = IntegrationRegistry.prepare(context); }
+            catch (RuntimeException error) { return new Result(false, "Integration declined preservation: " + error.getMessage()); }
+            if (level.getBlockState(pos) != state || level.getBlockEntity(pos) != blockEntity || store.get(pos.asLong()) != old) {
+                return new Result(false, "Target changed during integration validation");
+            }
+            if (formulation == Formulation.TEMPORAL_STASIS && !rules.policy().allowPartial() && !prepared.complete()) {
+                return new Result(false, "The server requires a verified integration for this target");
+            }
             var actions = EnumSet.noneOf(Action.class);
             var structure = new java.util.HashMap<String, String>();
             for (var protection : decision.protections()) {
@@ -106,13 +118,15 @@ public final class PreservationService {
             var record = new Treatment(pos.asLong(), formulation,
                     BuiltInRegistries.BLOCK.getKey(state.getBlock()), actions, structure, old == null ? List.of() : old.deferred(),
                     decision.protections().stream().map(protection -> protection.rule().toString()).distinct().toList(), Map.of(), owner,
-                    decision.protections());
+                    decision.protections(), prepared.snapshots());
             store.put(record);
             capturePending(pos);
             level.getChunkAt(pos).markUnsaved();
             TreatmentSync.changed(level, pos);
+            IntegrationRegistry.observed(context, prepared.snapshots(), true);
             return new Result(true, formulation == Formulation.TEMPORAL_STASIS
-                    ? "Standard ticks paused; external controllers and absolute-time work require integration" : "Coating applied");
+                    ? (prepared.complete() ? "Machine paused with its registered integration"
+                        : "Standard ticks paused; external controllers and absolute-time work require integration") : "Coating applied");
         } finally {
             inProgress.remove(pos.asLong());
         }
@@ -124,13 +138,23 @@ public final class PreservationService {
         if (!level.hasChunkAt(pos)) { return new Result(false, "Target is not loaded"); }
         if (!inProgress.add(pos.asLong())) { return new Result(false, "Target is busy"); }
         try {
-            Treatment treatment = store.remove(pos.asLong());
+            Treatment treatment = store.get(pos.asLong());
             if (treatment == null) { return new Result(false, "No coating here"); }
-            if (matches(pos, treatment)) {
-                deferred.start(treatment);
+            boolean matching = matches(pos, treatment);
+            var context = new PreservationContext(level, pos, level.getBlockState(pos), treatment.formulation(), treatment.owner());
+            var blockEntity = level.getBlockEntity(pos);
+            if (matching) {
+                try { IntegrationRegistry.resume(context, treatment.adapters()); }
+                catch (RuntimeException error) { return new Result(false, "Coating retained: " + error.getMessage()); }
+                if (level.getBlockState(pos) != context.state() || level.getBlockEntity(pos) != blockEntity || store.get(pos.asLong()) != treatment) {
+                    return new Result(false, "Target changed during integration resumption");
+                }
             }
+            store.remove(pos.asLong());
+            if (matching) { deferred.start(treatment); }
             level.getChunkAt(pos).markUnsaved();
             TreatmentSync.changed(level, pos);
+            if (matching) { IntegrationRegistry.observed(context, treatment.adapters(), false); }
             return new Result(true, "Coating removed");
         } finally {
             inProgress.remove(pos.asLong());
