@@ -15,6 +15,8 @@ public interface PreservationAdapter {
     Identifier id();
     default int dataVersion() { return 1; }
     boolean supports(PreservationContext context);
+    /** Loaded members of one logical target, including the clicked position; at most sixteen nearby positions. */
+    default java.util.List<net.minecraft.core.BlockPos> targets(PreservationContext context) { return java.util.List.of(context.pos()); }
     default Optional<String> validate(PreservationContext context) { return Optional.empty(); }
     default Map<String, String> capture(PreservationContext context) { return Map.of(); }
     default void resume(PreservationContext context, Map<String, String> saved) {}

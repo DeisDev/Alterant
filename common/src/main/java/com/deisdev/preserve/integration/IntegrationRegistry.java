@@ -3,6 +3,7 @@ package com.deisdev.preserve.integration;
 import com.deisdev.preserve.Constants;
 import com.deisdev.preserve.api.PreservationAdapter;
 import com.deisdev.preserve.api.PreservationContext;
+import com.deisdev.preserve.engine.TargetLink;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -26,6 +27,18 @@ public final class IntegrationRegistry {
 
     public static synchronized void lock() { locked = true; }
 
+    public static List<net.minecraft.core.BlockPos> targets(PreservationContext context) {
+        var result = TargetLink.validate(context.pos(), VanillaTargets.resolve(context));
+        for (var adapter : ordered) {
+            if (!adapter.supports(context)) { continue; }
+            var selected = TargetLink.validate(context.pos(), adapter.targets(context));
+            if (selected.size() == 1) { continue; }
+            if (result.size() != 1 && !result.equals(selected)) { throw new IllegalArgumentException("Adapters disagree about the linked target"); }
+            result = selected;
+        }
+        return result;
+    }
+
     public static Prepared prepare(PreservationContext context) {
         var snapshots = new ArrayList<AdapterSnapshot>();
         boolean complete = false;
@@ -45,6 +58,10 @@ public final class IntegrationRegistry {
         // Resolve the whole set first. Removing an optional integration cannot silently thaw its saved machines.
         for (var snapshot : snapshots) { requireAdapter(snapshot); }
         for (var snapshot : snapshots) { requireAdapter(snapshot).resume(context, snapshot.data()); }
+    }
+
+    public static void validateResume(List<AdapterSnapshot> snapshots) {
+        for (var snapshot : snapshots) { requireAdapter(snapshot); }
     }
 
     public static boolean available(List<AdapterSnapshot> snapshots) {
