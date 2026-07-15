@@ -3,7 +3,9 @@ package com.deisdev.preserve.engine;
 import com.deisdev.preserve.api.Action;
 import com.deisdev.preserve.api.Formulation;
 import com.deisdev.preserve.api.PreservationContext;
+import com.deisdev.preserve.api.PreservationPermission.Change;
 import com.deisdev.preserve.integration.IntegrationRegistry;
+import com.deisdev.preserve.integration.PlayerAccess;
 import com.deisdev.preserve.network.TreatmentSync;
 import com.deisdev.preserve.rules.RuleRegistry;
 import com.deisdev.preserve.rules.BlockCondition;
@@ -80,6 +82,16 @@ public final class PreservationService {
 
     /** Available charges are checked for the entire logical target before any mutation. */
     public Result apply(BlockPos pos, Formulation formulation, String owner, boolean replace, int available) {
+        return apply(pos, formulation, owner, replace, available, null);
+    }
+
+    /** The item check must be read-only and verify the held tool, formulation and available charges on the server. */
+    public Result applyFromPlayer(BlockPos pos, Formulation formulation, net.minecraft.server.level.ServerPlayer player,
+                                  boolean replace, int available, java.util.function.BooleanSupplier itemReady) {
+        return apply(pos, formulation, player.getStringUUID(), replace, available, new PlayerAccess(player, itemReady));
+    }
+
+    private Result apply(BlockPos pos, Formulation formulation, String owner, boolean replace, int available, PlayerAccess access) {
         checkThread();
         if (com.deisdev.preserve.platform.Services.PLATFORM.transferInProgress()) { return new Result(false, "Wait for the current transfer to finish"); }
         if (!level.hasChunkAt(pos) || level.isOutsideBuildHeight(pos)) { return new Result(false, "Target is not loaded"); }
@@ -91,6 +103,7 @@ public final class PreservationService {
             try {
                 var context = new PreservationContext(level, pos, level.getBlockState(pos), formulation, owner);
                 var entity = level.getBlockEntity(pos);
+                if (access != null) { access.validate(context, Change.APPLY); }
                 var targets = IntegrationRegistry.targets(context);
                 if (targets.size() > available) { return new Result(false, "Not enough charges for the entire linked target"); }
                 lockTargets(targets, locked);
@@ -99,16 +112,18 @@ public final class PreservationService {
                 }
                 var link = targets.size() == 1 ? java.util.Optional.<TargetLink>empty()
                         : java.util.Optional.of(new TargetLink(java.util.UUID.randomUUID(), targets.stream().map(BlockPos::asLong).toList()));
-                for (var target : targets) { prepared.add(prepare(target, formulation, owner, replace, link)); }
+                for (var target : targets) { prepared.add(prepare(target, formulation, owner, replace, link, access)); }
                 var added = new java.util.HashMap<Long, Integer>();
                 for (var entry : prepared) {
                     if (entry.old() == null) { added.merge(TreatmentStore.chunkKey(entry.next().position()), 1, Integer::sum); }
                     validateIdentity(entry);
+                    if (access != null) { access.validate(entry.context(), Change.APPLY); }
                 }
                 int limit = RuleRegistry.get(level.getServer()).policy().chunkLimit();
                 for (var entry : added.entrySet()) {
                     if (store.chunkSize(entry.getKey()) + entry.getValue() > limit) { return new Result(false, "This chunk has reached its coating limit"); }
                 }
+                if (access != null) { access.validateItem(); }
             } catch (RuntimeException error) { return new Result(false, error.getMessage()); }
             // Publish the whole group before collecting work or notifying integrations; no callback can see half a coating.
             for (var entry : prepared) { store.put(entry.next()); }
@@ -126,7 +141,7 @@ public final class PreservationService {
         }
     }
 
-    private Prepared prepare(BlockPos pos, Formulation formulation, String owner, boolean replace, java.util.Optional<TargetLink> link) {
+    private Prepared prepare(BlockPos pos, Formulation formulation, String owner, boolean replace, java.util.Optional<TargetLink> link, PlayerAccess access) {
         if (!level.hasChunkAt(pos) || level.isOutsideBuildHeight(pos)) { throw new IllegalArgumentException("Load every member of the linked target first"); }
         BlockState state = level.getBlockState(pos);
         if (state.isAir() || state.getBlock() instanceof LiquidBlock || state.is(Blocks.MOVING_PISTON)
@@ -146,6 +161,7 @@ public final class PreservationService {
         }
         var context = new PreservationContext(level, pos, state, formulation, owner);
         var entity = level.getBlockEntity(pos);
+        if (access != null) { access.validate(context, Change.APPLY); }
         var integration = IntegrationRegistry.prepare(context);
         if (formulation == Formulation.TEMPORAL_STASIS && !rules.policy().allowPartial() && !integration.complete()) {
             throw new IllegalArgumentException("The server requires a verified integration for this target");
@@ -168,6 +184,14 @@ public final class PreservationService {
     }
 
     public Result remove(BlockPos pos) {
+        return remove(pos, null);
+    }
+
+    public Result removeFromPlayer(BlockPos pos, net.minecraft.server.level.ServerPlayer player, java.util.function.BooleanSupplier itemReady) {
+        return remove(pos, new PlayerAccess(player, itemReady));
+    }
+
+    private Result remove(BlockPos pos, PlayerAccess access) {
         checkThread();
         if (com.deisdev.preserve.platform.Services.PLATFORM.transferInProgress()) { return new Result(false, "Wait for the current transfer to finish"); }
         if (!level.hasChunkAt(pos)) { return new Result(false, "Target is not loaded"); }
@@ -187,13 +211,18 @@ public final class PreservationService {
                     // A broken/replaced member can be absent or belong to a newer group. Never remove that newer coating.
                     if (record == null || !record.link().equals(treatment.link())) { continue; }
                     var context = new PreservationContext(level, target, level.getBlockState(target), record.formulation(), record.owner());
+                    if (access != null) { access.validate(context, Change.REMOVE); }
                     prepared.add(new Prepared(record, record, context, level.getBlockEntity(target)));
                     if (matches(target, record)) { IntegrationRegistry.validateResume(record.adapters()); }
                 }
                 for (var entry : prepared) {
                     if (matches(entry.context().pos(), entry.old())) { IntegrationRegistry.resume(entry.context(), entry.old().adapters()); }
                 }
-                for (var entry : prepared) { validateIdentity(entry); }
+                for (var entry : prepared) {
+                    validateIdentity(entry);
+                    if (access != null) { access.validate(entry.context(), Change.REMOVE); }
+                }
+                if (access != null) { access.validateItem(); }
             } catch (RuntimeException error) { return new Result(false, "Coating retained: " + error.getMessage()); }
             for (var entry : prepared) { store.remove(entry.old().position()); }
             for (var entry : prepared) {

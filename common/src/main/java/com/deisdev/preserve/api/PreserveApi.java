@@ -16,6 +16,7 @@ public final class PreserveApi {
     private PreserveApi() {}
 
     public static void register(PreservationAdapter adapter) { IntegrationRegistry.register(adapter); }
+    public static void registerPermission(PreservationPermission permission) { IntegrationRegistry.registerPermission(permission); }
 
     /** Independent schedulers can consult this before executing work. It does not pause an external clock. */
     public static boolean isSuspended(Level level, BlockPos pos) { return TickGate.blocks(level, pos, Action.BLOCK_ENTITY_TICK); }

@@ -3,6 +3,7 @@ package com.deisdev.preserve.integration;
 import com.deisdev.preserve.Constants;
 import com.deisdev.preserve.api.PreservationAdapter;
 import com.deisdev.preserve.api.PreservationContext;
+import com.deisdev.preserve.api.PreservationPermission;
 import com.deisdev.preserve.engine.TargetLink;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -16,6 +17,8 @@ public final class IntegrationRegistry {
     public record Prepared(List<AdapterSnapshot> snapshots, boolean complete) { public Prepared { snapshots = List.copyOf(snapshots); } }
     private static final Map<Identifier, PreservationAdapter> ADAPTERS = new ConcurrentHashMap<>();
     private static volatile List<PreservationAdapter> ordered = List.of();
+    private static final Map<Identifier, PreservationPermission> PERMISSIONS = new ConcurrentHashMap<>();
+    private static volatile List<PreservationPermission> permissions = List.of();
     private static boolean locked;
     private IntegrationRegistry() {}
 
@@ -26,6 +29,19 @@ public final class IntegrationRegistry {
     }
 
     public static synchronized void lock() { locked = true; }
+
+    public static synchronized void registerPermission(PreservationPermission permission) {
+        if (locked) { throw new IllegalStateException("Register Preserve permissions during mod initialization"); }
+        if (PERMISSIONS.putIfAbsent(permission.id(), permission) != null) { throw new IllegalArgumentException("Duplicate permission adapter " + permission.id()); }
+        permissions = PERMISSIONS.values().stream().sorted(Comparator.comparing(value -> value.id().toString())).toList();
+    }
+
+    public static void checkPermissions(net.minecraft.server.level.ServerPlayer player, PreservationContext context, PreservationPermission.Change change) {
+        for (var permission : permissions) {
+            var denial = permission.denial(player, context, change);
+            if (denial.isPresent()) { throw new IllegalArgumentException(denial.get()); }
+        }
+    }
 
     public static List<net.minecraft.core.BlockPos> targets(PreservationContext context) {
         var result = TargetLink.validate(context.pos(), VanillaTargets.resolve(context));
