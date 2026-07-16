@@ -15,6 +15,7 @@ import net.minecraft.resources.Identifier;
 /** Process-wide registration contains adapter code only; captured world data belongs to individual treatments. */
 public final class IntegrationRegistry {
     public record Prepared(List<AdapterSnapshot> snapshots, boolean complete) { public Prepared { snapshots = List.copyOf(snapshots); } }
+    public record Description(List<String> adapters, boolean complete) { public Description { adapters = List.copyOf(adapters); } }
     private static final Map<Identifier, PreservationAdapter> ADAPTERS = new ConcurrentHashMap<>();
     private static volatile List<PreservationAdapter> ordered = List.of();
     private static final Map<Identifier, PreservationPermission> PERMISSIONS = new ConcurrentHashMap<>();
@@ -68,6 +69,19 @@ public final class IntegrationRegistry {
             if (snapshots.size() > 16) { throw new IllegalArgumentException("Too many adapters select this target"); }
         }
         return new Prepared(snapshots, complete);
+    }
+
+    public static Description describe(PreservationContext context) {
+        var adapters = new ArrayList<String>();
+        boolean complete = false;
+        for (var adapter : ordered) {
+            if (!adapter.supports(context)) { continue; }
+            var denial = adapter.validate(context);
+            if (denial.isPresent()) { throw new IllegalArgumentException(adapter.id() + ": " + denial.get()); }
+            adapters.add(adapter.id() + ": " + adapter.description());
+            complete |= adapter.completeCoverage(context);
+        }
+        return new Description(adapters, complete);
     }
 
     public static void resume(PreservationContext context, List<AdapterSnapshot> snapshots) {

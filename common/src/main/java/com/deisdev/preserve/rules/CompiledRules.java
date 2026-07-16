@@ -22,7 +22,8 @@ import net.minecraft.world.level.block.state.BlockState;
 public final class CompiledRules {
     private record Selector(Set<Block> blocks, BlockCondition condition) {}
     private record Rule(RuleDefinition definition, BlockCondition selector, BlockCondition source, BlockCondition target) {}
-    public record Decision(List<Protection> protections, String denial) {
+    public record Decision(List<Protection> protections, String denial, boolean requiresIntegration) {
+        public Decision(List<Protection> protections, String denial) { this(protections, denial, false); }
         public Decision { protections = List.copyOf(protections); }
         public boolean allowed() { return denial.isEmpty() && !protections.isEmpty(); }
     }
@@ -98,7 +99,7 @@ public final class CompiledRules {
                 actions.putIfAbsent(action, new Protection(definition.id(), action, rule.source(), rule.target(), definition.structuralProperties()));
             }
         }
-        return new Decision(List.copyOf(actions.values()), actions.isEmpty() ? "No supported protection applies to this target" : "");
+        return new Decision(List.copyOf(actions.values()), actions.isEmpty() ? "No supported protection applies to this target" : "", actions.isEmpty());
     }
 
     private static Selector resolve(BlockSelector selector, HolderLookup.Provider registries,

@@ -17,18 +17,14 @@ public final class PreserveCommands {
                 .then(Commands.literal("inspect").then(Commands.argument("pos", BlockPosArgument.blockPos()).executes(context -> {
                     var source = context.getSource();
                     var pos = BlockPosArgument.getLoadedBlockPos(context, "pos");
+                    var report = com.deisdev.preserve.api.PreserveApi.inspect(source.getLevel(), pos, com.deisdev.preserve.api.Formulation.TEMPORAL_STASIS);
                     var treatment = PreservationService.get(source.getLevel()).store().get(pos.asLong());
-                    if (treatment == null) {
-                        source.sendSuccess(() -> Component.literal("No Preserve coating at " + pos.toShortString()), false);
-                    } else {
-                        source.sendSuccess(() -> Component.literal(treatment.formulation().getSerializedName() + " at " + pos.toShortString()
-                                + "; routes: " + treatment.actions() + "; profiles: " + treatment.profiles()
-                                + "; retained work: " + treatment.deferred().size()
-                                + "; adapters: " + treatment.adapters().stream().map(adapter -> adapter.id().toString()).toList()
-                                + (com.deisdev.preserve.integration.IntegrationRegistry.available(treatment.adapters()) ? "" : "; restore missing adapter before thawing")
-                                + ". External controllers and absolute-time machines require integration."), false);
-                    }
-                    return treatment == null ? 0 : 1;
+                    source.sendSuccess(() -> Component.literal(report.formulation().getSerializedName() + " at " + pos.toShortString()
+                            + "; " + report.coverage() + (report.treated() ? "; coated" : "; untreated")
+                            + "; positions: " + report.positions() + "; routes: " + report.actions() + "; profiles: " + report.profiles()
+                            + "; adapters: " + report.adapters() + "; retained work: " + (treatment == null ? 0 : treatment.deferred().size())
+                            + (report.reason().isEmpty() ? "" : "; " + report.reason()) + "; " + String.join("; ", report.limitations())), false);
+                    return report.applicable() ? 1 : 0;
                 })))
                 .then(Commands.literal("freeze").then(Commands.argument("pos", BlockPosArgument.blockPos()).executes(context -> {
                     var source = context.getSource();

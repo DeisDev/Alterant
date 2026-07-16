@@ -144,9 +144,7 @@ public final class PreservationService {
     private Prepared prepare(BlockPos pos, Formulation formulation, String owner, boolean replace, java.util.Optional<TargetLink> link, PlayerAccess access) {
         if (!level.hasChunkAt(pos) || level.isOutsideBuildHeight(pos)) { throw new IllegalArgumentException("Load every member of the linked target first"); }
         BlockState state = level.getBlockState(pos);
-        if (state.isAir() || state.getBlock() instanceof LiquidBlock || state.is(Blocks.MOVING_PISTON)
-                || state.is(Blocks.PISTON_HEAD) || state.is(Blocks.NETHER_PORTAL)
-                || state.is(Blocks.END_PORTAL) || state.is(Blocks.END_GATEWAY)) {
+        if (unsafe(state)) {
             throw new IllegalArgumentException("This target cannot be preserved safely");
         }
         var rules = RuleRegistry.get(level.getServer());
@@ -257,6 +255,11 @@ public final class PreservationService {
     private void changed(BlockPos pos) {
         level.getChunkAt(pos).markUnsaved();
         TreatmentSync.changed(level, pos);
+    }
+
+    static boolean unsafe(BlockState state) {
+        return state.isAir() || state.getBlock() instanceof LiquidBlock || state.is(Blocks.MOVING_PISTON)
+                || state.is(Blocks.PISTON_HEAD) || state.is(Blocks.NETHER_PORTAL) || state.is(Blocks.END_PORTAL) || state.is(Blocks.END_GATEWAY);
     }
 
     /** Real removal/replacement discards obsolete work, without invoking any machine lifecycle method. */
