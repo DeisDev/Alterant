@@ -9,12 +9,14 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 
 public final class FabricTransfers {
+    private static final boolean HAS_ENERGY = net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("team_reborn_energy");
     private FabricTransfers() {}
     @SuppressWarnings({"rawtypes", "unchecked"})
     public static Object wrap(BlockApiLookup<?, ?> lookup, Object result, Level level, BlockPos pos) {
         if (result != null && (lookup == ItemStorage.SIDED || lookup == FluidStorage.SIDED)) {
             return GuardedStorage.wrap((Storage) result, new TransferGuard(level, pos));
         }
+        if (result != null && HAS_ENERGY) { return TeamRebornEnergy.wrap(lookup, result, level, pos); }
         return result;
     }
 }

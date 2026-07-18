@@ -6,6 +6,8 @@ dependencies {
     minecraft("com.mojang:minecraft:${minecraft_version}")
     implementation("net.fabricmc:fabric-loader:${fabric_loader_version}")
     implementation("net.fabricmc.fabric-api:fabric-api:${fabric_version}")
+    // Optional runtime integration; never bundled or required by Preserve's metadata.
+    compileOnly('teamreborn:energy:5.0.0') { transitive = false }
 }
 
 loom {
