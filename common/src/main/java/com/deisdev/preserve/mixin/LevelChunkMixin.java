@@ -3,6 +3,7 @@ package com.deisdev.preserve.mixin;
 import com.deisdev.preserve.engine.PreservationLevel;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
@@ -19,6 +20,25 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(LevelChunk.class)
 public abstract class LevelChunkMixin {
     @Shadow @Final private Level level;
+
+    @ModifyExpressionValue(method = "setBlockEntity", at = @At(value = "INVOKE", target = "Ljava/util/Map;put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;"))
+    private Object preserve$clearEntityReplacement(Object previous, net.minecraft.world.level.block.entity.BlockEntity next) {
+        // Ordinary initial load has no previous entry. A successful live BE replacement is a new occupant.
+        if (previous != null && previous != next) { preserve$discard(next.getBlockPos()); }
+        return previous;
+    }
+
+    @ModifyExpressionValue(method = "removeBlockEntity", at = @At(value = "INVOKE", target = "Ljava/util/Map;remove(Ljava/lang/Object;)Ljava/lang/Object;"))
+    private Object preserve$clearRemovedEntity(Object removed, BlockPos pos) {
+        // Chunk unload uses clearAllBlockEntities, not this live removal path, so saved coatings survive unload.
+        if (removed != null) { preserve$discard(pos); }
+        return removed;
+    }
+
+    private void preserve$discard(BlockPos pos) {
+        var service = ((PreservationLevel) level).preserve$service();
+        if (service != null) { service.destroyed(pos); }
+    }
 
     @Inject(method = "unregisterTickContainerFromLevel", at = @At("HEAD"))
     private void preserve$pauseUnloadedResumptions(ServerLevel serverLevel, CallbackInfo ci) {

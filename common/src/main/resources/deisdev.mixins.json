@@ -16,6 +16,7 @@
     "LevelChunkTicksMixin",
     "ServerLevelMixin",
     "LevelChunkMixin",
+    "BlockInputMixin",
     "PistonMixin",
     "PlayerChunkSenderMixin"
   ],
