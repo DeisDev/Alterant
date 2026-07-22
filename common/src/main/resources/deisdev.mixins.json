@@ -17,6 +17,12 @@
     "ServerLevelMixin",
     "LevelChunkMixin",
     "BlockInputMixin",
+    "CropGrowthMixin",
+    "BambooGrowthMixin",
+    "BambooSaplingGrowthMixin",
+    "VineGrowthMixin",
+    "GrowingHeadMixin",
+    "NaturalGrowthScopeMixin",
     "PistonMixin",
     "PlayerChunkSenderMixin"
   ],
