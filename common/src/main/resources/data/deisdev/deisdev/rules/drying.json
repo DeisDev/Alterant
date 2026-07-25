@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "id": "deisdev:drying",
+  "selector": {
+    "blocks": [
+      "minecraft:farmland"
+    ]
+  },
+  "formulations": [
+    "preserving_sealant",
+    "temporal_stasis"
+  ],
+  "actions": [
+    "environmental_change"
+  ]
+}

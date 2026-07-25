@@ -23,6 +23,11 @@
     "VineGrowthMixin",
     "GrowingHeadMixin",
     "NaturalGrowthScopeMixin",
+    "IceMeltMixin",
+    "DecayMixin",
+    "CoralDeathMixin",
+    "FarmlandDryingMixin",
+    "OxidationMixin",
     "PistonMixin",
     "PlayerChunkSenderMixin"
   ],

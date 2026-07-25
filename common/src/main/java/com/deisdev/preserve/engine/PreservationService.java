@@ -224,7 +224,10 @@ public final class PreservationService {
             } catch (RuntimeException error) { return new Result(false, "Coating retained: " + error.getMessage()); }
             for (var entry : prepared) { store.remove(entry.old().position()); }
             for (var entry : prepared) {
-                if (matches(entry.context().pos(), entry.old())) { deferred.start(entry.old()); }
+                if (matches(entry.context().pos(), entry.old())) {
+                    deferred.start(entry.old());
+                    RemovalUpdates.afterRemoval(level, entry.old());
+                }
                 changed(entry.context().pos());
             }
             for (var entry : prepared) {
