@@ -211,13 +211,17 @@ public final class PreservationService {
                     var context = new PreservationContext(level, target, level.getBlockState(target), record.formulation(), record.owner());
                     if (access != null) { access.validate(context, Change.REMOVE); }
                     prepared.add(new Prepared(record, record, context, level.getBlockEntity(target)));
-                    if (matches(target, record)) { IntegrationRegistry.validateResume(record.adapters()); }
+                    if (matches(target, record)) {
+                        IntegrationRegistry.validateResume(record.adapters());
+                        RemovalUpdates.validate(level, record);
+                    }
                 }
                 for (var entry : prepared) {
                     if (matches(entry.context().pos(), entry.old())) { IntegrationRegistry.resume(entry.context(), entry.old().adapters()); }
                 }
                 for (var entry : prepared) {
                     validateIdentity(entry);
+                    RemovalUpdates.validate(level, entry.old());
                     if (access != null) { access.validate(entry.context(), Change.REMOVE); }
                 }
                 if (access != null) { access.validateItem(); }

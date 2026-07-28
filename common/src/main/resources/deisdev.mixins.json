@@ -28,6 +28,7 @@
     "CoralDeathMixin",
     "FarmlandDryingMixin",
     "OxidationMixin",
+    "StructuralShapeMixin",
     "PistonMixin",
     "PlayerChunkSenderMixin"
   ],
