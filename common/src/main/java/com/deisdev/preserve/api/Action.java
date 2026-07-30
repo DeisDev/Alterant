@@ -18,7 +18,8 @@ public enum Action implements StringRepresentable {
     PISTON_MOVEMENT,
     BLOCK_EVENT,
     PLAYER_USE,
-    RESOURCE_TRANSFER;
+    RESOURCE_TRANSFER,
+    GRAVITY;
 
     public static final Codec<Action> CODEC = StringRepresentable.fromEnum(Action::values);
 

@@ -29,6 +29,8 @@
     "FarmlandDryingMixin",
     "OxidationMixin",
     "StructuralShapeMixin",
+    "FallingBlockMixin",
+    "FallingBlockAccessor",
     "PistonMixin",
     "PlayerChunkSenderMixin"
   ],

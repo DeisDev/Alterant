@@ -12,6 +12,8 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.FenceBlock;
 import net.minecraft.world.level.block.WallBlock;
 import net.minecraft.world.level.block.StairBlock;
+import net.minecraft.world.level.block.FallingBlock;
+import com.deisdev.preserve.mixin.FallingBlockAccessor;
 
 final class RemovalUpdates {
     private RemovalUpdates() {}
@@ -36,6 +38,9 @@ final class RemovalUpdates {
         if (refreshesShape(level, treatment)) {
             var state = level.getBlockState(pos);
             level.setBlockAndUpdate(pos, Block.updateFromNeighbourShapes(state, level, pos));
+        }
+        if (treatment.actions().contains(Action.GRAVITY) && !treatment.actions().contains(Action.SCHEDULED_BLOCK_TICK) && block instanceof FallingBlock) {
+            level.scheduleTick(pos, block, ((FallingBlockAccessor) block).preserve$fallDelay());
         }
         if (treatment.actions().contains(Action.ENVIRONMENTAL_CHANGE) && !treatment.actions().contains(Action.SCHEDULED_BLOCK_TICK)
                 && (block instanceof CoralBlock || block instanceof CoralPlantBlock || block instanceof CoralFanBlock || block instanceof CoralWallFanBlock)) {

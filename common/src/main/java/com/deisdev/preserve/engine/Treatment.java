@@ -27,7 +27,7 @@ public record Treatment(long position, Formulation formulation, Identifier block
             Codec.STRING.listOf().fieldOf("profiles").forGetter(Treatment::profiles),
             Codec.unboundedMap(Codec.STRING, Codec.STRING).fieldOf("adapter_data").forGetter(Treatment::adapterData),
             Codec.STRING.fieldOf("owner").forGetter(Treatment::owner),
-            com.deisdev.preserve.rules.Protection.CODEC.listOf(0, 14).optionalFieldOf("protections", List.of()).forGetter(Treatment::protections),
+            com.deisdev.preserve.rules.Protection.CODEC.listOf(0, Action.values().length).optionalFieldOf("protections", List.of()).forGetter(Treatment::protections),
             AdapterSnapshot.CODEC.listOf(0, 16).optionalFieldOf("adapters", List.of()).forGetter(Treatment::adapters),
             TargetLink.CODEC.optionalFieldOf("link").forGetter(Treatment::link)
     ).apply(instance, Treatment::new));
