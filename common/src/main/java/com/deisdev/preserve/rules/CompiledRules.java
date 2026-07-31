@@ -62,6 +62,10 @@ public final class CompiledRules {
             try {
                 var selector = resolve(definition.selector(), registries, tags);
                 for (Block block : selector.blocks()) {
+                    if (block instanceof net.minecraft.world.level.block.TrapDoorBlock && !definition.structuralProperties().isEmpty()
+                            && !definition.structuralProperties().equals(Set.of("open", "powered"))) {
+                        throw new IllegalArgumentException("Trapdoor position profiles must select exactly open and powered together");
+                    }
                     for (String property : definition.structuralProperties()) {
                         if (block.getStateDefinition().getProperty(property) == null) {
                             throw new IllegalArgumentException("Unknown structural property " + property + " on " + BuiltInRegistries.BLOCK.getKey(block));

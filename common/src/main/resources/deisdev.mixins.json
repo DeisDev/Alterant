@@ -29,6 +29,7 @@
     "FarmlandDryingMixin",
     "OxidationMixin",
     "StructuralShapeMixin",
+    "TrapdoorMixin",
     "FallingBlockMixin",
     "FallingBlockAccessor",
     "PistonMixin",

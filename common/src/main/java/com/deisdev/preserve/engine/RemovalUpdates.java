@@ -2,7 +2,6 @@ package com.deisdev.preserve.engine;
 
 import com.deisdev.preserve.api.Action;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.CoralBlock;
 import net.minecraft.world.level.block.CoralPlantBlock;
@@ -13,15 +12,21 @@ import net.minecraft.world.level.block.FenceBlock;
 import net.minecraft.world.level.block.WallBlock;
 import net.minecraft.world.level.block.StairBlock;
 import net.minecraft.world.level.block.FallingBlock;
+import net.minecraft.world.level.block.TrapDoorBlock;
 import com.deisdev.preserve.mixin.FallingBlockAccessor;
 
 final class RemovalUpdates {
     private RemovalUpdates() {}
     static void validate(ServerLevel level, Treatment treatment) {
-        if (refreshesShape(level, treatment)) {
+        if (treatment.actions().contains(Action.STRUCTURAL_CHANGE)) {
             var pos = BlockPos.of(treatment.position());
-            for (var direction : Direction.values()) {
-                if (!level.hasChunkAt(pos.relative(direction))) { throw new IllegalArgumentException("Load neighboring chunks before restoring this shape"); }
+            int radius = level.getBlockState(pos).getBlock() instanceof TrapDoorBlock ? 2 : refreshesShape(level, treatment) ? 1 : 0;
+            if (radius == 0) { return; }
+            // A radius below one chunk can span at most two chunks per axis. Include redstone's adjacent conductors.
+            for (int x : new int[] {-radius, radius}) {
+                for (int z : new int[] {-radius, radius}) {
+                    if (!level.hasChunkAt(pos.offset(x, 0, z))) { throw new IllegalArgumentException("Load neighboring chunks before restoring this shape"); }
+                }
             }
         }
     }
@@ -38,6 +43,9 @@ final class RemovalUpdates {
         if (refreshesShape(level, treatment)) {
             var state = level.getBlockState(pos);
             level.setBlockAndUpdate(pos, Block.updateFromNeighbourShapes(state, level, pos));
+        }
+        if (treatment.actions().contains(Action.STRUCTURAL_CHANGE) && block instanceof TrapDoorBlock) {
+            level.getBlockState(pos).handleNeighborChanged(level, pos, block, null, false);
         }
         if (treatment.actions().contains(Action.GRAVITY) && !treatment.actions().contains(Action.SCHEDULED_BLOCK_TICK) && block instanceof FallingBlock) {
             level.scheduleTick(pos, block, ((FallingBlockAccessor) block).preserve$fallDelay());

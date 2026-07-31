@@ -19,6 +19,7 @@ public final class Inspection {
     private static final List<String> STANDARD_LIMITS = List.of(
             "Direct machine access and independent controllers require integration",
             "Absolute-time progress and world-time animations require integration",
+            "Neighbor-driven changes need an applicable semantic profile or integration",
             "Standard transfer guards cover verified loader block interfaces and vanilla hopper paths");
     private Inspection() {}
 
