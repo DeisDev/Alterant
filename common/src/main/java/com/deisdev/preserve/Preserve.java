@@ -5,6 +5,7 @@ public final class Preserve {
     private Preserve() {}
 
     public static void init() {
+        com.deisdev.preserve.item.PreserveItems.init();
         Constants.LOG.info("Preserve initialized");
     }
 }

@@ -1,0 +1,14 @@
+{
+  "item.deisdev.binding_paste": "Binding Paste",
+  "item.deisdev.inert_powder": "Inert Powder",
+  "item.deisdev.waxed_membrane": "Waxed Membrane",
+  "item.deisdev.stabilizing_lattice": "Stabilizing Lattice",
+  "item.deisdev.temporal_core": "Temporal Core",
+  "item.deisdev.growth_inhibitor": "Growth Inhibitor",
+  "item.deisdev.preserving_sealant": "Preserving Sealant",
+  "item.deisdev.structural_stasis": "Structural Stasis",
+  "item.deisdev.temporal_stasis": "Temporal Stasis",
+  "item.deisdev.jar.uses": "%s / %s uses",
+  "item.deisdev.jar.empty": "Empty or invalid compound",
+  "item.deisdev.jar.brush": "Hold in your offhand with a Preserving Brush"
+}

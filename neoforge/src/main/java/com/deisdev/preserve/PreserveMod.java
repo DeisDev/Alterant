@@ -15,6 +15,10 @@ public final class PreserveMod {
                 event.registrar("1").playToClient(com.deisdev.preserve.network.ChunkTreatmentsPayload.TYPE,
                         com.deisdev.preserve.network.ChunkTreatmentsPayload.STREAM_CODEC));
         Preserve.init();
+        com.deisdev.preserve.platform.NeoForgePlatformHelper.registerContent(eventBus);
+        eventBus.addListener((net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent event) -> {
+            if (event.getTabKey().equals(com.deisdev.preserve.item.PreserveItems.INGREDIENTS_TAB)) { com.deisdev.preserve.item.PreserveItems.fillCreativeTab(event::accept); }
+        });
         NeoForge.EVENT_BUS.addListener((RegisterCommandsEvent event) -> PreserveCommands.register(event.getDispatcher()));
     }
 }

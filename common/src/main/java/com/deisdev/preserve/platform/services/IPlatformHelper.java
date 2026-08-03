@@ -1,6 +1,10 @@
 package com.deisdev.preserve.platform.services;
 
 public interface IPlatformHelper {
+    <T extends net.minecraft.world.item.Item> java.util.function.Supplier<T> registerItem(String name, java.util.function.Function<net.minecraft.world.item.Item.Properties, T> factory);
+    <T> java.util.function.Supplier<net.minecraft.core.component.DataComponentType<T>> registerComponent(String name,
+            java.util.function.Supplier<net.minecraft.core.component.DataComponentType<T>> factory);
+
     boolean transferInProgress();
 
     com.deisdev.preserve.rules.RuleLoad loadedRules(net.minecraft.server.MinecraftServer server);

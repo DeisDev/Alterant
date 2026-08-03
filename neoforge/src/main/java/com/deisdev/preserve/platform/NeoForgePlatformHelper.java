@@ -3,8 +3,20 @@ package com.deisdev.preserve.platform;
 import com.deisdev.preserve.platform.services.IPlatformHelper;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.loading.FMLLoader;
+import com.deisdev.preserve.Constants;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import net.minecraft.core.component.DataComponentType;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.world.item.Item;
+import net.neoforged.neoforge.registries.DeferredRegister;
 
 public class NeoForgePlatformHelper implements IPlatformHelper {
+    private static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(Constants.MOD_ID);
+    private static final DeferredRegister.DataComponents COMPONENTS = DeferredRegister.createDataComponents(Registries.DATA_COMPONENT_TYPE, Constants.MOD_ID);
+    public static void registerContent(net.neoforged.bus.api.IEventBus bus) { COMPONENTS.register(bus); ITEMS.register(bus); }
+    @Override public <T extends Item> Supplier<T> registerItem(String name, Function<Item.Properties, T> factory) { return ITEMS.registerItem(name, factory); }
+    @Override public <T> Supplier<DataComponentType<T>> registerComponent(String name, Supplier<DataComponentType<T>> factory) { return COMPONENTS.register(name, factory); }
     @Override public boolean transferInProgress() {
         return net.neoforged.neoforge.transfer.transaction.Transaction.getLifecycle()
                 != net.neoforged.neoforge.transfer.transaction.Transaction.Lifecycle.NONE;
