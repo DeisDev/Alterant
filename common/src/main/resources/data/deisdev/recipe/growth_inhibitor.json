@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "minecraft:glass_bottle",
+    "deisdev:binding_paste",
+    "deisdev:inert_powder"
+  ],
+  "result": {
+    "id": "deisdev:growth_inhibitor",
+    "count": 1,
+    "components": {
+      "deisdev:jar_contents": {
+        "schema": 1,
+        "formulation": "growth_inhibitor",
+        "capacity": 32,
+        "remaining": 32
+      }
+    }
+  }
+}

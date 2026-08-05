@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "minecraft:wheat",
+    "minecraft:clay_ball"
+  ],
+  "result": {
+    "id": "deisdev:binding_paste",
+    "count": 4
+  }
+}

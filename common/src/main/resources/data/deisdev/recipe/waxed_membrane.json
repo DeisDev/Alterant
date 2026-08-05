@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "minecraft:honeycomb",
+    "minecraft:paper"
+  ],
+  "result": {
+    "id": "deisdev:waxed_membrane",
+    "count": 2
+  }
+}
