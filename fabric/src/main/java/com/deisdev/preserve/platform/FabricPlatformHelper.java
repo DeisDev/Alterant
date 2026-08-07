@@ -14,6 +14,11 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.Item;
 
 public class FabricPlatformHelper implements IPlatformHelper {
+    @Override public <T extends net.minecraft.world.item.crafting.Recipe<?>> Supplier<net.minecraft.world.item.crafting.RecipeSerializer<T>> registerRecipeSerializer(
+            String name, Supplier<net.minecraft.world.item.crafting.RecipeSerializer<T>> factory) {
+        var serializer = Registry.register(BuiltInRegistries.RECIPE_SERIALIZER, Identifier.fromNamespaceAndPath(Constants.MOD_ID, name), factory.get());
+        return () -> serializer;
+    }
     @Override public <T extends Item> Supplier<T> registerItem(String name, Function<Item.Properties, T> factory) {
         var key = ResourceKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath(Constants.MOD_ID, name));
         T item = Registry.register(BuiltInRegistries.ITEM, key, factory.apply(new Item.Properties().setId(key)));

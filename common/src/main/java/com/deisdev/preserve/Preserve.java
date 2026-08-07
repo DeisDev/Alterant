@@ -6,6 +6,7 @@ public final class Preserve {
 
     public static void init() {
         com.deisdev.preserve.item.PreserveItems.init();
+        com.deisdev.preserve.recipe.PreserveRecipes.init();
         Constants.LOG.info("Preserve initialized");
     }
 }

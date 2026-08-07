@@ -14,7 +14,10 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 public class NeoForgePlatformHelper implements IPlatformHelper {
     private static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(Constants.MOD_ID);
     private static final DeferredRegister.DataComponents COMPONENTS = DeferredRegister.createDataComponents(Registries.DATA_COMPONENT_TYPE, Constants.MOD_ID);
-    public static void registerContent(net.neoforged.bus.api.IEventBus bus) { COMPONENTS.register(bus); ITEMS.register(bus); }
+    private static final DeferredRegister<net.minecraft.world.item.crafting.RecipeSerializer<?>> RECIPES = DeferredRegister.create(Registries.RECIPE_SERIALIZER, Constants.MOD_ID);
+    public static void registerContent(net.neoforged.bus.api.IEventBus bus) { COMPONENTS.register(bus); ITEMS.register(bus); RECIPES.register(bus); }
+    @Override public <T extends net.minecraft.world.item.crafting.Recipe<?>> Supplier<net.minecraft.world.item.crafting.RecipeSerializer<T>> registerRecipeSerializer(
+            String name, Supplier<net.minecraft.world.item.crafting.RecipeSerializer<T>> factory) { return RECIPES.register(name, factory); }
     @Override public <T extends Item> Supplier<T> registerItem(String name, Function<Item.Properties, T> factory) { return ITEMS.registerItem(name, factory); }
     @Override public <T> Supplier<DataComponentType<T>> registerComponent(String name, Supplier<DataComponentType<T>> factory) { return COMPONENTS.register(name, factory); }
     @Override public boolean transferInProgress() {

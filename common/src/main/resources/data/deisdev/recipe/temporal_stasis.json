@@ -1,0 +1,9 @@
+{
+  "type": "deisdev:temporal_stasis",
+  "category": "misc",
+  "additives": [
+    "deisdev:stabilizing_lattice",
+    "deisdev:stabilizing_lattice",
+    "deisdev:temporal_core"
+  ]
+}
