@@ -6,6 +6,7 @@ import com.deisdev.preserve.api.PreservationContext;
 import com.deisdev.preserve.api.PreservationPermission.Change;
 import com.deisdev.preserve.integration.IntegrationRegistry;
 import com.deisdev.preserve.integration.PlayerAccess;
+import com.deisdev.preserve.item.CompoundCharge;
 import com.deisdev.preserve.network.TreatmentSync;
 import com.deisdev.preserve.rules.RuleRegistry;
 import com.deisdev.preserve.rules.BlockCondition;
@@ -91,7 +92,20 @@ public final class PreservationService {
         return apply(pos, formulation, player.getStringUUID(), replace, available, new PlayerAccess(player, itemReady));
     }
 
+    /** The brush's inventory cost commits with the coating, before scheduler notifications or adapter observations. */
+    public Result applyWithBrush(BlockPos pos, net.minecraft.server.level.ServerPlayer player, boolean replace) {
+        checkThread();
+        CompoundCharge cost;
+        try { cost = CompoundCharge.capture(player); }
+        catch (IllegalArgumentException error) { return new Result(false, error.getMessage()); }
+        return apply(pos, cost.formulation(), player.getStringUUID(), replace, cost.available(), new PlayerAccess(player, cost::ready), cost);
+    }
+
     private Result apply(BlockPos pos, Formulation formulation, String owner, boolean replace, int available, PlayerAccess access) {
+        return apply(pos, formulation, owner, replace, available, access, null);
+    }
+
+    private Result apply(BlockPos pos, Formulation formulation, String owner, boolean replace, int available, PlayerAccess access, CompoundCharge cost) {
         checkThread();
         if (com.deisdev.preserve.platform.Services.PLATFORM.transferInProgress()) { return new Result(false, "Wait for the current transfer to finish"); }
         if (!level.hasChunkAt(pos) || level.isOutsideBuildHeight(pos)) { return new Result(false, "Target is not loaded"); }
@@ -100,6 +114,7 @@ public final class PreservationService {
         locked.add(pos.asLong());
         try {
             var prepared = new java.util.ArrayList<Prepared>();
+            CompoundCharge.Prepared payment = null;
             try {
                 var context = new PreservationContext(level, pos, level.getBlockState(pos), formulation, owner);
                 var entity = level.getBlockEntity(pos);
@@ -124,9 +139,11 @@ public final class PreservationService {
                     if (store.chunkSize(entry.getKey()) + entry.getValue() > limit) { return new Result(false, "This chunk has reached its coating limit"); }
                 }
                 if (access != null) { access.validateItem(); }
+                if (cost != null) { payment = cost.prepare(prepared.size()); }
             } catch (RuntimeException error) { return new Result(false, error.getMessage()); }
             // Publish the whole group before collecting work or notifying integrations; no callback can see half a coating.
             for (var entry : prepared) { store.put(entry.next()); }
+            if (payment != null) { payment.commit(); }
             for (var entry : prepared) {
                 capturePending(entry.context().pos());
                 changed(entry.context().pos());

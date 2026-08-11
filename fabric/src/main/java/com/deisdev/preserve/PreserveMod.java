@@ -14,6 +14,8 @@ public final class PreserveMod implements ModInitializer {
         Preserve.init();
         net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents.modifyOutputEvent(com.deisdev.preserve.item.PreserveItems.INGREDIENTS_TAB)
                 .register(output -> com.deisdev.preserve.item.PreserveItems.fillCreativeTab(output::accept));
+        net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents.modifyOutputEvent(com.deisdev.preserve.item.PreserveItems.TOOLS_TAB)
+                .register(output -> com.deisdev.preserve.item.PreserveItems.fillToolsTab(output::accept));
         CommandRegistrationCallback.EVENT.register((dispatcher, context, environment) -> PreserveCommands.register(dispatcher));
     }
 }

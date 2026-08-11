@@ -18,6 +18,7 @@ public final class PreserveMod {
         com.deisdev.preserve.platform.NeoForgePlatformHelper.registerContent(eventBus);
         eventBus.addListener((net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent event) -> {
             if (event.getTabKey().equals(com.deisdev.preserve.item.PreserveItems.INGREDIENTS_TAB)) { com.deisdev.preserve.item.PreserveItems.fillCreativeTab(event::accept); }
+            if (event.getTabKey().equals(com.deisdev.preserve.item.PreserveItems.TOOLS_TAB)) { com.deisdev.preserve.item.PreserveItems.fillToolsTab(event::accept); }
         });
         NeoForge.EVENT_BUS.addListener((RegisterCommandsEvent event) -> PreserveCommands.register(event.getDispatcher()));
     }

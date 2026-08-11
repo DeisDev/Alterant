@@ -38,7 +38,7 @@
     "PistonMixin",
     "PlayerChunkSenderMixin"
   ],
-  "client": ["client.ClientLevelMixin", "client.ClientChunkCacheMixin"],
+  "client": ["client.ClientLevelMixin", "client.ClientChunkCacheMixin", "client.ToolUseMixin"],
   "server": [],
   "injectors": {
     "defaultRequire": 1

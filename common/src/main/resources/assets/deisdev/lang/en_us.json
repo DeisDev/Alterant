@@ -11,5 +11,10 @@
   "item.deisdev.temporal_stasis": "Temporal Stasis",
   "item.deisdev.jar.uses": "%s / %s uses",
   "item.deisdev.jar.empty": "Empty or invalid compound",
-  "item.deisdev.jar.brush": "Hold in your offhand with a Preserving Brush"
+  "item.deisdev.jar.brush": "Hold in your offhand with a Preserving Brush",
+  "item.deisdev.preserving_brush": "Preserving Brush",
+  "item.deisdev.scraper": "Scraper",
+  "item.deisdev.preserving_brush.use": "Apply the compound in your offhand",
+  "item.deisdev.preserving_brush.replace": "Sneak-use to replace a coating",
+  "item.deisdev.scraper.use": "Remove a coating without refunding compound"
 }
