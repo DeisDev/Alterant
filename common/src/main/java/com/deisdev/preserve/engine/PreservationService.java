@@ -30,6 +30,7 @@ import net.minecraft.world.ticks.ScheduledTick;
 /** Authoritative operations, called only on the server thread; tick gates only read the store. */
 public final class PreservationService {
     public record Result(int changedPositions, String message) {
+        public Result { if (message == null || message.isBlank()) { message = "Preservation could not complete"; } }
         public Result(boolean changed, String message) { this(changed ? 1 : 0, message); }
         public boolean changed() { return changedPositions > 0; }
     }
@@ -94,11 +95,15 @@ public final class PreservationService {
 
     /** The brush's inventory cost commits with the coating, before scheduler notifications or adapter observations. */
     public Result applyWithBrush(BlockPos pos, net.minecraft.server.level.ServerPlayer player, boolean replace) {
+        return applyWithBrush(pos, player, replace, TargetLink.LIMIT);
+    }
+
+    Result applyWithBrush(BlockPos pos, net.minecraft.server.level.ServerPlayer player, boolean replace, int limit) {
         checkThread();
         CompoundCharge cost;
         try { cost = CompoundCharge.capture(player); }
         catch (IllegalArgumentException error) { return new Result(false, error.getMessage()); }
-        return apply(pos, cost.formulation(), player.getStringUUID(), replace, cost.available(), new PlayerAccess(player, cost::ready), cost);
+        return apply(pos, cost.formulation(), player.getStringUUID(), replace, Math.min(limit, cost.available()), new PlayerAccess(player, cost::ready), cost);
     }
 
     private Result apply(BlockPos pos, Formulation formulation, String owner, boolean replace, int available, PlayerAccess access) {

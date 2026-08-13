@@ -14,6 +14,10 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.Item;
 
 public class FabricPlatformHelper implements IPlatformHelper {
+    @Override public boolean allowSurfaceUse(net.minecraft.server.level.ServerPlayer player, net.minecraft.world.phys.BlockHitResult hit) {
+        return net.fabricmc.fabric.api.event.player.UseBlockCallback.EVENT.invoker().interact(player, player.level(), net.minecraft.world.InteractionHand.MAIN_HAND, hit)
+                == net.minecraft.world.InteractionResult.PASS;
+    }
     @Override public <T extends net.minecraft.world.item.crafting.Recipe<?>> Supplier<net.minecraft.world.item.crafting.RecipeSerializer<T>> registerRecipeSerializer(
             String name, Supplier<net.minecraft.world.item.crafting.RecipeSerializer<T>> factory) {
         var serializer = Registry.register(BuiltInRegistries.RECIPE_SERIALIZER, Identifier.fromNamespaceAndPath(Constants.MOD_ID, name), factory.get());

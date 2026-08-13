@@ -16,5 +16,8 @@
   "item.deisdev.scraper": "Scraper",
   "item.deisdev.preserving_brush.use": "Apply the compound in your offhand",
   "item.deisdev.preserving_brush.replace": "Sneak-use to replace a coating",
+  "item.deisdev.preserving_brush.single": "Mode: Single target",
+  "item.deisdev.preserving_brush.area": "Mode: 3x3 surface",
+  "item.deisdev.preserving_brush.mode": "Sneak-use in air to change mode",
   "item.deisdev.scraper.use": "Remove a coating without refunding compound"
 }

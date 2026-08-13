@@ -1,6 +1,8 @@
 package com.deisdev.preserve.platform.services;
 
 public interface IPlatformHelper {
+    /** Dispatch native interaction cancellation for an additional, loaded surface target. */
+    boolean allowSurfaceUse(net.minecraft.server.level.ServerPlayer player, net.minecraft.world.phys.BlockHitResult hit);
     <T extends net.minecraft.world.item.crafting.Recipe<?>> java.util.function.Supplier<net.minecraft.world.item.crafting.RecipeSerializer<T>> registerRecipeSerializer(
             String name, java.util.function.Supplier<net.minecraft.world.item.crafting.RecipeSerializer<T>> factory);
     <T extends net.minecraft.world.item.Item> java.util.function.Supplier<T> registerItem(String name, java.util.function.Function<net.minecraft.world.item.Item.Properties, T> factory);

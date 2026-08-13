@@ -15,6 +15,8 @@ public final class PreserveItems {
             net.minecraft.core.registries.Registries.CREATIVE_MODE_TAB, net.minecraft.resources.Identifier.withDefaultNamespace("tools_and_utilities"));
     public static final Supplier<DataComponentType<JarContents>> JAR_CONTENTS = Services.PLATFORM.registerComponent("jar_contents",
             () -> DataComponentType.<JarContents>builder().persistent(JarContents.CODEC).networkSynchronized(JarContents.STREAM_CODEC).build());
+    public static final Supplier<DataComponentType<Boolean>> BRUSH_AREA = Services.PLATFORM.registerComponent("brush_area",
+            () -> DataComponentType.<Boolean>builder().persistent(com.mojang.serialization.Codec.BOOL).networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.BOOL).build());
     public static final Supplier<Item> BINDING_PASTE = material("binding_paste");
     public static final Supplier<Item> INERT_POWDER = material("inert_powder");
     public static final Supplier<Item> WAXED_MEMBRANE = material("waxed_membrane");
