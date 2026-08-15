@@ -19,5 +19,8 @@
   "item.deisdev.preserving_brush.single": "Mode: Single target",
   "item.deisdev.preserving_brush.area": "Mode: 3x3 surface",
   "item.deisdev.preserving_brush.mode": "Sneak-use in air to change mode",
+  "overlay.deisdev.need_compound": "Hold a compound jar in your offhand",
+  "overlay.deisdev.surface_preview": "Center first · Some targets may be skipped",
+  "overlay.deisdev.treated": "%s coating · %s bars",
   "item.deisdev.scraper.use": "Remove a coating without refunding compound"
 }

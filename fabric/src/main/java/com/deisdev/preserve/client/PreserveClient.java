@@ -7,6 +7,12 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 
 public final class PreserveClient implements ClientModInitializer {
     @Override public void onInitializeClient() {
+        net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry.attachElementBefore(net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements.CHAT,
+                net.minecraft.resources.Identifier.parse("deisdev:inspection"), ToolOverlay::hud);
+        net.fabricmc.fabric.api.client.rendering.v1.level.LevelExtractionEvents.END_EXTRACTION.register(context ->
+                ((OverlayRenderState) context.levelState()).preserve$overlay(ToolOverlay.extract(context.level())));
+        net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents.COLLECT_SUBMITS.register(context ->
+                ToolOverlay.submit(context.levelState(), context.poseStack(), context.submitNodeCollector()));
         ClientPlayNetworking.registerGlobalReceiver(ChunkTreatmentsPayload.TYPE,
                 (payload, context) -> TreatmentSync.receive(context.client().level, payload));
     }

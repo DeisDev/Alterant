@@ -11,6 +11,18 @@ import net.neoforged.neoforge.client.network.event.RegisterClientPayloadHandlers
 @EventBusSubscriber(modid = "deisdev", value = Dist.CLIENT)
 public final class PreserveClient {
     @SubscribeEvent
+    public static void registerLayers(net.neoforged.neoforge.client.event.RegisterGuiLayersEvent event) {
+        event.registerBelow(net.neoforged.neoforge.client.gui.VanillaGuiLayers.CHAT, net.minecraft.resources.Identifier.parse("deisdev:inspection"), ToolOverlay::hud);
+    }
+    @SubscribeEvent
+    public static void extract(net.neoforged.neoforge.client.event.ExtractLevelRenderStateEvent event) {
+        ((OverlayRenderState) event.getRenderState()).preserve$overlay(ToolOverlay.extract(event.getLevel()));
+    }
+    @SubscribeEvent
+    public static void submit(net.neoforged.neoforge.client.event.SubmitCustomGeometryEvent event) {
+        ToolOverlay.submit(event.getLevelRenderState(), event.getPoseStack(), event.getSubmitNodeCollector());
+    }
+    @SubscribeEvent
     public static void registerPayloads(RegisterClientPayloadHandlersEvent event) {
         event.register(ChunkTreatmentsPayload.TYPE, (payload, context) -> TreatmentSync.receive(Minecraft.getInstance().level, payload));
     }
