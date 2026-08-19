@@ -9,6 +9,10 @@ public final class PreserveMod implements ModInitializer {
     @Override
     public void onInitialize() {
         com.deisdev.preserve.rules.FabricRules.register();
+        net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry.serverboundPlay().register(com.deisdev.preserve.network.InspectionRequest.TYPE, com.deisdev.preserve.network.InspectionRequest.STREAM_CODEC);
+        net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry.clientboundPlay().register(com.deisdev.preserve.network.InspectionPayload.TYPE, com.deisdev.preserve.network.InspectionPayload.STREAM_CODEC);
+        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.registerGlobalReceiver(com.deisdev.preserve.network.InspectionRequest.TYPE,
+                (payload, context) -> com.deisdev.preserve.network.InspectionQueries.handle(context.player(), payload));
         net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry.clientboundPlay().register(
                 com.deisdev.preserve.network.ChunkTreatmentsPayload.TYPE, com.deisdev.preserve.network.ChunkTreatmentsPayload.STREAM_CODEC);
         Preserve.init();

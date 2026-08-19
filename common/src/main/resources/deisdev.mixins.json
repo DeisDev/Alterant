@@ -11,6 +11,7 @@
     "ContainerMixin",
     "ContainerMenuMixin",
     "PlayerUseMixin",
+    "InspectionPlayerMixin",
     "RecipeBookMixin",
     "CraftingInventoryMixin",
     "CraftingContentsMixin",

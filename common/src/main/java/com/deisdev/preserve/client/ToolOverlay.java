@@ -39,7 +39,7 @@ public final class ToolOverlay {
     private static List<Mark> cachedMarks = List.of();
 
     private ToolOverlay() {}
-    private static boolean active(Minecraft client) {
+    static boolean active(Minecraft client) {
         return client.level != null && client.player != null && !client.player.isSpectator() && client.gui.screen() == null
                 && !client.gui.hud.isHidden() && !client.getDebugOverlay().showDebugScreen()
                 && client.player.getMainHandItem().getItem() instanceof PreservationTool;
@@ -116,11 +116,38 @@ public final class ToolOverlay {
             var treatment = ((PreservationLevel) client.level).preserve$treatments().get(hit.getBlockPos().asLong());
             if (treatment != null) { lines.add(Component.translatable("overlay.deisdev.treated", PreserveItems.compound(treatment.formulation()).getDefaultInstance().getHoverName(), treatment.formulation().ordinal() + 1)); }
         }
-        int width = Math.min(graphics.guiWidth() - 16, lines.stream().mapToInt(client.font::width).max().orElse(140) + 12);
+        ClientInspection.current(client).ifPresent(report -> {
+            lines.add(Component.translatable("overlay.deisdev.coverage." + report.coverage().name().toLowerCase(java.util.Locale.ROOT)));
+            if (!report.reason().isBlank()) { lines.add(Component.literal(report.reason())); }
+            else if (report.applicable()) { lines.add(Component.translatable(brush ? "overlay.deisdev.ready_apply" : "overlay.deisdev.ready_remove")); }
+            var actions = new ArrayList<String>();
+            for (var action : com.deisdev.preserve.api.Action.values()) {
+                if ((report.actions() & (1 << action.ordinal())) != 0) {
+                    actions.add(Component.translatable("overlay.deisdev.action." + action.getSerializedName()).getString() + ((report.conditionalActions() & (1 << action.ordinal())) == 0 ? "" : "*"));
+                }
+            }
+            if (!actions.isEmpty()) {
+                lines.add(player.isSecondaryUseActive() ? Component.translatable("overlay.deisdev.protections", String.join(", ", actions))
+                        : Component.translatable("overlay.deisdev.protection_count", actions.size()));
+            }
+            if (report.conditionalActions() != 0) { lines.add(Component.translatable("overlay.deisdev.conditional")); }
+            if (report.coverage() == com.deisdev.preserve.api.PreservationInspection.Coverage.STANDARD_ROUTES) { lines.add(Component.translatable("overlay.deisdev.partial")); }
+            if (report.positions() > 1) { lines.add(Component.translatable("overlay.deisdev.linked", report.positions())); }
+            if (brush && PreservingBrushItem.area(player.getMainHandItem())) { lines.add(Component.translatable("overlay.deisdev.area_limit", report.areaLimit())); }
+            if (player.isSecondaryUseActive()) {
+                if (!report.properties().isEmpty()) { lines.add(Component.translatable("overlay.deisdev.properties", report.properties())); }
+                for (var limitation : report.limitations()) { lines.add(Component.literal(limitation)); }
+                for (var detail : report.details()) { lines.add(Component.literal(detail)); }
+            } else if (!report.limitations().isEmpty() || !report.properties().isEmpty() || !report.details().isEmpty()) { lines.add(Component.translatable("overlay.deisdev.details")); }
+        });
+        int width = Math.min(graphics.guiWidth() - 16, Math.min(260, lines.stream().mapToInt(client.font::width).max().orElse(140) + 12));
+        var wrapped = lines.stream().flatMap(line -> client.font.split(line, width - 12).stream()).toList();
+        int count = Math.min(wrapped.size(), (graphics.guiHeight() - 24) / 11);
         int y = 8;
-        graphics.fill(8, y, 8 + width, y + 8 + lines.size() * 11, 0xA0181C22);
-        for (var line : lines) {
-            graphics.text(client.font, client.font.plainSubstrByWidth(line.getString(), width - 12), 14, y + 5, 0xFFE4E6EA);
+        graphics.fill(8, y, 8 + width, y + 8 + count * 11, 0xA0181C22);
+        for (int line = 0; line < count; line++) {
+            var text = line == count - 1 && count < wrapped.size() ? Component.translatable("overlay.deisdev.more").getVisualOrderText() : wrapped.get(line);
+            graphics.text(client.font, text, 14, y + 5, 0xFFE4E6EA);
             y += 11;
         }
     }

@@ -11,6 +11,8 @@ import net.neoforged.neoforge.client.network.event.RegisterClientPayloadHandlers
 @EventBusSubscriber(modid = "deisdev", value = Dist.CLIENT)
 public final class PreserveClient {
     @SubscribeEvent
+    public static void clientTick(net.neoforged.neoforge.client.event.ClientTickEvent.Post event) { ClientInspection.tick(Minecraft.getInstance()); }
+    @SubscribeEvent
     public static void registerLayers(net.neoforged.neoforge.client.event.RegisterGuiLayersEvent event) {
         event.registerBelow(net.neoforged.neoforge.client.gui.VanillaGuiLayers.CHAT, net.minecraft.resources.Identifier.parse("deisdev:inspection"), ToolOverlay::hud);
     }
@@ -24,6 +26,8 @@ public final class PreserveClient {
     }
     @SubscribeEvent
     public static void registerPayloads(RegisterClientPayloadHandlersEvent event) {
+        ClientInspection.init(net.neoforged.neoforge.client.network.ClientPacketDistributor::sendToServer);
+        event.register(com.deisdev.preserve.network.InspectionPayload.TYPE, (payload, context) -> ClientInspection.receive(Minecraft.getInstance(), payload));
         event.register(ChunkTreatmentsPayload.TYPE, (payload, context) -> TreatmentSync.receive(Minecraft.getInstance().level, payload));
     }
 }

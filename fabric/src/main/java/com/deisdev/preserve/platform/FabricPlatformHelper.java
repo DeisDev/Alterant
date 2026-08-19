@@ -14,6 +14,9 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.Item;
 
 public class FabricPlatformHelper implements IPlatformHelper {
+    @Override public void sendInspection(net.minecraft.server.level.ServerPlayer player, com.deisdev.preserve.network.InspectionPayload payload) {
+        if (net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.canSend(player, payload.type())) { net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(player, payload); }
+    }
     @Override public boolean allowSurfaceUse(net.minecraft.server.level.ServerPlayer player, net.minecraft.world.phys.BlockHitResult hit) {
         return net.fabricmc.fabric.api.event.player.UseBlockCallback.EVENT.invoker().interact(player, player.level(), net.minecraft.world.InteractionHand.MAIN_HAND, hit)
                 == net.minecraft.world.InteractionResult.PASS;
