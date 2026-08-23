@@ -43,6 +43,7 @@ public final class Inspection {
                     !available ? List.of("Linked members or saved adapters are missing; inspect the group before removal") : limits(existing.formulation(), complete), "",
                     existing.link().map(link -> link.members().size()).orElse(1));
         }
+        if (CleanupJob.get(level.getServer()).blocksApplication()) { return denied(requested, Coverage.DENIED, "Uninstall preparation blocks new coatings"); }
         var actions = EnumSet.noneOf(Action.class);
         var profiles = new LinkedHashSet<String>();
         var adapters = new LinkedHashSet<String>();

@@ -85,6 +85,13 @@ public final class TreatmentStore extends SavedData {
     }
 
     public int size() { return size; }
+    public int resumingSize() { return resuming.size(); }
+    /** Explicit administrative traversal only; snapshot chunk keys without copying every treatment. */
+    public List<Long> pendingChunks() {
+        var keys = new LongOpenHashSet(chunks.keySet());
+        keys.addAll(resumingChunks.keySet());
+        return java.util.Arrays.stream(keys.toLongArray()).sorted().boxed().toList();
+    }
     public long revision() { return revision; }
 
     public int chunkSize(long chunkKey) {

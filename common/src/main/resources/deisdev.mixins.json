@@ -4,6 +4,7 @@
   "package": "com.deisdev.preserve.mixin",
   "compatibilityLevel": "JAVA_25",
   "mixins": [
+    "CleanupServerMixin",
     "SavedDataStorageAccessor",
     "MinecraftServerMixin",
     "CompoundContainerMixin",

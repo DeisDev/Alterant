@@ -112,6 +112,7 @@ public final class PreservationService {
 
     private Result apply(BlockPos pos, Formulation formulation, String owner, boolean replace, int available, PlayerAccess access, CompoundCharge cost) {
         checkThread();
+        if (CleanupJob.get(level.getServer()).blocksApplication()) { return new Result(false, "Uninstall preparation blocks new coatings; cancel cleanup to continue playing"); }
         if (com.deisdev.preserve.platform.Services.PLATFORM.transferInProgress()) { return new Result(false, "Wait for the current transfer to finish"); }
         if (!level.hasChunkAt(pos) || level.isOutsideBuildHeight(pos)) { return new Result(false, "Target is not loaded"); }
         if (!inProgress.add(pos.asLong())) { return new Result(false, "Target is busy"); }

@@ -12,6 +12,8 @@ import net.minecraft.world.item.Item;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 public class NeoForgePlatformHelper implements IPlatformHelper {
+    private static final DeferredRegister<net.minecraft.server.level.TicketType> TICKETS = DeferredRegister.create(Registries.TICKET_TYPE, Constants.MOD_ID);
+    @Override public Supplier<net.minecraft.server.level.TicketType> registerCleanupTicket() { return TICKETS.register("cleanup", com.deisdev.preserve.engine.CleanupTickets::create); }
     @Override public void sendInspection(net.minecraft.server.level.ServerPlayer player, com.deisdev.preserve.network.InspectionPayload payload) {
         net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player, payload);
     }
@@ -22,7 +24,7 @@ public class NeoForgePlatformHelper implements IPlatformHelper {
     private static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(Constants.MOD_ID);
     private static final DeferredRegister.DataComponents COMPONENTS = DeferredRegister.createDataComponents(Registries.DATA_COMPONENT_TYPE, Constants.MOD_ID);
     private static final DeferredRegister<net.minecraft.world.item.crafting.RecipeSerializer<?>> RECIPES = DeferredRegister.create(Registries.RECIPE_SERIALIZER, Constants.MOD_ID);
-    public static void registerContent(net.neoforged.bus.api.IEventBus bus) { COMPONENTS.register(bus); ITEMS.register(bus); RECIPES.register(bus); }
+    public static void registerContent(net.neoforged.bus.api.IEventBus bus) { COMPONENTS.register(bus); ITEMS.register(bus); RECIPES.register(bus); TICKETS.register(bus); }
     @Override public <T extends net.minecraft.world.item.crafting.Recipe<?>> Supplier<net.minecraft.world.item.crafting.RecipeSerializer<T>> registerRecipeSerializer(
             String name, Supplier<net.minecraft.world.item.crafting.RecipeSerializer<T>> factory) { return RECIPES.register(name, factory); }
     @Override public <T extends Item> Supplier<T> registerItem(String name, Function<Item.Properties, T> factory) { return ITEMS.registerItem(name, factory); }
