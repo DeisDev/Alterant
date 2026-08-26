@@ -4,3 +4,16 @@ plugins {
     // see https://projects.neoforged.net/neoforged/moddevgradle for new versions
     id 'net.neoforged.moddev' version '2.0.141' apply false
 }
+
+subprojects {
+    plugins.withId('java') {
+        repositories {
+            exclusiveContent {
+                forRepository { maven { name = 'Modrinth'; url = uri('https://api.modrinth.com/maven') } }
+                filter { includeGroup('maven.modrinth') }
+            }
+        }
+        // Optional claim API: compile against exact 26.2 releases; never bundle or require the mod.
+        dependencies.add('compileOnly', "maven.modrinth:open-parties-and-claims:${project.name == 'neoforge' ? 'vox50Uq3' : 'eji5E2yU'}") { transitive = false }
+    }
+}

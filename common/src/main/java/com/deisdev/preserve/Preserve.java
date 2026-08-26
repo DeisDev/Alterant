@@ -8,6 +8,9 @@ public final class Preserve {
         com.deisdev.preserve.engine.CleanupTickets.init();
         com.deisdev.preserve.item.PreserveItems.init();
         com.deisdev.preserve.recipe.PreserveRecipes.init();
+        if (com.deisdev.preserve.platform.Services.PLATFORM.isModLoaded("openpartiesandclaims")) {
+            com.deisdev.preserve.integration.OpenPacPermission.register();
+        }
         Constants.LOG.info("Preserve initialized");
     }
 }
