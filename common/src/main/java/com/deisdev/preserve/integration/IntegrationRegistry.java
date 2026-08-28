@@ -46,8 +46,10 @@ public final class IntegrationRegistry {
 
     public static List<net.minecraft.core.BlockPos> targets(PreservationContext context) {
         var result = TargetLink.validate(context.pos(), VanillaTargets.resolve(context));
+        int matching = 0;
         for (var adapter : ordered) {
             if (!adapter.supports(context)) { continue; }
+            if (++matching > AdapterSnapshot.MAX_ADAPTERS) { throw new IllegalArgumentException("Too many adapters select this target"); }
             var selected = TargetLink.validate(context.pos(), adapter.targets(context));
             if (selected.size() == 1) { continue; }
             if (result.size() != 1 && !result.equals(selected)) { throw new IllegalArgumentException("Adapters disagree about the linked target"); }
@@ -61,12 +63,13 @@ public final class IntegrationRegistry {
         boolean complete = false;
         for (var adapter : ordered) {
             if (!adapter.supports(context)) { continue; }
+            if (snapshots.size() == AdapterSnapshot.MAX_ADAPTERS) { throw new IllegalArgumentException("Too many adapters select this target"); }
             var denial = adapter.validate(context);
             if (denial.isPresent()) { throw new IllegalArgumentException(adapter.id() + ": " + denial.get()); }
             boolean covered = adapter.completeCoverage(context);
             snapshots.add(new AdapterSnapshot(adapter.id(), adapter.dataVersion(), adapter.capture(context), covered));
             complete |= covered;
-            if (snapshots.size() > 16) { throw new IllegalArgumentException("Too many adapters select this target"); }
+            AdapterSnapshot.validateTarget(snapshots);
         }
         return new Prepared(snapshots, complete);
     }
@@ -76,6 +79,7 @@ public final class IntegrationRegistry {
         boolean complete = false;
         for (var adapter : ordered) {
             if (!adapter.supports(context)) { continue; }
+            if (adapters.size() == AdapterSnapshot.MAX_ADAPTERS) { throw new IllegalArgumentException("Too many adapters select this target"); }
             var denial = adapter.validate(context);
             if (denial.isPresent()) { throw new IllegalArgumentException(adapter.id() + ": " + denial.get()); }
             adapters.add(adapter.id() + ": " + adapter.description());

@@ -28,7 +28,7 @@ public record Treatment(long position, Formulation formulation, Identifier block
             Codec.unboundedMap(Codec.STRING, Codec.STRING).fieldOf("adapter_data").forGetter(Treatment::adapterData),
             Codec.STRING.fieldOf("owner").forGetter(Treatment::owner),
             com.deisdev.preserve.rules.Protection.CODEC.listOf(0, Action.values().length).optionalFieldOf("protections", List.of()).forGetter(Treatment::protections),
-            AdapterSnapshot.CODEC.listOf(0, 16).optionalFieldOf("adapters", List.of()).forGetter(Treatment::adapters),
+            AdapterSnapshot.CODEC.listOf(0, AdapterSnapshot.MAX_ADAPTERS).optionalFieldOf("adapters", List.of()).forGetter(Treatment::adapters),
             TargetLink.CODEC.optionalFieldOf("link").forGetter(Treatment::link)
     ).apply(instance, Treatment::new));
 
@@ -44,7 +44,8 @@ public record Treatment(long position, Formulation formulation, Identifier block
         protections = List.copyOf(protections);
         adapters = List.copyOf(adapters);
         if (link.isPresent() && !link.get().members().contains(position)) { throw new IllegalArgumentException("Linked target does not include this position"); }
-        if (adapters.size() > 16 || adapters.stream().map(AdapterSnapshot::id).distinct().count() != adapters.size()) {
+        AdapterSnapshot.validateTarget(adapters);
+        if (adapters.stream().map(AdapterSnapshot::id).distinct().count() != adapters.size()) {
             throw new IllegalArgumentException("Adapter identities must be unique and bounded");
         }
         if (deferred.size() > 4 || deferred.stream().map(tick -> (tick.fluid() ? 2 : 0) + (tick.collected() ? 1 : 0)).distinct().count() != deferred.size()) {
