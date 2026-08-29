@@ -16,6 +16,10 @@ import net.minecraft.world.phys.HitResult;
 
 /** One expiring local report; stale replies cannot follow the player across a target, dimension, reconnect or jar change. */
 public final class ClientInspection {
+    private static final int REFRESH_INTERVAL = 10;
+    private static final int REPLY_TIMEOUT = 40;
+    // Keep the last valid report through one missed refresh and its retry, without retaining it indefinitely.
+    private static final int REPORT_LIFETIME = REFRESH_INTERVAL + 2 * REPLY_TIMEOUT;
     private static WeakReference<LocalPlayer> owner = new WeakReference<>(null);
     private static Consumer<InspectionRequest> sender;
     private static InspectionRequest pending;
@@ -28,7 +32,7 @@ public final class ClientInspection {
     public static void tick(Minecraft client) {
         if (owner.get() != client.player) {
             owner = new WeakReference<>(client.player); pending = null; report = null; tool = ItemStack.EMPTY; jar = ItemStack.EMPTY;
-            lastSent = client.player == null ? 0 : client.player.tickCount - 10;
+            lastSent = client.player == null ? 0 : client.player.tickCount - REFRESH_INTERVAL;
         }
         if (!ToolOverlay.active(client) || !(client.hitResult instanceof BlockHitResult hit) || hit.getType() != HitResult.Type.BLOCK
                 || !client.player.isWithinBlockInteractionRange(hit.getBlockPos(), 0)) { pending = null; report = null; return; }
@@ -38,7 +42,7 @@ public final class ClientInspection {
         if (changed) { report = null; }
         int elapsed = client.player.tickCount - lastSent;
         // Keep one request in flight long enough for slower connections; repeatedly replacing it would starve replies.
-        if (sender == null || elapsed < (changed ? 5 : awaiting ? 40 : 10)) { return; }
+        if (sender == null || elapsed < (changed ? 5 : awaiting ? REPLY_TIMEOUT : REFRESH_INTERVAL)) { return; }
         lastSent = client.player.tickCount; selection = selected;
         sequence = (sequence + 1) & Integer.MAX_VALUE;
         pending = new InspectionRequest(sequence, dimension, hit.getBlockPos().asLong());
@@ -54,7 +58,7 @@ public final class ClientInspection {
         if (current(client).isEmpty()) { report = null; }
     }
     public static Optional<InspectionPayload> current(Minecraft client) {
-        if (report == null || owner.get() != client.player || !ToolOverlay.active(client) || !sameItems(client) || client.player.tickCount - receivedAt > 20
+        if (report == null || owner.get() != client.player || !ToolOverlay.active(client) || !sameItems(client) || client.player.tickCount - receivedAt > REPORT_LIFETIME
                 || !client.level.dimension().identifier().equals(report.dimension()) || report.selection() != selection(client)
                 || !(client.hitResult instanceof BlockHitResult hit) || hit.getType() != HitResult.Type.BLOCK || hit.getBlockPos().asLong() != report.position()
                 || !client.player.isWithinBlockInteractionRange(hit.getBlockPos(), 0)
