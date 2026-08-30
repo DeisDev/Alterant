@@ -34,7 +34,8 @@ public final class ClientInspection {
             owner = new WeakReference<>(client.player); pending = null; report = null; tool = ItemStack.EMPTY; jar = ItemStack.EMPTY;
             lastSent = client.player == null ? 0 : client.player.tickCount - REFRESH_INTERVAL;
         }
-        if (!ToolOverlay.active(client) || !(client.hitResult instanceof BlockHitResult hit) || hit.getType() != HitResult.Type.BLOCK
+        if (ClientConfig.get().settings().tooltip() != ClientConfig.TooltipMode.ADVANCED
+                || !ToolOverlay.active(client) || !(client.hitResult instanceof BlockHitResult hit) || hit.getType() != HitResult.Type.BLOCK
                 || !client.player.isWithinBlockInteractionRange(hit.getBlockPos(), 0)) { pending = null; report = null; return; }
         var dimension = client.level.dimension().identifier();
         int selected = selection(client);
@@ -58,7 +59,8 @@ public final class ClientInspection {
         if (current(client).isEmpty()) { report = null; }
     }
     public static Optional<InspectionPayload> current(Minecraft client) {
-        if (report == null || owner.get() != client.player || !ToolOverlay.active(client) || !sameItems(client) || client.player.tickCount - receivedAt > REPORT_LIFETIME
+        if (report == null || ClientConfig.get().settings().tooltip() != ClientConfig.TooltipMode.ADVANCED
+                || owner.get() != client.player || !ToolOverlay.active(client) || !sameItems(client) || client.player.tickCount - receivedAt > REPORT_LIFETIME
                 || !client.level.dimension().identifier().equals(report.dimension()) || report.selection() != selection(client)
                 || !(client.hitResult instanceof BlockHitResult hit) || hit.getType() != HitResult.Type.BLOCK || hit.getBlockPos().asLong() != report.position()
                 || !client.player.isWithinBlockInteractionRange(hit.getBlockPos(), 0)

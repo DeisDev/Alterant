@@ -55,9 +55,10 @@ public final class ToolOverlay {
     public static List<Mark> extract(ClientLevel level) {
         var client = Minecraft.getInstance();
         if (level != client.level || !active(client)) { cachedMarks = List.of(); cachedRevision = -1; return List.of(); }
+        var settings = ClientConfig.get().settings();
         var store = ((PreservationLevel) level).preserve$treatments();
         var origin = client.player.blockPosition();
-        if (cachedLevel.get() != level || !origin.equals(cachedOrigin) || store.revision() != cachedRevision || level.getGameTime() >= refreshAt) {
+        if (settings.coatingOutlines() && (cachedLevel.get() != level || !origin.equals(cachedOrigin) || store.revision() != cachedRevision || level.getGameTime() >= refreshAt)) {
             cachedLevel = new WeakReference<>(level);
             cachedOrigin = origin.immutable();
             cachedRevision = store.revision();
@@ -75,8 +76,8 @@ public final class ToolOverlay {
             }
             cachedMarks = List.copyOf(marks);
         }
-        var marks = new ArrayList<>(cachedMarks);
-        if (PreservingBrushItem.area(client.player.getMainHandItem()) && client.hitResult instanceof BlockHitResult hit && hit.getType() == HitResult.Type.BLOCK
+        var marks = new ArrayList<Mark>(settings.coatingOutlines() ? cachedMarks : List.of());
+        if (settings.surfacePreview() && PreservingBrushItem.area(client.player.getMainHandItem()) && client.hitResult instanceof BlockHitResult hit && hit.getType() == HitResult.Type.BLOCK
                 && client.player.isWithinBlockInteractionRange(hit.getBlockPos(), 0)) {
             int order = 0;
             for (var pos : SurfaceTargets.positions(hit.getBlockPos(), hit.getDirection())) {
@@ -98,25 +99,30 @@ public final class ToolOverlay {
             pose.popPose();
         }
     }
-    public static void hud(GuiGraphicsExtractor graphics, DeltaTracker delta) {
-        var client = Minecraft.getInstance();
-        if (!active(client)) { return; }
+    public static List<Component> tooltipLines(Minecraft client) {
+        var mode = ClientConfig.get().settings().tooltip();
+        if (!active(client) || mode == ClientConfig.TooltipMode.HIDDEN) { return List.of(); }
         var player = client.player;
         var brush = player.getMainHandItem().getItem() instanceof PreservingBrushItem;
         var lines = new ArrayList<Component>();
         var jar = player.getOffhandItem();
         if (brush) {
-            lines.add(Component.translatable(PreservingBrushItem.area(player.getMainHandItem()) ? "item.deisdev.preserving_brush.area" : "item.deisdev.preserving_brush.single"));
             if (jar.getItem() instanceof CompoundItem compound) {
                 lines.add(jar.getHoverName().copy().append(" · ").append(Component.translatable("item.deisdev.jar.uses", compound.remaining(jar), compound.formulation().capacity())));
+                lines.add(description(compound.formulation()));
             } else { lines.add(Component.translatable("overlay.deisdev.need_compound")); }
-            if (PreservingBrushItem.area(player.getMainHandItem())) { lines.add(Component.translatable("overlay.deisdev.surface_preview")); }
-        } else { lines.add(Component.translatable("item.deisdev.scraper.use")); }
-        if (client.hitResult instanceof BlockHitResult hit && hit.getType() == HitResult.Type.BLOCK && player.isWithinBlockInteractionRange(hit.getBlockPos(), 0)) {
+            lines.add(Component.translatable("overlay.deisdev.brush_controls"));
+            lines.add(Component.translatable("overlay.deisdev.mode_controls", Component.translatable(PreservingBrushItem.area(player.getMainHandItem())
+                    ? "overlay.deisdev.mode.area" : "overlay.deisdev.mode.single")));
+        } else if (client.hitResult instanceof BlockHitResult hit && hit.getType() == HitResult.Type.BLOCK && player.isWithinBlockInteractionRange(hit.getBlockPos(), 0)) {
             var treatment = ((PreservationLevel) client.level).preserve$treatments().get(hit.getBlockPos().asLong());
-            if (treatment != null) { lines.add(Component.translatable("overlay.deisdev.treated", PreserveItems.compound(treatment.formulation()).getDefaultInstance().getHoverName(), treatment.formulation().ordinal() + 1)); }
+            if (treatment != null) {
+                lines.add(PreserveItems.compound(treatment.formulation()).getDefaultInstance().getHoverName());
+                lines.add(description(treatment.formulation()));
+            }
         }
-        ClientInspection.current(client).ifPresent(report -> {
+        if (!brush) { lines.add(Component.translatable("overlay.deisdev.scraper_controls")); }
+        if (mode == ClientConfig.TooltipMode.ADVANCED) { ClientInspection.current(client).ifPresent(report -> {
             lines.add(Component.translatable("overlay.deisdev.coverage." + report.coverage().name().toLowerCase(java.util.Locale.ROOT)));
             if (!report.reason().isBlank()) { lines.add(Component.literal(report.reason())); }
             else if (report.applicable()) { lines.add(Component.translatable(brush ? "overlay.deisdev.ready_apply" : "overlay.deisdev.ready_remove")); }
@@ -127,19 +133,25 @@ public final class ToolOverlay {
                 }
             }
             if (!actions.isEmpty()) {
-                lines.add(player.isSecondaryUseActive() ? Component.translatable("overlay.deisdev.protections", String.join(", ", actions))
-                        : Component.translatable("overlay.deisdev.protection_count", actions.size()));
+                lines.add(Component.translatable("overlay.deisdev.protections", String.join(", ", actions)));
             }
             if (report.conditionalActions() != 0) { lines.add(Component.translatable("overlay.deisdev.conditional")); }
             if (report.coverage() == com.deisdev.preserve.api.PreservationInspection.Coverage.STANDARD_ROUTES) { lines.add(Component.translatable("overlay.deisdev.partial")); }
             if (report.positions() > 1) { lines.add(Component.translatable("overlay.deisdev.linked", report.positions())); }
             if (brush && PreservingBrushItem.area(player.getMainHandItem())) { lines.add(Component.translatable("overlay.deisdev.area_limit", report.areaLimit())); }
-            if (player.isSecondaryUseActive()) {
-                if (!report.properties().isEmpty()) { lines.add(Component.translatable("overlay.deisdev.properties", report.properties())); }
-                for (var limitation : report.limitations()) { lines.add(Component.literal(limitation)); }
-                for (var detail : report.details()) { lines.add(Component.literal(detail)); }
-            } else if (!report.limitations().isEmpty() || !report.properties().isEmpty() || !report.details().isEmpty()) { lines.add(Component.translatable("overlay.deisdev.details")); }
-        });
+            if (!report.properties().isEmpty()) { lines.add(Component.translatable("overlay.deisdev.properties", report.properties())); }
+            for (var limitation : report.limitations()) { lines.add(Component.literal(limitation)); }
+            for (var detail : report.details()) { lines.add(Component.literal(detail)); }
+        }); }
+        return List.copyOf(lines);
+    }
+    private static Component description(Formulation formulation) {
+        return Component.translatable("formulation.deisdev." + formulation.getSerializedName());
+    }
+    public static void hud(GuiGraphicsExtractor graphics, DeltaTracker delta) {
+        var client = Minecraft.getInstance();
+        var lines = tooltipLines(client);
+        if (lines.isEmpty()) { return; }
         int width = Math.min(graphics.guiWidth() - 16, Math.min(260, lines.stream().mapToInt(client.font::width).max().orElse(140) + 12));
         var wrapped = lines.stream().flatMap(line -> client.font.split(line, width - 12).stream()).toList();
         int count = Math.min(wrapped.size(), (graphics.guiHeight() - 24) / 11);
