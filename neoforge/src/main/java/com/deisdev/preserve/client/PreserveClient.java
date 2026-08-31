@@ -11,6 +11,14 @@ import net.neoforged.neoforge.client.network.event.RegisterClientPayloadHandlers
 @EventBusSubscriber(modid = "deisdev", value = Dist.CLIENT)
 public final class PreserveClient {
     @SubscribeEvent
+    public static void setup(net.neoforged.fml.event.lifecycle.FMLClientSetupEvent event) {
+        ClientConfig.initialize(net.neoforged.fml.loading.FMLPaths.CONFIGDIR.get());
+        if (net.neoforged.fml.ModList.get().isLoaded("yet_another_config_lib_v3")) {
+            net.neoforged.fml.ModList.get().getModContainerById("deisdev").orElseThrow().registerExtensionPoint(
+                    net.neoforged.neoforge.client.gui.IConfigScreenFactory.class, (container, parent) -> PreserveConfigScreen.create(parent));
+        }
+    }
+    @SubscribeEvent
     public static void clientTick(net.neoforged.neoforge.client.event.ClientTickEvent.Post event) { ClientInspection.tick(Minecraft.getInstance()); }
     @SubscribeEvent
     public static void registerLayers(net.neoforged.neoforge.client.event.RegisterGuiLayersEvent event) {

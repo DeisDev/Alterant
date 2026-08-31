@@ -16,6 +16,13 @@ config = "${mod_id}.mixins.json"
 config = "${mod_id}.neoforge.mixins.json"
 
 [[dependencies.${mod_id}]]
+modId = "yet_another_config_lib_v3"
+type = "optional"
+versionRange = "[3.9.6,)"
+ordering = "AFTER"
+side = "CLIENT"
+
+[[dependencies.${mod_id}]]
 modId = "neoforge"
 type = "required"
 versionRange = "[${neoforge_version},)"

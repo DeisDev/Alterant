@@ -15,7 +15,9 @@ Use a **Preserving Brush** on a block with a jar in your offhand. Sneak-use air 
 
 Craft vanilla materials into **Binding Paste, Inert Powder, Waxed Membrane, Stabilizing Lattice** and a **Temporal Core**, then jars. Temporal Stasis needs three full base jars, two lattice and a core; it returns two bottles. See the recipe book. Costs are experimental.
 
-Install on **client and server**. Fabric requires Fabric API. Independent clocks, controllers and networks may remain partly active; tool inspection shows coverage limits.
+Install on **client and server**. Fabric requires Fabric API. Add [YACL](https://modrinth.com/mod/yacl) for **Mods → Preserve → Config**; Fabric also needs [Mod Menu](https://modrinth.com/mod/modmenu). Tooltips default to **Basic**, with **Advanced** and **Hidden** options.
+
+Independent clocks, controllers and networks may remain partly active; Advanced inspection shows coverage limits.
 
 **Uninstall:** back up the world, discard Preserve items, run `/preserve prepare-uninstall start`, and wait for **complete**. Then stop the server and remove the mod.
 

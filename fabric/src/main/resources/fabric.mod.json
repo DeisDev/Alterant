@@ -10,6 +10,7 @@
   "license": "${license}",
   "environment": "*",
   "entrypoints": {
+    "modmenu": ["com.deisdev.preserve.client.PreserveModMenu"],
     "client": ["com.deisdev.preserve.client.PreserveClient"],
     "main": [
       "com.deisdev.preserve.PreserveMod"
@@ -19,6 +20,10 @@
     "${mod_id}.mixins.json",
     "${mod_id}.fabric.mixins.json"
   ],
+  "suggests": {
+    "yet_another_config_lib_v3": ">=3.9.6",
+    "modmenu": ">=20.0.1"
+  },
   "depends": {
     "fabricloader": ">=${fabric_loader_version}",
     "fabric-api": ">=${fabric_version}",

@@ -3,6 +3,13 @@ plugins {
     id 'net.neoforged.moddev'
 }
 
+dependencies {
+    compileOnly("maven.modrinth:yacl:${yacl_neoforge_version}") { transitive = false }
+    if (!providers.gradleProperty('withoutConfigUi').map { it.toBoolean() }.getOrElse(false)) {
+        runtimeOnly("maven.modrinth:yacl:${yacl_neoforge_version}") { transitive = false }
+    }
+}
+
 neoForge {
     version = neoforge_version
     // Automatically enable neoforge AccessTransformers if the file exists

@@ -7,6 +7,7 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 
 public final class PreserveClient implements ClientModInitializer {
     @Override public void onInitializeClient() {
+        ClientConfig.initialize(net.fabricmc.loader.api.FabricLoader.getInstance().getConfigDir());
         ClientInspection.init(payload -> { if (ClientPlayNetworking.canSend(payload.type())) { ClientPlayNetworking.send(payload); } });
         net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.END_CLIENT_TICK.register(ClientInspection::tick);
         ClientPlayNetworking.registerGlobalReceiver(com.deisdev.preserve.network.InspectionPayload.TYPE,
