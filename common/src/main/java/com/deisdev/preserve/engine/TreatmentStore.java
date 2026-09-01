@@ -32,6 +32,7 @@ public final class TreatmentStore extends SavedData {
             Identifier.fromNamespaceAndPath("deisdev", "treatments"), TreatmentStore::new, CODEC, DataFixTypes.LEVEL);
 
     private final Long2ObjectMap<Long2ObjectMap<Treatment>> chunks = new Long2ObjectOpenHashMap<>();
+    private final Long2ObjectMap<Long2ObjectMap<Treatment>> acceleratedChunks = new Long2ObjectOpenHashMap<>();
     private final Long2ObjectMap<ResumingTicks> resuming = new Long2ObjectOpenHashMap<>();
     private final Long2ObjectMap<LongOpenHashSet> resumingChunks = new Long2ObjectOpenHashMap<>();
     private int size;
@@ -64,6 +65,10 @@ public final class TreatmentStore extends SavedData {
     }
 
     public void put(Treatment treatment) {
+        removeAcceleration(treatment.position());
+        if (treatment.acceleration().isPresent()) {
+            acceleratedChunks.computeIfAbsent(chunkKey(treatment.position()), key -> new Long2ObjectOpenHashMap<>()).put(treatment.position(), treatment);
+        }
         var chunk = chunks.computeIfAbsent(chunkKey(treatment.position()), key -> new Long2ObjectOpenHashMap<>());
         if (chunk.put(treatment.position(), treatment) == null) { size++; }
         setDirty();
@@ -76,6 +81,7 @@ public final class TreatmentStore extends SavedData {
         if (chunk == null) { return null; }
         Treatment removed = chunk.remove(position);
         if (removed != null) {
+            removeAcceleration(position);
             size--;
             if (chunk.isEmpty()) { chunks.remove(key); }
             setDirty();
@@ -85,6 +91,18 @@ public final class TreatmentStore extends SavedData {
     }
 
     public int size() { return size; }
+    public List<Treatment> acceleratedChunk(long key) {
+        var chunk = acceleratedChunks.get(key);
+        return chunk == null ? List.of() : List.copyOf(chunk.values());
+    }
+    private void removeAcceleration(long position) {
+        long key = chunkKey(position);
+        var chunk = acceleratedChunks.get(key);
+        if (chunk != null) {
+            chunk.remove(position);
+            if (chunk.isEmpty()) { acceleratedChunks.remove(key); }
+        }
+    }
     public int resumingSize() { return resuming.size(); }
     /** Explicit administrative traversal only; snapshot chunk keys without copying every treatment. */
     public List<Long> pendingChunks() {
