@@ -2,5 +2,15 @@
   "disabled_formulations": [],
   "allow_partial_coverage": true,
   "coatings_per_chunk": 4096,
-  "area_limit": 9
+  "area_limit": 9,
+  "time_serums": {
+    "multiplier": 2.0,
+    "suspicious_min": 1.5,
+    "suspicious_max": 8.0,
+    "duration_ticks": 24000,
+    "enchant_level": 35,
+    "enchant_levels_spent": 3,
+    "lapis_cost": 3,
+    "bookshelves": 15
+  }
 }
