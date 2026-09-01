@@ -5,7 +5,9 @@
     "minecraft:amethyst_shard",
     "minecraft:amethyst_shard",
     "minecraft:copper_ingot",
-    "minecraft:iron_ingot"
+    "minecraft:iron_ingot",
+    "minecraft:amethyst_shard",
+    "minecraft:copper_ingot"
   ],
   "result": {
     "id": "deisdev:stabilizing_lattice",

@@ -6,7 +6,8 @@
     "minecraft:diamond",
     "minecraft:diamond",
     "minecraft:ender_pearl",
-    "minecraft:netherite_scrap"
+    "minecraft:netherite_scrap",
+    "minecraft:diamond"
   ],
   "result": {
     "id": "deisdev:temporal_core",
