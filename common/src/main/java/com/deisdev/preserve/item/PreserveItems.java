@@ -22,6 +22,9 @@ public final class PreserveItems {
     public static final Supplier<Item> WAXED_MEMBRANE = material("waxed_membrane");
     public static final Supplier<Item> STABILIZING_LATTICE = material("stabilizing_lattice");
     public static final Supplier<Item> TEMPORAL_CORE = material("temporal_core");
+    public static final Supplier<Item> CHRONAL_DUST = material("chronal_dust");
+    public static final Supplier<Item> RESONANT_CRYSTAL = material("resonant_crystal");
+    public static final Supplier<Item> QUANTUM_LENS = material("quantum_lens");
     public static final Supplier<CompoundItem> GROWTH_INHIBITOR = registerCompound(Formulation.GROWTH_INHIBITOR);
     public static final Supplier<CompoundItem> PRESERVING_SEALANT = registerCompound(Formulation.PRESERVING_SEALANT);
     public static final Supplier<CompoundItem> STRUCTURAL_STASIS = registerCompound(Formulation.STRUCTURAL_STASIS);
@@ -40,7 +43,7 @@ public final class PreserveItems {
     }
     public static List<Supplier<? extends Item>> all() {
         return List.of(BINDING_PASTE, INERT_POWDER, WAXED_MEMBRANE, STABILIZING_LATTICE, TEMPORAL_CORE,
-                GROWTH_INHIBITOR, PRESERVING_SEALANT, STRUCTURAL_STASIS, TEMPORAL_STASIS, PRESERVING_BRUSH, SCRAPER);
+                GROWTH_INHIBITOR, PRESERVING_SEALANT, STRUCTURAL_STASIS, TEMPORAL_STASIS, PRESERVING_BRUSH, SCRAPER, CHRONAL_DUST, RESONANT_CRYSTAL, QUANTUM_LENS);
     }
     public static CompoundItem compound(Formulation formulation) {
         return switch (formulation) {

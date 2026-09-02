@@ -74,5 +74,8 @@
   "overlay.deisdev.ready_apply": "Ready to apply",
   "overlay.deisdev.ready_remove": "Ready to remove",
   "overlay.deisdev.more": "More details beyond this display",
-  "overlay.deisdev.protection_count": "%s protections"
+  "overlay.deisdev.protection_count": "%s protections",
+  "item.deisdev.chronal_dust": "Chronal Dust",
+  "item.deisdev.resonant_crystal": "Resonant Crystal",
+  "item.deisdev.quantum_lens": "Quantum Lens"
 }

@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "deisdev:chronal_dust",
+    "deisdev:chronal_dust",
+    "minecraft:diamond",
+    "minecraft:amethyst_shard",
+    "minecraft:amethyst_shard",
+    "minecraft:ender_pearl",
+    "minecraft:ender_pearl",
+    "minecraft:end_stone",
+    "minecraft:end_stone"
+  ],
+  "result": {
+    "id": "deisdev:resonant_crystal",
+    "count": 1
+  }
+}
