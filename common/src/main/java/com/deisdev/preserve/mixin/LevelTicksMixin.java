@@ -65,6 +65,11 @@ public abstract class LevelTicksMixin<T> implements TickScheduler<T> {
         if (preserve$service != null && preserve$service.retain(tick, preserve$fluid)) { ci.cancel(); }
     }
 
+    @org.spongepowered.asm.mixin.injection.ModifyVariable(method = "schedule", at = @At("HEAD"), argsOnly = true)
+    private ScheduledTick<T> preserve$accelerateIncoming(ScheduledTick<T> tick) {
+        return preserve$service == null ? tick : preserve$service.accelerateScheduled(tick, preserve$fluid);
+    }
+
     @Inject(method = "hasScheduledTick", at = @At("HEAD"), cancellable = true)
     private void preserve$includeRetained(BlockPos pos, T type, CallbackInfoReturnable<Boolean> cir) {
         // Consumers must still see retained identities, otherwise they can create duplicate restart requests.

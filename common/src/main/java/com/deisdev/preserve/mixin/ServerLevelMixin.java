@@ -45,11 +45,16 @@ public abstract class ServerLevelMixin {
         PreservationService.get((ServerLevel) (Object) this).chunkReady(chunk);
     }
 
-    @WrapWithCondition(method = "tickChunk", at = @At(value = "INVOKE",
+    @Inject(method = "tickChunk", at = @At("HEAD"))
+    private void preserve$elapseSerums(LevelChunk chunk, int tickSpeed, CallbackInfo ci) {
+        PreservationService.get((ServerLevel) (Object) this).tickSerums(chunk);
+    }
+
+    @WrapOperation(method = "tickChunk", at = @At(value = "INVOKE",
             target = "Lnet/minecraft/world/level/block/state/BlockState;randomTick(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/core/BlockPos;Lnet/minecraft/util/RandomSource;)V"))
-    private boolean preserve$randomBlock(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+    private void preserve$randomBlock(BlockState state, ServerLevel level, BlockPos pos, RandomSource random, Operation<Void> original) {
         // Per-position dispatch; unrelated random ticks in the same chunk still execute.
-        return !TickGate.blocks(level, pos, Action.RANDOM_BLOCK_TICK);
+        com.deisdev.preserve.engine.AcceleratedTicks.random(level, pos, state, current -> original.call(current, level, pos, random));
     }
 
     @WrapWithCondition(method = "tickChunk", at = @At(value = "INVOKE",

@@ -1,11 +1,11 @@
 package com.deisdev.preserve.mixin;
 
-import com.deisdev.preserve.api.Action;
+import com.deisdev.preserve.engine.AcceleratedTicks;
 import com.deisdev.preserve.engine.PreservationLevel;
 import com.deisdev.preserve.engine.PreservationService;
-import com.deisdev.preserve.engine.TickGate;
 import com.deisdev.preserve.engine.TreatmentStore;
-import com.llamalad7.mixinextras.injector.WrapWithCondition;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.TickingBlockEntity;
 import org.spongepowered.asm.mixin.Mixin;
@@ -27,10 +27,10 @@ public abstract class LevelMixin implements PreservationLevel {
         return preserve$clientTreatments;
     }
 
-    @WrapWithCondition(method = "tickBlockEntities", at = @At(value = "INVOKE",
+    @WrapOperation(method = "tickBlockEntities", at = @At(value = "INVOKE",
             target = "Lnet/minecraft/world/level/block/entity/TickingBlockEntity;tick()V"))
-    private boolean preserve$gateTicker(TickingBlockEntity ticker) {
+    private void preserve$gateTicker(TickingBlockEntity ticker, Operation<Void> original) {
         // Guard invocation, not registration: cached/rebound and previously registered modded tickers are included.
-        return !TickGate.blocks((Level) (Object) this, ticker.getPos(), Action.BLOCK_ENTITY_TICK);
+        AcceleratedTicks.entity((Level) (Object) this, ticker, () -> original.call(ticker));
     }
 }

@@ -69,6 +69,37 @@ public final class PreservationService {
     public void tickResumptions() { deferred.tick(); }
     public void chunkUnloaded(net.minecraft.world.level.ChunkPos chunk) { deferred.chunkUnloaded(chunk.pack()); }
 
+    /** Called only for a chunk Minecraft is actively ticking. Unloaded time never consumes serum. */
+    public void tickSerums(net.minecraft.world.level.chunk.LevelChunk chunk) {
+        var records = store.acceleratedChunk(chunk.getPos().pack());
+        for (var record : records) {
+            var pos = BlockPos.of(record.position());
+            if (!matches(pos, record)) { destroyed(pos); }
+            else if (!record.acceleration().orElseThrow().elapse()) {
+                store.remove(record.position());
+                changed(pos);
+            }
+        }
+        if (!records.isEmpty()) { store.setDirty(); }
+    }
+
+    public <T> ScheduledTick<T> accelerateScheduled(ScheduledTick<T> tick, boolean fluid) {
+        if (fluid) { return tick; }
+        var record = store.get(tick.pos().asLong());
+        if (record == null || !record.actions().contains(Action.ACCELERATE_SCHEDULED_BLOCK) || record.acceleration().isEmpty()
+                || !level.hasChunkAt(tick.pos()) || level.getBlockState(tick.pos()).getBlock() != tick.type()) { return tick; }
+        long now = level.getGameTime();
+        long remaining = tick.triggerTick() <= now ? 0 : tick.triggerTick() - now;
+        return new ScheduledTick<>(tick.type(), tick.pos(), now + record.acceleration().get().delay(remaining), tick.priority(), tick.subTickOrder());
+    }
+
+    private void acceleratePending(BlockPos pos) {
+        for (var pending : this.<Block>scheduler(false).preserve$take(pos)) {
+            // Preserve type/position, priority and order; the insertion hook scales the remaining delay once.
+            level.getBlockTicks().schedule(pending.tick());
+        }
+    }
+
     @SuppressWarnings("unchecked")
     private <T> TickScheduler<T> scheduler(boolean fluid) {
         return (TickScheduler<T>) (Object) (fluid ? level.getFluidTicks() : level.getBlockTicks());

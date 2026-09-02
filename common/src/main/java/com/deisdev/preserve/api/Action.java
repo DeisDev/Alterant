@@ -19,7 +19,10 @@ public enum Action implements StringRepresentable {
     BLOCK_EVENT,
     PLAYER_USE,
     RESOURCE_TRANSFER,
-    GRAVITY;
+    GRAVITY,
+    ACCELERATE_BLOCK_ENTITY,
+    ACCELERATE_RANDOM_BLOCK,
+    ACCELERATE_SCHEDULED_BLOCK;
 
     public static final Codec<Action> CODEC = StringRepresentable.fromEnum(Action::values);
 
