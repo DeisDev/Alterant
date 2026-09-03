@@ -38,9 +38,16 @@
     "FallingBlockMixin",
     "FallingBlockAccessor",
     "PistonMixin",
-    "PlayerChunkSenderMixin"
+    "PlayerChunkSenderMixin",
+    "EnchantmentMenuMixin"
   ],
-  "client": ["client.ClientLevelMixin", "client.ClientChunkCacheMixin", "client.ToolUseMixin", "client.OverlayStateMixin"],
+  "client": [
+    "client.ClientLevelMixin",
+    "client.ClientChunkCacheMixin",
+    "client.ToolUseMixin",
+    "client.OverlayStateMixin",
+    "client.EnchantmentScreenMixin"
+  ],
   "server": [],
   "injectors": {
     "defaultRequire": 1

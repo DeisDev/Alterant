@@ -88,5 +88,6 @@
   "formulation.deisdev.suspicious_time_serum": "Temporary acceleration; speed is rolled for each application.",
   "overlay.deisdev.action.accelerate_block_entity": "Faster block entity ticks",
   "overlay.deisdev.action.accelerate_random_block": "Extra random tick attempts",
-  "overlay.deisdev.action.accelerate_scheduled_block": "Shorter scheduled block delays"
+  "overlay.deisdev.action.accelerate_scheduled_block": "Shorter scheduled block delays",
+  "enchantment.deisdev.temporal_instability": "Suspicious Time Serum"
 }
