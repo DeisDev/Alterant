@@ -21,7 +21,7 @@ public record RuleDefinition(int schema, Identifier id, int priority, Set<String
             Codec.STRING.listOf(0, 64).xmap(Set::copyOf, List::copyOf).optionalFieldOf("requires_mods", Set.of()).forGetter(RuleDefinition::requiresMods),
             Codec.BOOL.optionalFieldOf("optional", false).forGetter(RuleDefinition::optional),
             BlockSelector.CODEC.fieldOf("selector").forGetter(RuleDefinition::selector),
-            Formulation.CODEC.listOf(1, 4).xmap(Set::copyOf, List::copyOf).fieldOf("formulations").forGetter(RuleDefinition::formulations),
+            Formulation.CODEC.listOf(1, Formulation.values().length).xmap(Set::copyOf, List::copyOf).fieldOf("formulations").forGetter(RuleDefinition::formulations),
             Action.CODEC.listOf(0, Action.values().length).xmap(Set::copyOf, List::copyOf).optionalFieldOf("actions", Set.of()).forGetter(RuleDefinition::actions),
             Codec.STRING.listOf(0, 16).xmap(Set::copyOf, List::copyOf).optionalFieldOf("structural_properties", Set.of()).forGetter(RuleDefinition::structuralProperties),
             Codec.BOOL.optionalFieldOf("deny", false).forGetter(RuleDefinition::deny),
@@ -54,6 +54,7 @@ public record RuleDefinition(int schema, Identifier id, int priority, Set<String
                 case GROWTH_INHIBITOR -> Set.of(Action.NATURAL_GROWTH);
                 case PRESERVING_SEALANT -> Set.of(Action.ENVIRONMENTAL_CHANGE);
                 case STRUCTURAL_STASIS -> Set.of(Action.STRUCTURAL_CHANGE, Action.PISTON_MOVEMENT, Action.GRAVITY);
+                case TIME_SERUM, SUSPICIOUS_TIME_SERUM -> Set.of(Action.ACCELERATE_BLOCK_ENTITY, Action.ACCELERATE_RANDOM_BLOCK, Action.ACCELERATE_SCHEDULED_BLOCK);
                 default -> throw new AssertionError(formulation);
             };
             if (!allowed.containsAll(actions)) { throw new IllegalArgumentException("Selective formulations cannot suppress unrelated actions"); }

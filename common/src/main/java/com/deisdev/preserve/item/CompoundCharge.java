@@ -22,11 +22,18 @@ public final class CompoundCharge {
         this.infinite = player.hasInfiniteMaterials();
     }
     public static CompoundCharge capture(ServerPlayer player) {
-        if (!(player.getMainHandItem().getItem() instanceof PreservingBrushItem) || player.getMainHandItem().getCount() != 1) {
-            throw new IllegalArgumentException("Hold the Preserving Brush in your main hand");
+        return capture(player, false);
+    }
+    public static CompoundCharge capture(ServerPlayer player, boolean serum) {
+        if (!(serum ? player.getMainHandItem().getItem() instanceof QuantumApplicatorItem
+                : player.getMainHandItem().getItem() instanceof PreservingBrushItem) || player.getMainHandItem().getCount() != 1) {
+            throw new IllegalArgumentException(serum ? "Hold the Quantum Applicator in your main hand" : "Hold the Preserving Brush in your main hand");
         }
         if (!(player.getOffhandItem().getItem() instanceof CompoundItem compound) || compound.remaining(player.getOffhandItem()) == 0) {
             throw new IllegalArgumentException("Hold a usable compound jar in your offhand");
+        }
+        if (compound.formulation().accelerates() != serum) {
+            throw new IllegalArgumentException(serum ? "The Quantum Applicator requires time serum" : "Time serums require the Quantum Applicator");
         }
         return new CompoundCharge(player, compound);
     }

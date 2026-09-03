@@ -8,7 +8,9 @@ public enum Formulation implements StringRepresentable {
     GROWTH_INHIBITOR("growth_inhibitor", 32),
     PRESERVING_SEALANT("preserving_sealant", 16),
     STRUCTURAL_STASIS("structural_stasis", 8),
-    TEMPORAL_STASIS("temporal_stasis", 4);
+    TEMPORAL_STASIS("temporal_stasis", 4),
+    TIME_SERUM("time_serum", 1),
+    SUSPICIOUS_TIME_SERUM("suspicious_time_serum", 1);
 
     public static final Codec<Formulation> CODEC = StringRepresentable.fromEnum(Formulation::values);
     private final String id;
@@ -23,4 +25,5 @@ public enum Formulation implements StringRepresentable {
     public String getSerializedName() { return id; }
 
     public int capacity() { return capacity; }
+    public boolean accelerates() { return this == TIME_SERUM || this == SUSPICIOUS_TIME_SERUM; }
 }

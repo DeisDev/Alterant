@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "id": "deisdev:serum_scheduled_ticks",
+  "priority": 0,
+  "selector": {
+    "blocks": [
+      "minecraft:repeater",
+      "minecraft:comparator",
+      "minecraft:observer"
+    ]
+  },
+  "formulations": [
+    "time_serum",
+    "suspicious_time_serum"
+  ],
+  "actions": [
+    "accelerate_scheduled_block"
+  ]
+}

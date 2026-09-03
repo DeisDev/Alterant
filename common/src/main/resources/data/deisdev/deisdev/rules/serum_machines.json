@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "id": "deisdev:serum_machines",
+  "priority": 0,
+  "selector": {"all": true},
+  "formulations": [
+    "time_serum",
+    "suspicious_time_serum"
+  ],
+  "actions": [
+    "accelerate_block_entity"
+  ]
+}

@@ -44,6 +44,9 @@ public final class TreatmentStore extends SavedData {
         }
         var store = new TreatmentStore();
         for (Treatment treatment : payload.records) {
+            if (treatment.formulation().accelerates() != treatment.acceleration().isPresent()) {
+                return DataResult.error(() -> "Serum treatment must retain its strength and lifetime");
+            }
             if (store.get(treatment.position()) != null) {
                 return DataResult.error(() -> "Duplicate Preserve position " + treatment.position());
             }

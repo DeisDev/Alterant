@@ -103,6 +103,8 @@ public final class CompiledRules {
                 actions.putIfAbsent(action, new Protection(definition.id(), action, rule.source(), rule.target(), definition.structuralProperties()));
             }
         }
+        if (!state.isRandomlyTicking()) { actions.remove(Action.ACCELERATE_RANDOM_BLOCK); }
+        if (!state.hasBlockEntity()) { actions.remove(Action.ACCELERATE_BLOCK_ENTITY); }
         return new Decision(List.copyOf(actions.values()), actions.isEmpty() ? "No supported protection applies to this target" : "", actions.isEmpty());
     }
 

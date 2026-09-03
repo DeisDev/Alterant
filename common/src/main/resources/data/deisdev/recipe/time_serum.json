@@ -1,0 +1,25 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "minecraft:glass_bottle",
+    "deisdev:chronal_dust",
+    "deisdev:chronal_dust",
+    "deisdev:resonant_crystal",
+    "minecraft:ghast_tear",
+    "minecraft:glowstone_dust",
+    "minecraft:glowstone_dust"
+  ],
+  "result": {
+    "id": "deisdev:time_serum",
+    "count": 1,
+    "components": {
+      "deisdev:jar_contents": {
+        "schema": 1,
+        "formulation": "time_serum",
+        "capacity": 1,
+        "remaining": 1
+      }
+    }
+  }
+}

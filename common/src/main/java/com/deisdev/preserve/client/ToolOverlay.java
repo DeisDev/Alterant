@@ -50,6 +50,8 @@ public final class ToolOverlay {
             case PRESERVING_SEALANT -> 0xDDE1B957;
             case STRUCTURAL_STASIS -> 0xDD72BAE8;
             case TEMPORAL_STASIS -> 0xDDB89BE7;
+            case TIME_SERUM -> 0xDD49DDE0;
+            case SUSPICIOUS_TIME_SERUM -> 0xDDD568EB;
         };
     }
     public static List<Mark> extract(ClientLevel level) {

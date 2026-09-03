@@ -48,12 +48,15 @@ public final class CompoundItem extends Item {
             case PRESERVING_SEALANT -> 0xE5B753;
             case STRUCTURAL_STASIS -> 0x80B4CF;
             case TEMPORAL_STASIS -> 0xB891DF;
+            case TIME_SERUM -> 0x49DDE0;
+            case SUSPICIOUS_TIME_SERUM -> 0xD568EB;
         };
     }
     @Override public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> lines, TooltipFlag flag) {
         if (!display.shows(PreserveItems.JAR_CONTENTS.get())) { return; }
         lines.accept(Component.translatable("item.deisdev.jar.uses", remaining(stack), formulation.capacity()).withStyle(ChatFormatting.GRAY));
         if (remaining(stack) == 0) { lines.accept(Component.translatable("item.deisdev.jar.empty").withStyle(ChatFormatting.RED)); }
-        else { lines.accept(Component.translatable("item.deisdev.jar.brush").withStyle(ChatFormatting.DARK_GRAY)); }
+        else { lines.accept(Component.translatable(formulation.accelerates() ? "item.deisdev.serum.applicator" : "item.deisdev.jar.brush").withStyle(ChatFormatting.DARK_GRAY)); }
+        if (formulation.accelerates()) { lines.accept(Component.translatable("item.deisdev.serum.settings").withStyle(ChatFormatting.DARK_GRAY)); }
     }
 }

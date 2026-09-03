@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "id": "deisdev:serum_random_ticks",
+  "priority": 0,
+  "selector": {
+    "all": true
+  },
+  "formulations": [
+    "time_serum",
+    "suspicious_time_serum"
+  ],
+  "actions": [
+    "accelerate_random_block"
+  ]
+}

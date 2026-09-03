@@ -129,6 +129,14 @@ public final class PreservationService {
         return applyWithBrush(pos, player, replace, TargetLink.LIMIT);
     }
 
+    public Result applyWithApplicator(BlockPos pos, net.minecraft.server.level.ServerPlayer player) {
+        checkThread();
+        CompoundCharge cost;
+        try { cost = CompoundCharge.capture(player, true); }
+        catch (IllegalArgumentException error) { return new Result(false, error.getMessage()); }
+        return apply(pos, cost.formulation(), player.getStringUUID(), false, cost.available(), new PlayerAccess(player, cost::ready), cost);
+    }
+
     Result applyWithBrush(BlockPos pos, net.minecraft.server.level.ServerPlayer player, boolean replace, int limit) {
         checkThread();
         CompoundCharge cost;
@@ -156,7 +164,7 @@ public final class PreservationService {
                 var context = new PreservationContext(level, pos, level.getBlockState(pos), formulation, owner);
                 var entity = level.getBlockEntity(pos);
                 if (access != null) { access.validate(context, Change.APPLY); }
-                var targets = IntegrationRegistry.targets(context);
+                var targets = formulation.accelerates() ? List.of(pos) : IntegrationRegistry.targets(context);
                 if (targets.size() > available) { return new Result(false, "Not enough charges for the entire linked target"); }
                 lockTargets(targets, locked);
                 if (level.getBlockState(pos) != context.state() || level.getBlockEntity(pos) != entity) {
@@ -183,10 +191,15 @@ public final class PreservationService {
             if (payment != null) { payment.commit(); }
             for (var entry : prepared) {
                 capturePending(entry.context().pos());
+                if (entry.next().actions().contains(Action.ACCELERATE_SCHEDULED_BLOCK)) { acceleratePending(entry.context().pos()); }
                 changed(entry.context().pos());
             }
             for (var entry : prepared) { IntegrationRegistry.observed(entry.context(), entry.next().adapters(), true); }
             boolean complete = prepared.stream().allMatch(entry -> entry.next().adapters().stream().anyMatch(com.deisdev.preserve.integration.AdapterSnapshot::complete));
+            if (formulation.accelerates()) {
+                var effect = prepared.getFirst().next().acceleration().orElseThrow();
+                return new Result(prepared.size(), String.format(java.util.Locale.ROOT, "Serum applied: %.2fx for %.1f loaded minutes", effect.multiplier(), effect.remainingTicks() / 1200.0));
+            }
             return new Result(prepared.size(), formulation == Formulation.TEMPORAL_STASIS
                     ? (complete ? "Machine paused with its registered integration"
                         : "Standard ticks paused; external controllers and absolute-time work require integration") : "Coating applied");
@@ -214,7 +227,7 @@ public final class PreservationService {
         var context = new PreservationContext(level, pos, state, formulation, owner);
         var entity = level.getBlockEntity(pos);
         if (access != null) { access.validate(context, Change.APPLY); }
-        var integration = IntegrationRegistry.prepare(context);
+        var integration = formulation.accelerates() ? new IntegrationRegistry.Prepared(List.of(), false) : IntegrationRegistry.prepare(context);
         if (formulation == Formulation.TEMPORAL_STASIS && !rules.policy().allowPartial() && !integration.complete()) {
             throw new IllegalArgumentException("The server requires a verified integration for this target");
         }
@@ -226,13 +239,34 @@ public final class PreservationService {
                 structure.put(property, BlockCondition.valueName(state, state.getBlock().getStateDefinition().getProperty(property)));
             }
         }
+        if (formulation.accelerates() && actions.contains(Action.ACCELERATE_RANDOM_BLOCK) && !state.isRandomlyTicking()) {
+            actions.remove(Action.ACCELERATE_RANDOM_BLOCK);
+        }
+        if (formulation.accelerates() && actions.contains(Action.ACCELERATE_BLOCK_ENTITY) && !hasTicker(state, entity)) {
+            actions.remove(Action.ACCELERATE_BLOCK_ENTITY);
+        }
+        if (formulation.accelerates() && actions.isEmpty()) { throw new IllegalArgumentException("This block has no supported ticking route to accelerate"); }
         if (old != null && !old.deferred().isEmpty() && !actions.containsAll(old.actions())) {
             throw new IllegalArgumentException("Remove the existing coating before switching its suspended tick routes");
         }
         var record = new Treatment(pos.asLong(), formulation, BuiltInRegistries.BLOCK.getKey(state.getBlock()), actions, structure,
                 old == null ? List.of() : old.deferred(), decision.protections().stream().map(protection -> protection.rule().toString()).distinct().toList(),
-                Map.of(), owner, decision.protections(), integration.snapshots(), link);
+                Map.of(), owner, decision.protections(), integration.snapshots(), link,
+                formulation.accelerates() ? java.util.Optional.of(newAcceleration(formulation)) : java.util.Optional.empty());
         return new Prepared(old, record, context, entity);
+    }
+
+    private Acceleration newAcceleration(Formulation formulation) {
+        var settings = RuleRegistry.get(level.getServer()).policy().time();
+        double speed = formulation == Formulation.TIME_SERUM ? settings.multiplier()
+                : settings.suspiciousMin() + level.getRandom().nextDouble() * (settings.suspiciousMax() - settings.suspiciousMin());
+        return new Acceleration(speed, settings.durationTicks());
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    boolean hasTicker(BlockState state, net.minecraft.world.level.block.entity.BlockEntity entity) {
+        return entity != null && state.getBlock() instanceof net.minecraft.world.level.block.EntityBlock block
+                && block.getTicker(level, state, (net.minecraft.world.level.block.entity.BlockEntityType) entity.getType()) != null;
     }
 
     public Result remove(BlockPos pos) {

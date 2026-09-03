@@ -64,7 +64,7 @@ public final class TemporalRecipe extends NormalCraftingRecipe {
         for (var stack : input.items()) {
             if (stack.isEmpty()) { continue; }
             if (stack.getItem() instanceof CompoundItem jar) {
-                if (jar.formulation() == Formulation.TEMPORAL_STASIS || !jar.isFull(stack) || !found.add(jar.formulation())) { return false; }
+                if (!BASES.contains(jar.formulation()) || !jar.isFull(stack) || !found.add(jar.formulation())) { return false; }
             } else { materials.add(stack); }
         }
         if (found.size() != 3 || materials.size() != additives.size()) { return false; }
