@@ -106,16 +106,17 @@ public final class ToolOverlay {
         if (!active(client) || mode == ClientConfig.TooltipMode.HIDDEN) { return List.of(); }
         var player = client.player;
         var brush = player.getMainHandItem().getItem() instanceof PreservingBrushItem;
+        var applicator = player.getMainHandItem().getItem() instanceof com.deisdev.preserve.item.QuantumApplicatorItem;
         var lines = new ArrayList<Component>();
         var jar = player.getOffhandItem();
-        if (brush) {
+        if (brush || applicator) {
             if (jar.getItem() instanceof CompoundItem compound) {
                 lines.add(jar.getHoverName().copy().append(" · ").append(Component.translatable("item.deisdev.jar.uses", compound.remaining(jar), compound.formulation().capacity())));
                 lines.add(description(compound.formulation()));
             } else { lines.add(Component.translatable("overlay.deisdev.need_compound")); }
-            lines.add(Component.translatable("overlay.deisdev.brush_controls"));
-            lines.add(Component.translatable("overlay.deisdev.mode_controls", Component.translatable(PreservingBrushItem.area(player.getMainHandItem())
-                    ? "overlay.deisdev.mode.area" : "overlay.deisdev.mode.single")));
+            lines.add(Component.translatable(applicator ? "item.deisdev.quantum_applicator.use" : "overlay.deisdev.brush_controls"));
+            if (brush) { lines.add(Component.translatable("overlay.deisdev.mode_controls", Component.translatable(PreservingBrushItem.area(player.getMainHandItem())
+                    ? "overlay.deisdev.mode.area" : "overlay.deisdev.mode.single"))); }
         } else if (client.hitResult instanceof BlockHitResult hit && hit.getType() == HitResult.Type.BLOCK && player.isWithinBlockInteractionRange(hit.getBlockPos(), 0)) {
             var treatment = ((PreservationLevel) client.level).preserve$treatments().get(hit.getBlockPos().asLong());
             if (treatment != null) {
@@ -123,11 +124,11 @@ public final class ToolOverlay {
                 lines.add(description(treatment.formulation()));
             }
         }
-        if (!brush) { lines.add(Component.translatable("overlay.deisdev.scraper_controls")); }
+        if (!brush && !applicator) { lines.add(Component.translatable("overlay.deisdev.scraper_controls")); }
         if (mode == ClientConfig.TooltipMode.ADVANCED) { ClientInspection.current(client).ifPresent(report -> {
             lines.add(Component.translatable("overlay.deisdev.coverage." + report.coverage().name().toLowerCase(java.util.Locale.ROOT)));
             if (!report.reason().isBlank()) { lines.add(Component.literal(report.reason())); }
-            else if (report.applicable()) { lines.add(Component.translatable(brush ? "overlay.deisdev.ready_apply" : "overlay.deisdev.ready_remove")); }
+            else if (report.applicable()) { lines.add(Component.translatable(brush || applicator ? "overlay.deisdev.ready_apply" : "overlay.deisdev.ready_remove")); }
             var actions = new ArrayList<String>();
             for (var action : com.deisdev.preserve.api.Action.values()) {
                 if ((report.actions() & (1 << action.ordinal())) != 0) {

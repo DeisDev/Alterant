@@ -39,7 +39,7 @@ public final class InspectionQueries {
         var state = level.getBlockState(pos);
         var tool = player.getMainHandItem().copy();
         var jar = player.getOffhandItem().copy();
-        boolean brush = tool.getItem() instanceof PreservingBrushItem;
+        boolean brush = tool.getItem() instanceof PreservingBrushItem || tool.getItem() instanceof com.deisdev.preserve.item.QuantumApplicatorItem;
         int selection = brush && jar.getItem() instanceof CompoundItem compound ? compound.formulation().ordinal() : -1;
         var requested = selection >= 0 ? Formulation.values()[selection] : Formulation.TEMPORAL_STASIS;
         var store = PreservationService.get(level).store();
@@ -53,7 +53,7 @@ public final class InspectionQueries {
             var access = new PlayerAccess(player, () -> ItemStack.matches(tool, player.getMainHandItem()) && ItemStack.matches(jar, player.getOffhandItem()));
             var context = new PreservationContext(level, pos, state, report.formulation(), player.getStringUUID());
             var targets = existing != null ? existing.link().map(link -> link.members().stream().map(BlockPos::of).toList()).orElse(List.of(pos))
-                    : report.applicable() ? IntegrationRegistry.targets(context) : List.of(pos);
+                    : report.applicable() && !requested.accelerates() ? IntegrationRegistry.targets(context) : List.of(pos);
             for (var target : targets) {
                 if (!level.hasChunkAt(target) || level.isOutsideBuildHeight(target)) { throw new IllegalArgumentException("Load every linked target first"); }
                 access.validate(new PreservationContext(level, target, level.getBlockState(target), report.formulation(), player.getStringUUID()),
@@ -63,10 +63,14 @@ public final class InspectionQueries {
                     || (!player.hasInfiniteMaterials() && compound.remaining(jar) < report.positions()))) {
                 throw new IllegalArgumentException("Hold enough usable compound for the entire target");
             }
+            if (brush && requested.accelerates() != (tool.getItem() instanceof com.deisdev.preserve.item.QuantumApplicatorItem)) {
+                throw new IllegalArgumentException("Time serums need a Quantum Applicator; preservation compounds need a brush");
+            }
             if (!brush && !report.treated()) { throw new IllegalArgumentException("No coating to remove"); }
             if (brush && report.treated()) {
                 applicable = false;
-                reason = existing.formulation() == requested ? "Already treated" : "Remove the coating or deliberately replace it";
+                reason = existing.formulation() == requested ? "Already treated" : requested.accelerates()
+                        ? "Remove the existing coating first" : "Remove the coating or deliberately replace it";
             }
             access.validateItem();
         } catch (RuntimeException error) { applicable = false; reason = error.getMessage(); }
@@ -78,6 +82,13 @@ public final class InspectionQueries {
         List<Protection> protections = existing == null ? rules.evaluate(state, requested).protections() : existing.protections();
         var properties = new TreeSet<String>();
         var details = new java.util.ArrayList<String>();
+        if (existing != null) { existing.acceleration().ifPresent(effect -> details.add(String.format(java.util.Locale.ROOT,
+                "Speed: %.2fx; %.1f loaded minutes remaining", effect.multiplier(), effect.remainingTicks() / 1200.0))); }
+        else if (requested.accelerates()) {
+            var time = rules.policy().time();
+            details.add(requested == Formulation.TIME_SERUM ? "Speed: " + time.multiplier() + "x" : "Random speed: " + time.suspiciousMin() + "x - " + time.suspiciousMax() + "x");
+            details.add("Duration: " + time.durationTicks() / 1200.0 + " loaded minutes");
+        }
         for (var profile : report.profiles()) { details.add("Profile: " + profile); }
         for (var adapter : report.adapters()) { details.add("Integration: " + adapter); }
         for (var protection : protections) {

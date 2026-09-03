@@ -51,7 +51,7 @@ public final class Inspection {
         try {
             var context = new PreservationContext(level, pos, level.getBlockState(pos), requested, "");
             if (PreservationService.unsafe(context.state())) { return denied(requested, Coverage.DENIED, "This target cannot be preserved safely"); }
-            var targets = IntegrationRegistry.targets(context);
+            var targets = requested.accelerates() ? List.of(pos) : IntegrationRegistry.targets(context);
             var rules = RuleRegistry.get(level.getServer());
             for (var target : targets) {
                 if (!level.hasChunkAt(target) || level.isOutsideBuildHeight(target)) { return denied(requested, Coverage.DENIED, "Load every linked target first"); }
@@ -59,7 +59,12 @@ public final class Inspection {
                 if (PreservationService.unsafe(state)) { return denied(requested, Coverage.DENIED, "A linked target cannot be preserved safely"); }
                 var decision = rules.evaluate(state, requested);
                 if (!decision.allowed()) { return denied(requested, decision.requiresIntegration() ? Coverage.INTEGRATION_REQUIRED : Coverage.DENIED, decision.denial()); }
-                var report = IntegrationRegistry.describe(new PreservationContext(level, target, state, requested, ""));
+                if (requested.accelerates() && decision.protections().stream().allMatch(protection -> protection.action() == Action.ACCELERATE_BLOCK_ENTITY)
+                        && !PreservationService.get(level).hasTicker(state, level.getBlockEntity(target))) {
+                    return denied(requested, Coverage.DENIED, "This block has no supported ticking route to accelerate");
+                }
+                var report = requested.accelerates() ? new IntegrationRegistry.Description(List.of(), false)
+                        : IntegrationRegistry.describe(new PreservationContext(level, target, state, requested, ""));
                 complete &= report.complete();
                 adapters.addAll(report.adapters());
                 for (var protection : decision.protections()) { actions.add(protection.action()); profiles.add(protection.rule().toString()); }
@@ -76,6 +81,8 @@ public final class Inspection {
         return complete ? Coverage.VERIFIED_INTEGRATION : formulation == Formulation.TEMPORAL_STASIS ? Coverage.STANDARD_ROUTES : Coverage.PROFILED_ACTIONS;
     }
     private static List<String> limits(Formulation formulation, boolean complete) {
+        if (formulation.accelerates()) { return List.of("Only configured block-entity, random and scheduled block tick routes accelerate",
+                "World clocks, external controllers and networks keep their normal rate", "Scheduled work runs at most once per game tick; fractional delays round up"); }
         return complete ? List.of() : formulation == Formulation.TEMPORAL_STASIS ? STANDARD_LIMITS : List.of("Only the listed semantic profiles are covered");
     }
     private static PreservationInspection denied(Formulation formulation, Coverage coverage, String reason) {

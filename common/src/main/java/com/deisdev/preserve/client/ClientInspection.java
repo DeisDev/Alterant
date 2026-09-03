@@ -72,7 +72,8 @@ public final class ClientInspection {
         return ItemStack.matches(tool, client.player.getMainHandItem()) && ItemStack.matches(jar, client.player.getOffhandItem());
     }
     private static int selection(Minecraft client) {
-        return client.player.getMainHandItem().getItem() instanceof PreservingBrushItem && client.player.getOffhandItem().getItem() instanceof CompoundItem compound
+        return (client.player.getMainHandItem().getItem() instanceof PreservingBrushItem || client.player.getMainHandItem().getItem() instanceof com.deisdev.preserve.item.QuantumApplicatorItem)
+                && client.player.getOffhandItem().getItem() instanceof CompoundItem compound
                 ? compound.formulation().ordinal() : -1;
     }
 }
