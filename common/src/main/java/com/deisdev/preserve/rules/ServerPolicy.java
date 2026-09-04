@@ -8,9 +8,9 @@ import java.util.Set;
 
 /** Administrators' settings precede every allow rule and adapter. */
 public record ServerPolicy(Set<Formulation> disabled, boolean allowPartial, int chunkLimit, int areaLimit,
-                           TimeSettings time) {
+                           TimeSettings time, java.util.List<ComponentTrade> componentTrades) {
     public ServerPolicy(Set<Formulation> disabled, boolean allowPartial, int chunkLimit, int areaLimit) {
-        this(disabled, allowPartial, chunkLimit, areaLimit, TimeSettings.DEFAULT);
+        this(disabled, allowPartial, chunkLimit, areaLimit, TimeSettings.DEFAULT, ComponentTrade.DEFAULT);
     }
     public static final ServerPolicy DEFAULT = new ServerPolicy(Set.of(), true, 4096, 9);
     public static final Codec<ServerPolicy> CODEC = RecordCodecBuilder.create(i -> i.group(
@@ -18,7 +18,8 @@ public record ServerPolicy(Set<Formulation> disabled, boolean allowPartial, int 
             Codec.BOOL.optionalFieldOf("allow_partial_coverage", true).forGetter(ServerPolicy::allowPartial),
             Codec.intRange(1, 4096).optionalFieldOf("coatings_per_chunk", 4096).forGetter(ServerPolicy::chunkLimit),
             Codec.intRange(1, 9).optionalFieldOf("area_limit", 9).forGetter(ServerPolicy::areaLimit),
-            TimeSettings.CODEC.optionalFieldOf("time_serums", TimeSettings.DEFAULT).forGetter(ServerPolicy::time)
+            TimeSettings.CODEC.optionalFieldOf("time_serums", TimeSettings.DEFAULT).forGetter(ServerPolicy::time),
+            ComponentTrade.CODEC.listOf(0, 32).optionalFieldOf("component_trades", ComponentTrade.DEFAULT).forGetter(ServerPolicy::componentTrades)
     ).apply(i, ServerPolicy::new));
-    public ServerPolicy { disabled = Set.copyOf(disabled); }
+    public ServerPolicy { disabled = Set.copyOf(disabled); componentTrades = List.copyOf(componentTrades); }
 }

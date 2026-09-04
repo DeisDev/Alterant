@@ -12,5 +12,79 @@
     "enchant_levels_spent": 3,
     "lapis_cost": 3,
     "bookshelves": 15
-  }
+  },
+  "component_trades": [
+    {
+      "component": "binding_paste",
+      "profession": "mason",
+      "level": 2,
+      "emeralds": 8,
+      "count": 2,
+      "max_uses": 8,
+      "end_stone": 0
+    },
+    {
+      "component": "inert_powder",
+      "profession": "cleric",
+      "level": 2,
+      "emeralds": 10,
+      "count": 2,
+      "max_uses": 8,
+      "end_stone": 0
+    },
+    {
+      "component": "waxed_membrane",
+      "profession": "leatherworker",
+      "level": 3,
+      "emeralds": 12,
+      "count": 1,
+      "max_uses": 6,
+      "end_stone": 0
+    },
+    {
+      "component": "stabilizing_lattice",
+      "profession": "toolsmith",
+      "level": 4,
+      "emeralds": 24,
+      "count": 1,
+      "max_uses": 4,
+      "end_stone": 0
+    },
+    {
+      "component": "temporal_core",
+      "profession": "cleric",
+      "level": 5,
+      "emeralds": 64,
+      "count": 1,
+      "max_uses": 2,
+      "end_stone": 0
+    },
+    {
+      "component": "chronal_dust",
+      "profession": "cleric",
+      "level": 3,
+      "emeralds": 24,
+      "count": 1,
+      "max_uses": 4,
+      "end_stone": 8
+    },
+    {
+      "component": "resonant_crystal",
+      "profession": "cleric",
+      "level": 4,
+      "emeralds": 40,
+      "count": 1,
+      "max_uses": 3,
+      "end_stone": 16
+    },
+    {
+      "component": "quantum_lens",
+      "profession": "cleric",
+      "level": 5,
+      "emeralds": 64,
+      "count": 1,
+      "max_uses": 2,
+      "end_stone": 32
+    }
+  ]
 }

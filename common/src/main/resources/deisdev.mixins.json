@@ -39,6 +39,7 @@
     "FallingBlockAccessor",
     "PistonMixin",
     "PlayerChunkSenderMixin",
+    "VillagerMixin",
     "EnchantmentMenuMixin"
   ],
   "client": [
