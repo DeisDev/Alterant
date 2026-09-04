@@ -36,6 +36,7 @@ public final class CompiledRules {
     }
 
     public ServerPolicy policy() { return policy; }
+    public CompiledRules withPolicy(ServerPolicy next) { return new CompiledRules(next, byBlock); }
 
     public static CompiledRules compile(List<RuleDefinition> definitions, ServerPolicy policy,
                                         HolderLookup.Provider registries, Predicate<String> modLoaded) {

@@ -21,5 +21,11 @@ public record ServerPolicy(Set<Formulation> disabled, boolean allowPartial, int 
             TimeSettings.CODEC.optionalFieldOf("time_serums", TimeSettings.DEFAULT).forGetter(ServerPolicy::time),
             ComponentTrade.CODEC.listOf(0, 32).optionalFieldOf("component_trades", ComponentTrade.DEFAULT).forGetter(ServerPolicy::componentTrades)
     ).apply(i, ServerPolicy::new));
-    public ServerPolicy { disabled = Set.copyOf(disabled); componentTrades = List.copyOf(componentTrades); }
+    public ServerPolicy {
+        disabled = Set.copyOf(disabled); componentTrades = List.copyOf(componentTrades);
+        java.util.Objects.requireNonNull(time);
+        if (chunkLimit < 1 || chunkLimit > 4096 || areaLimit < 1 || areaLimit > 9 || componentTrades.size() > 32) {
+            throw new IllegalArgumentException("Invalid gameplay limits");
+        }
+    }
 }
