@@ -36,6 +36,11 @@ public final class PreserveConfigScreen {
                                 .binding(ClientConfig.DEFAULTS.surfacePreview(), () -> draft.preview, value -> draft.preview = value)
                                 .controller(TickBoxControllerBuilder::create).build())
                         .build())
+                .category(ConfigCategory.createBuilder().name(text("gameplay"))
+                        .option(dev.isxander.yacl3.api.LabelOption.create(text("gameplay.description")))
+                        .option(dev.isxander.yacl3.api.ButtonOption.createBuilder().name(text("gameplay.open"))
+                                .text(text("gameplay.edit")).action((screen, option) -> GameplayConfigScreen.open(screen)).build())
+                        .build())
                 .save(() -> {
                     if (!config.save(new ClientConfig.Settings(draft.tooltip, draft.outlines, draft.preview))) {
                         SystemToast.add(Minecraft.getInstance().gui.toastManager(), SystemToast.SystemToastId.PACK_LOAD_FAILURE,
