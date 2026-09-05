@@ -1,6 +1,7 @@
 package com.deisdev.preserve.platform.services;
 
 public interface IPlatformHelper {
+    void sendGameplay(net.minecraft.server.level.ServerPlayer player, com.deisdev.preserve.network.GameplayPayload payload);
     java.util.function.Supplier<net.minecraft.server.level.TicketType> registerCleanupTicket();
     void sendInspection(net.minecraft.server.level.ServerPlayer player, com.deisdev.preserve.network.InspectionPayload payload);
     /** Dispatch native interaction cancellation for an additional, loaded surface target. */

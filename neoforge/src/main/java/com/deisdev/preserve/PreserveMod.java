@@ -14,6 +14,9 @@ public final class PreserveMod {
         eventBus.addListener((net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent event) ->
                 event.registrar("1").playToClient(com.deisdev.preserve.network.ChunkTreatmentsPayload.TYPE,
                         com.deisdev.preserve.network.ChunkTreatmentsPayload.STREAM_CODEC)
+                        .playToClient(com.deisdev.preserve.network.GameplayPayload.TYPE, com.deisdev.preserve.network.GameplayPayload.STREAM_CODEC)
+                        .playToServer(com.deisdev.preserve.network.GameplayRequest.TYPE, com.deisdev.preserve.network.GameplayRequest.STREAM_CODEC,
+                                (payload, context) -> com.deisdev.preserve.network.GameplayQueries.handle((net.minecraft.server.level.ServerPlayer) context.player(), payload))
                         .playToClient(com.deisdev.preserve.network.InspectionPayload.TYPE, com.deisdev.preserve.network.InspectionPayload.STREAM_CODEC)
                         .playToServer(com.deisdev.preserve.network.InspectionRequest.TYPE, com.deisdev.preserve.network.InspectionRequest.STREAM_CODEC,
                                 (payload, context) -> com.deisdev.preserve.network.InspectionQueries.handle((net.minecraft.server.level.ServerPlayer) context.player(), payload)));

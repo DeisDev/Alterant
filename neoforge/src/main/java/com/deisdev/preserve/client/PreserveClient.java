@@ -34,6 +34,8 @@ public final class PreserveClient {
     }
     @SubscribeEvent
     public static void registerPayloads(RegisterClientPayloadHandlersEvent event) {
+        ClientGameplay.init(payload -> { net.neoforged.neoforge.client.network.ClientPacketDistributor.sendToServer(payload); return true; });
+        event.register(com.deisdev.preserve.network.GameplayPayload.TYPE, (payload, context) -> ClientGameplay.receive(Minecraft.getInstance(), payload));
         ClientInspection.init(net.neoforged.neoforge.client.network.ClientPacketDistributor::sendToServer);
         event.register(com.deisdev.preserve.network.InspectionPayload.TYPE, (payload, context) -> ClientInspection.receive(Minecraft.getInstance(), payload));
         event.register(ChunkTreatmentsPayload.TYPE, (payload, context) -> TreatmentSync.receive(Minecraft.getInstance().level, payload));
