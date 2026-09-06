@@ -23,6 +23,8 @@ Clerics sell time components for 24–64 emeralds plus End stone. Other componen
 
 Install on **client and server**. Fabric requires Fabric API. Add [YACL](https://modrinth.com/mod/yacl) for **Mods → Preserve → Config**; Fabric also needs [Mod Menu](https://modrinth.com/mod/modmenu). Tooltips default to **Basic**, with **Advanced** and **Hidden** options.
 
+Open **Config → Gameplay → Open** to edit serums, enchanting, treatment limits and component trades. Single-player owners and server admins can save; other players can view the server values. Saves create a world-specific override in `serverconfig/deisdev.json`; **Use data pack settings** restores pack control. Changes affect future applications and new offers. Look at a serum-treated block to see its actual speed and remaining loaded time; Hidden mode hides this display too.
+
 Independent clocks, controllers and networks may remain partly active; Advanced inspection shows coverage limits.
 
 **Uninstall:** back up the world, discard Preserve items, run `/preserve prepare-uninstall start`, and wait for **complete**. Then stop the server and remove the mod.

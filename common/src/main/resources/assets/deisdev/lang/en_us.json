@@ -90,6 +90,8 @@
   "overlay.deisdev.action.accelerate_block_entity": "Faster block entity ticks",
   "overlay.deisdev.action.accelerate_random_block": "Extra random tick attempts",
   "overlay.deisdev.action.accelerate_scheduled_block": "Shorter scheduled block delays",
+  "overlay.deisdev.serum_running": "%s speed  ·  %s remaining",
+  "overlay.deisdev.serum_paused": "%s speed  ·  %s paused",
   "config.deisdev.gameplay": "Gameplay",
   "config.deisdev.gameplay.description": "Adjust time serums, enchanting, treatment limits and component trades for the current world or server. Single-player owners and server admins can save changes.",
   "config.deisdev.gameplay.open": "World / server settings",

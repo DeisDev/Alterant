@@ -152,6 +152,7 @@ public final class ToolOverlay {
         return Component.translatable("formulation.deisdev." + formulation.getSerializedName());
     }
     public static void hud(GuiGraphicsExtractor graphics, DeltaTracker delta) {
+        SerumFeedback.hud(graphics);
         var client = Minecraft.getInstance();
         var lines = tooltipLines(client);
         if (lines.isEmpty()) { return; }

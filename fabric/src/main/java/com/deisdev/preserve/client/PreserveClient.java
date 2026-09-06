@@ -8,8 +8,12 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 public final class PreserveClient implements ClientModInitializer {
     @Override public void onInitializeClient() {
         ClientGameplay.init(payload -> { if (!ClientPlayNetworking.canSend(payload.type())) { return false; } ClientPlayNetworking.send(payload); return true; });
+        SerumFeedback.init(payload -> { if (ClientPlayNetworking.canSend(payload.type())) { ClientPlayNetworking.send(payload); } });
         ClientPlayNetworking.registerGlobalReceiver(com.deisdev.preserve.network.GameplayPayload.TYPE,
                 (payload, context) -> ClientGameplay.receive(context.client(), payload));
+        ClientPlayNetworking.registerGlobalReceiver(com.deisdev.preserve.network.SerumStatusPayload.TYPE,
+                (payload, context) -> SerumFeedback.receive(context.client(), payload));
+        net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.END_CLIENT_TICK.register(SerumFeedback::tick);
         ClientConfig.initialize(net.fabricmc.loader.api.FabricLoader.getInstance().getConfigDir());
         ClientInspection.init(payload -> { if (ClientPlayNetworking.canSend(payload.type())) { ClientPlayNetworking.send(payload); } });
         net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.END_CLIENT_TICK.register(ClientInspection::tick);

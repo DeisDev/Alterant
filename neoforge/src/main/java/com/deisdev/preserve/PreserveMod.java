@@ -17,6 +17,9 @@ public final class PreserveMod {
                         .playToClient(com.deisdev.preserve.network.GameplayPayload.TYPE, com.deisdev.preserve.network.GameplayPayload.STREAM_CODEC)
                         .playToServer(com.deisdev.preserve.network.GameplayRequest.TYPE, com.deisdev.preserve.network.GameplayRequest.STREAM_CODEC,
                                 (payload, context) -> com.deisdev.preserve.network.GameplayQueries.handle((net.minecraft.server.level.ServerPlayer) context.player(), payload))
+                        .playToClient(com.deisdev.preserve.network.SerumStatusPayload.TYPE, com.deisdev.preserve.network.SerumStatusPayload.STREAM_CODEC)
+                        .playToServer(com.deisdev.preserve.network.SerumStatusRequest.TYPE, com.deisdev.preserve.network.SerumStatusRequest.STREAM_CODEC,
+                                (payload, context) -> com.deisdev.preserve.network.SerumStatusQueries.handle((net.minecraft.server.level.ServerPlayer) context.player(), payload))
                         .playToClient(com.deisdev.preserve.network.InspectionPayload.TYPE, com.deisdev.preserve.network.InspectionPayload.STREAM_CODEC)
                         .playToServer(com.deisdev.preserve.network.InspectionRequest.TYPE, com.deisdev.preserve.network.InspectionRequest.STREAM_CODEC,
                                 (payload, context) -> com.deisdev.preserve.network.InspectionQueries.handle((net.minecraft.server.level.ServerPlayer) context.player(), payload)));

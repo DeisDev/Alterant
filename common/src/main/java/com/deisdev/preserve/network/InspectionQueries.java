@@ -118,7 +118,7 @@ public final class InspectionQueries {
         String states = String.join(", ", condition.state().entrySet().stream().sorted(java.util.Map.Entry.comparingByKey()).map(entry -> entry.getKey() + "=" + entry.getValue()).toList());
         return blocks + (states.isEmpty() ? "" : " [" + states + "]");
     }
-    private static boolean pointingAt(ServerPlayer player, BlockPos expected) {
+    static boolean pointingAt(ServerPlayer player, BlockPos expected) {
         double range = Math.min(MAX_RANGE, player.blockInteractionRange());
         if (!Double.isFinite(range) || range <= 0) { return false; }
         var eye = player.getEyePosition();

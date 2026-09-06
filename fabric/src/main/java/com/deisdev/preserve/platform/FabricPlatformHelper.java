@@ -17,6 +17,9 @@ public class FabricPlatformHelper implements IPlatformHelper {
     @Override public void sendGameplay(net.minecraft.server.level.ServerPlayer player, com.deisdev.preserve.network.GameplayPayload payload) {
         if (net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.canSend(player, payload.type())) { net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(player, payload); }
     }
+    @Override public void sendSerumStatus(net.minecraft.server.level.ServerPlayer player, com.deisdev.preserve.network.SerumStatusPayload payload) {
+        if (net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.canSend(player, payload.type())) { net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(player, payload); }
+    }
     @Override public Supplier<net.minecraft.server.level.TicketType> registerCleanupTicket() {
         var type = Registry.register(BuiltInRegistries.TICKET_TYPE, Identifier.parse("deisdev:cleanup"), com.deisdev.preserve.engine.CleanupTickets.create());
         return () -> type;

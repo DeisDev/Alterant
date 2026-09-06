@@ -15,6 +15,9 @@ public class NeoForgePlatformHelper implements IPlatformHelper {
     @Override public void sendGameplay(net.minecraft.server.level.ServerPlayer player, com.deisdev.preserve.network.GameplayPayload payload) {
         net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player, payload);
     }
+    @Override public void sendSerumStatus(net.minecraft.server.level.ServerPlayer player, com.deisdev.preserve.network.SerumStatusPayload payload) {
+        net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player, payload);
+    }
     private static final DeferredRegister<net.minecraft.server.level.TicketType> TICKETS = DeferredRegister.create(Registries.TICKET_TYPE, Constants.MOD_ID);
     @Override public Supplier<net.minecraft.server.level.TicketType> registerCleanupTicket() { return TICKETS.register("cleanup", com.deisdev.preserve.engine.CleanupTickets::create); }
     @Override public void sendInspection(net.minecraft.server.level.ServerPlayer player, com.deisdev.preserve.network.InspectionPayload payload) {

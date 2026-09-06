@@ -19,7 +19,9 @@ public final class PreserveClient {
         }
     }
     @SubscribeEvent
-    public static void clientTick(net.neoforged.neoforge.client.event.ClientTickEvent.Post event) { ClientInspection.tick(Minecraft.getInstance()); }
+    public static void clientTick(net.neoforged.neoforge.client.event.ClientTickEvent.Post event) {
+        ClientInspection.tick(Minecraft.getInstance()); SerumFeedback.tick(Minecraft.getInstance());
+    }
     @SubscribeEvent
     public static void registerLayers(net.neoforged.neoforge.client.event.RegisterGuiLayersEvent event) {
         event.registerBelow(net.neoforged.neoforge.client.gui.VanillaGuiLayers.CHAT, net.minecraft.resources.Identifier.parse("deisdev:inspection"), ToolOverlay::hud);
@@ -35,7 +37,9 @@ public final class PreserveClient {
     @SubscribeEvent
     public static void registerPayloads(RegisterClientPayloadHandlersEvent event) {
         ClientGameplay.init(payload -> { net.neoforged.neoforge.client.network.ClientPacketDistributor.sendToServer(payload); return true; });
+        SerumFeedback.init(net.neoforged.neoforge.client.network.ClientPacketDistributor::sendToServer);
         event.register(com.deisdev.preserve.network.GameplayPayload.TYPE, (payload, context) -> ClientGameplay.receive(Minecraft.getInstance(), payload));
+        event.register(com.deisdev.preserve.network.SerumStatusPayload.TYPE, (payload, context) -> SerumFeedback.receive(Minecraft.getInstance(), payload));
         ClientInspection.init(net.neoforged.neoforge.client.network.ClientPacketDistributor::sendToServer);
         event.register(com.deisdev.preserve.network.InspectionPayload.TYPE, (payload, context) -> ClientInspection.receive(Minecraft.getInstance(), payload));
         event.register(ChunkTreatmentsPayload.TYPE, (payload, context) -> TreatmentSync.receive(Minecraft.getInstance().level, payload));
