@@ -1,0 +1,101 @@
+{
+  "definitions": [
+    {
+      "image": "deisdev:textures/gui/tooltip_frames.png",
+      "index": 0,
+      "startColor": "#FF78B763",
+      "endColor": "#FF78B763",
+      "bgColor": "#F0181C22",
+      "priority": 0,
+      "selectors": [
+        "deisdev:growth_inhibitor"
+      ]
+    },
+    {
+      "image": "deisdev:textures/gui/tooltip_frames.png",
+      "index": 1,
+      "startColor": "#FFE5B753",
+      "endColor": "#FFE5B753",
+      "bgColor": "#F0181C22",
+      "priority": 0,
+      "selectors": [
+        "deisdev:preserving_sealant",
+        "deisdev:waxed_membrane",
+        "deisdev:chronal_dust"
+      ]
+    },
+    {
+      "image": "deisdev:textures/gui/tooltip_frames.png",
+      "index": 2,
+      "startColor": "#FF80B4CF",
+      "endColor": "#FF80B4CF",
+      "bgColor": "#F0181C22",
+      "priority": 0,
+      "selectors": [
+        "deisdev:structural_stasis"
+      ]
+    },
+    {
+      "image": "deisdev:textures/gui/tooltip_frames.png",
+      "index": 3,
+      "startColor": "#FFB891DF",
+      "endColor": "#FFB891DF",
+      "bgColor": "#F0181C22",
+      "priority": 0,
+      "selectors": [
+        "deisdev:temporal_stasis"
+      ]
+    },
+    {
+      "image": "deisdev:textures/gui/tooltip_frames.png",
+      "index": 4,
+      "startColor": "#FF49DDE0",
+      "endColor": "#FF49DDE0",
+      "bgColor": "#F0181C22",
+      "priority": 0,
+      "selectors": [
+        "deisdev:time_serum",
+        "deisdev:temporal_core",
+        "deisdev:resonant_crystal",
+        "deisdev:quantum_lens",
+        "deisdev:quantum_applicator"
+      ]
+    },
+    {
+      "image": "deisdev:textures/gui/tooltip_frames.png",
+      "index": 5,
+      "startColor": "#FFD568EB",
+      "endColor": "#FFD568EB",
+      "bgColor": "#F0181C22",
+      "priority": 0,
+      "selectors": [
+        "deisdev:suspicious_time_serum"
+      ]
+    },
+    {
+      "image": "deisdev:textures/gui/tooltip_frames.png",
+      "index": 6,
+      "startColor": "#FFC6AD86",
+      "endColor": "#FFC6AD86",
+      "bgColor": "#F0181C22",
+      "priority": 0,
+      "selectors": [
+        "deisdev:binding_paste",
+        "deisdev:preserving_brush"
+      ]
+    },
+    {
+      "image": "deisdev:textures/gui/tooltip_frames.png",
+      "index": 7,
+      "startColor": "#FF8A939E",
+      "endColor": "#FF8A939E",
+      "bgColor": "#F0181C22",
+      "priority": 0,
+      "selectors": [
+        "deisdev:inert_powder",
+        "deisdev:stabilizing_lattice",
+        "deisdev:scraper"
+      ]
+    }
+  ]
+}
