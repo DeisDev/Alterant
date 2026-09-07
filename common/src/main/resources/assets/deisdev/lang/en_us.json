@@ -82,8 +82,7 @@
   "item.deisdev.resonant_crystal": "Resonant Crystal",
   "item.deisdev.quantum_lens": "Quantum Lens",
   "item.deisdev.quantum_applicator.use": "Use on a block with time serum in your offhand.",
-  "item.deisdev.serum.applicator": "Apply with a Quantum Applicator. One dose per block.",
-  "item.deisdev.serum.settings": "Strength and loaded duration are set by the server.",
+  "item.deisdev.serum.applicator": "Offhand: use with a Quantum Applicator",
   "formulation.deisdev.time_serum": "Temporarily accelerates supported block ticks.",
   "formulation.deisdev.suspicious_time_serum": "Temporary acceleration; speed is rolled for each application.",
   "enchantment.deisdev.temporal_instability": "Suspicious Time Serum",
@@ -153,5 +152,8 @@
   "config.deisdev.gameplay.trade.max_uses": "Purchases before restock",
   "config.deisdev.gameplay.trade.max_uses.description": "Number of times the offer can be used before the villager needs to restock.",
   "config.deisdev.gameplay.trade.end_stone": "Additional End stone cost",
-  "config.deisdev.gameplay.trade.end_stone.description": "Second ingredient cost. Set to 0 to charge only emeralds."
+  "config.deisdev.gameplay.trade.end_stone.description": "Second ingredient cost. Set to 0 to charge only emeralds.",
+  "item.deisdev.serum.strength": "Strength: %s\u00d7",
+  "item.deisdev.serum.random_strength": "Strength: %s\u2013%s\u00d7 (random)",
+  "item.deisdev.serum.duration": "Duration: %s loaded minutes"
 }

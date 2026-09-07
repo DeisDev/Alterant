@@ -11,6 +11,8 @@ public final class PreserveMod {
 
     public PreserveMod(IEventBus eventBus) {
         NeoForge.EVENT_BUS.addListener(com.deisdev.preserve.rules.NeoForgeRules::register);
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.OnDatapackSyncEvent event) ->
+                event.getRelevantPlayers().forEach(com.deisdev.preserve.network.GameplayQueries::sync));
         eventBus.addListener((net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent event) ->
                 event.registrar("1").playToClient(com.deisdev.preserve.network.ChunkTreatmentsPayload.TYPE,
                         com.deisdev.preserve.network.ChunkTreatmentsPayload.STREAM_CODEC)

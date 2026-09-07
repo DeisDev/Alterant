@@ -57,6 +57,6 @@ public final class CompoundItem extends Item {
         lines.accept(Component.translatable("item.deisdev.jar.uses", remaining(stack), formulation.capacity()).withStyle(ChatFormatting.GRAY));
         if (remaining(stack) == 0) { lines.accept(Component.translatable("item.deisdev.jar.empty").withStyle(ChatFormatting.RED)); }
         else { lines.accept(Component.translatable(formulation.accelerates() ? "item.deisdev.serum.applicator" : "item.deisdev.jar.brush").withStyle(ChatFormatting.DARK_GRAY)); }
-        if (formulation.accelerates()) { lines.accept(Component.translatable("item.deisdev.serum.settings").withStyle(ChatFormatting.DARK_GRAY)); }
+        if (formulation.accelerates()) { SerumTooltip.append(formulation, lines); }
     }
 }

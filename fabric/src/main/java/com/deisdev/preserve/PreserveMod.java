@@ -17,6 +17,8 @@ public final class PreserveMod implements ModInitializer {
         net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.registerGlobalReceiver(com.deisdev.preserve.network.SerumStatusRequest.TYPE,
                 (payload, context) -> com.deisdev.preserve.network.SerumStatusQueries.handle(context.player(), payload));
         com.deisdev.preserve.rules.FabricRules.register();
+        net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SYNC_DATA_PACK_CONTENTS.register(
+                (player, joined) -> com.deisdev.preserve.network.GameplayQueries.sync(player));
         net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry.serverboundPlay().register(com.deisdev.preserve.network.InspectionRequest.TYPE, com.deisdev.preserve.network.InspectionRequest.STREAM_CODEC);
         net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry.clientboundPlay().register(com.deisdev.preserve.network.InspectionPayload.TYPE, com.deisdev.preserve.network.InspectionPayload.STREAM_CODEC);
         net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.registerGlobalReceiver(com.deisdev.preserve.network.InspectionRequest.TYPE,

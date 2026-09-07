@@ -28,7 +28,21 @@ public final class GameplayQueries {
                 || Commands.hasPermission(Commands.LEVEL_ADMINS).test(player.createCommandSourceStack());
     }
     public static void handle(ServerPlayer player, GameplayRequest request) {
-        Services.PLATFORM.sendGameplay(player, query(player, request));
+        var reply = query(player, request);
+        Services.PLATFORM.sendGameplay(player, reply);
+        if (reply.status() == GameplayPayload.Status.SAVED) {
+            for (var other : player.level().getServer().getPlayerList().getPlayers()) {
+                if (other != player) { sync(other); }
+            }
+        }
+    }
+    /** Unsolicited snapshots use request zero, leaving config-screen requests independent. */
+    public static void sync(ServerPlayer player) {
+        var server = player.level().getServer();
+        var policy = RuleRegistry.get(server).policy();
+        var registry = ((PreservationServer) server).preserve$rules();
+        Services.PLATFORM.sendGameplay(player, new GameplayPayload(0, registry.revision(), canEdit(player), registry.overridden(),
+                GameplayPayload.Status.LOADED, GameplaySettingsFile.encode(policy)));
     }
     public static GameplayPayload query(ServerPlayer player, GameplayRequest request) {
         var server = player.level().getServer();
