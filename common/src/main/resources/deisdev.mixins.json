@@ -47,7 +47,8 @@
     "client.ClientChunkCacheMixin",
     "client.ToolUseMixin",
     "client.OverlayStateMixin",
-    "client.EnchantmentScreenMixin"
+    "client.EnchantmentScreenMixin",
+    "client.ItemBordersMixin"
   ],
   "server": [],
   "injectors": {
