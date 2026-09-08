@@ -1,6 +1,6 @@
 # Preserve
 
-Keep gardens, delicate blocks, structures and machines just as you left them.
+Adds new ways to make blocks and machines interact with the world.
 
 **Minecraft 26.2 · Fabric & NeoForge · Java 25 · By DeisDev**
 
@@ -25,7 +25,7 @@ Install on **client and server**. Fabric requires Fabric API. Add [YACL](https:/
 
 Optional client mods [Legendary Tooltips](https://modrinth.com/mod/legendary-tooltips) and [Item Borders](https://modrinth.com/mod/item-borders) give all Preserve items matching frames and inventory borders in their existing colors. Either works independently; install its required dependencies too. Their own display settings and manual overrides still apply.
 
-Open **Config → Gameplay → Open** to edit serums, enchanting, treatment limits and component trades. Single-player owners and server admins can save; other players can view the server values. Saves create a world-specific override in `serverconfig/deisdev.json`; **Use data pack settings** restores pack control. Changes affect future applications and new offers. Look at a serum-treated block to see its actual speed and remaining loaded time; Hidden mode hides this display too.
+Open **Config → Gameplay → Open** to edit serums, enchanting, treatment limits and component trades. Single-player owners and server admins can save; other players can view settings. Saves create a world-specific override in `serverconfig/deisdev.json`; **Use data pack settings** restores pack control. Changes affect future applications and new offers. Look at a serum-treated block to see its actual speed and remaining loaded time; Hidden mode hides this display too.
 
 Independent clocks, controllers and networks may remain partly active; Advanced inspection shows coverage limits.
 
