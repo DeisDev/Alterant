@@ -14,7 +14,7 @@ public final class PreserveMod {
         NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.OnDatapackSyncEvent event) ->
                 event.getRelevantPlayers().forEach(com.deisdev.preserve.network.GameplayQueries::sync));
         eventBus.addListener((net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent event) ->
-                event.registrar("1").playToClient(com.deisdev.preserve.network.ChunkTreatmentsPayload.TYPE,
+                event.registrar("2").playToClient(com.deisdev.preserve.network.ChunkTreatmentsPayload.TYPE,
                         com.deisdev.preserve.network.ChunkTreatmentsPayload.STREAM_CODEC)
                         .playToClient(com.deisdev.preserve.network.GameplayPayload.TYPE, com.deisdev.preserve.network.GameplayPayload.STREAM_CODEC)
                         .playToServer(com.deisdev.preserve.network.GameplayRequest.TYPE, com.deisdev.preserve.network.GameplayRequest.STREAM_CODEC,
