@@ -70,7 +70,7 @@ public final class Inspection {
                 for (var protection : decision.protections()) { actions.add(protection.action()); profiles.add(protection.rule().toString()); }
             }
             if (requested == Formulation.TEMPORAL_STASIS && !rules.policy().allowPartial() && !complete) {
-                return denied(requested, Coverage.INTEGRATION_REQUIRED, "The server requires a verified integration for this target");
+                return denied(requested, Coverage.INTEGRATION_REQUIRED, "This target requires a verified integration");
             }
             return new PreservationInspection(false, true, coverage(requested, complete), requested, actions, List.copyOf(profiles), List.copyOf(adapters),
                     limits(requested, complete), "", targets.size());

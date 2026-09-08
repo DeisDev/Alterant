@@ -44,7 +44,7 @@ public final class SurfaceApplication {
         var service = PreservationService.get(level);
         for (var pos : SurfaceTargets.positions(center, face)) {
             if (!visited.add(pos.asLong())) { continue; }
-            if (changed >= limit) { reason = "Server area limit reached"; break; }
+            if (changed >= limit) { reason = "Area limit reached"; break; }
             if (!ItemStack.matches(tool, player.getMainHandItem()) || !ItemStack.matches(expectedJar, player.getOffhandItem()) || player.hasInfiniteMaterials() != infinite) {
                 reason = "Held items changed"; break;
             }

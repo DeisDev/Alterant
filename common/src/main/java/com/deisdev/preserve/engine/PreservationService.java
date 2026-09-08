@@ -201,8 +201,8 @@ public final class PreservationService {
                 return new Result(prepared.size(), String.format(java.util.Locale.ROOT, "Serum applied: %.2fx for %.1f loaded minutes", effect.multiplier(), effect.remainingTicks() / 1200.0));
             }
             return new Result(prepared.size(), formulation == Formulation.TEMPORAL_STASIS
-                    ? (complete ? "Machine paused with its registered integration"
-                        : "Standard ticks paused; external controllers and absolute-time work require integration") : "Coating applied");
+                    ? (complete ? "Machine paused"
+                        : "Standard ticks paused") : "Coating applied");
         } finally {
             for (long position : locked) { inProgress.remove(position); }
         }
@@ -229,7 +229,7 @@ public final class PreservationService {
         if (access != null) { access.validate(context, Change.APPLY); }
         var integration = formulation.accelerates() ? new IntegrationRegistry.Prepared(List.of(), false) : IntegrationRegistry.prepare(context);
         if (formulation == Formulation.TEMPORAL_STASIS && !rules.policy().allowPartial() && !integration.complete()) {
-            throw new IllegalArgumentException("The server requires a verified integration for this target");
+            throw new IllegalArgumentException("This target requires a verified integration");
         }
         var actions = EnumSet.noneOf(Action.class);
         var structure = new java.util.HashMap<String, String>();

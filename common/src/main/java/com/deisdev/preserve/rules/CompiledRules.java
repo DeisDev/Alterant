@@ -93,7 +93,7 @@ public final class CompiledRules {
     }
 
     public Decision evaluate(BlockState state, Formulation formulation) {
-        if (policy.disabled().contains(formulation)) { return new Decision(List.of(), "This formulation is disabled by the server"); }
+        if (policy.disabled().contains(formulation)) { return new Decision(List.of(), "This compound is disabled"); }
         var candidates = byBlock.getOrDefault(state.getBlock(), List.of());
         var actions = new EnumMap<Action, Protection>(Action.class);
         for (var rule : candidates) {
