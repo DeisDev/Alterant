@@ -23,7 +23,7 @@ public final class ScraperItem extends Item implements PreservationTool {
         var tool = context.getItemInHand().copy();
         var result = PreservationService.get(player.level()).removeFromPlayer(context.getClickedPos(), player,
                 () -> player.getMainHandItem().is(this) && player.getMainHandItem().getCount() == 1 && ItemStack.isSameItemSameComponents(tool, player.getMainHandItem()));
-        player.sendOverlayMessage(Component.literal(result.message()));
+        player.sendOverlayMessage(Component.literal(result.message()).withColor(result.changed() ? 0xA9DDD0 : 0xE1BD84));
         return result.changed() ? InteractionResult.SUCCESS : InteractionResult.FAIL;
     }
     @Override public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> lines, TooltipFlag flag) {

@@ -31,7 +31,6 @@ public final class ToolOverlay {
     public record Mark(BlockPos pos, VoxelShape shape, int color, float width, boolean preview) {}
     public static final int TREATMENT_LIMIT = 32;
     private static final List<BlockPos> OFFSETS = offsets();
-    private static final VoxelShape[] PATTERNS = patterns();
     private static WeakReference<ClientLevel> cachedLevel = new WeakReference<>(null);
     private static BlockPos cachedOrigin = BlockPos.ZERO;
     private static long cachedRevision = -1;
@@ -73,7 +72,9 @@ public final class ToolOverlay {
                 if (treatment == null) { continue; }
                 var shape = level.getBlockState(pos).getShape(level, pos);
                 if (shape.isEmpty()) { continue; }
-                marks.add(new Mark(pos, Shapes.or(shape, PATTERNS[treatment.formulation().ordinal()]), color(treatment.formulation()), 1.5F, false));
+                boolean focused = client.hitResult instanceof BlockHitResult hit && hit.getBlockPos().equals(pos);
+                marks.add(new Mark(pos, Shapes.or(shape, pattern(shape, treatment.formulation())),
+                        (color(treatment.formulation()) & 0xFFFFFF) | (focused ? 0xDD000000 : 0x88000000), focused ? 1.5F : 1.0F, false));
                 if (marks.size() == TREATMENT_LIMIT) { break; }
             }
             cachedMarks = List.copyOf(marks);
@@ -112,17 +113,18 @@ public final class ToolOverlay {
         var jar = player.getOffhandItem();
         if (brush || applicator) {
             if (jar.getItem() instanceof CompoundItem compound) {
-                lines.add(jar.getHoverName().copy().append(" · ").append(Component.translatable("item.deisdev.jar.uses", compound.remaining(jar), compound.formulation().capacity())));
-                lines.add(description(compound.formulation()));
-            } else { lines.add(Component.translatable("overlay.deisdev.need_compound")); }
+                lines.add(jar.getHoverName().copy().append(" · ").append(Component.translatable("item.deisdev.jar.uses", compound.remaining(jar), compound.formulation().capacity()))
+                        .withColor(color(compound.formulation()) & 0xFFFFFF));
+                lines.add(description(compound.formulation()).copy().withStyle(net.minecraft.ChatFormatting.GRAY));
+            } else { lines.add(Component.translatable(applicator ? "overlay.deisdev.need_serum" : "overlay.deisdev.need_compound")); }
             lines.add(Component.translatable(applicator ? "item.deisdev.quantum_applicator.use" : "overlay.deisdev.brush_controls"));
             if (brush) { lines.add(Component.translatable("overlay.deisdev.mode_controls", Component.translatable(PreservingBrushItem.area(player.getMainHandItem())
                     ? "overlay.deisdev.mode.area" : "overlay.deisdev.mode.single"))); }
         } else if (client.hitResult instanceof BlockHitResult hit && hit.getType() == HitResult.Type.BLOCK && player.isWithinBlockInteractionRange(hit.getBlockPos(), 0)) {
             var treatment = ((PreservationLevel) client.level).preserve$treatments().get(hit.getBlockPos().asLong());
             if (treatment != null) {
-                lines.add(PreserveItems.compound(treatment.formulation()).getDefaultInstance().getHoverName());
-                lines.add(description(treatment.formulation()));
+                lines.add(PreserveItems.compound(treatment.formulation()).getDefaultInstance().getHoverName().copy().withColor(color(treatment.formulation()) & 0xFFFFFF));
+                lines.add(description(treatment.formulation()).copy().withStyle(net.minecraft.ChatFormatting.GRAY));
             }
         }
         if (!brush && !applicator) { lines.add(Component.translatable("overlay.deisdev.scraper_controls")); }
@@ -155,12 +157,17 @@ public final class ToolOverlay {
     public static void hud(GuiGraphicsExtractor graphics, DeltaTracker delta) {
         var client = Minecraft.getInstance();
         var lines = tooltipLines(client);
-        if (lines.isEmpty()) { return; }
-        int width = Math.min(graphics.guiWidth() - 16, Math.min(260, lines.stream().mapToInt(client.font::width).max().orElse(140) + 12));
+        if (lines.isEmpty() || graphics.guiWidth() < 48 || graphics.guiHeight() < 48) { return; }
+        boolean basic = ClientConfig.get().settings().tooltip() == ClientConfig.TooltipMode.BASIC;
+        int width = Math.min(graphics.guiWidth() - 16, Math.min(basic ? 200 : 260, lines.stream().mapToInt(client.font::width).max().orElse(140) + 12));
         var wrapped = lines.stream().flatMap(line -> client.font.split(line, width - 12).stream()).toList();
-        int count = Math.min(wrapped.size(), (graphics.guiHeight() - 24) / 11);
-        int y = 8;
-        graphics.fill(8, y, 8 + width, y + 8 + count * 11, 0xA0181C22);
+        int count = Math.min(wrapped.size(), Math.max(1, (graphics.guiHeight() - 96) / 11));
+        // Leave the top center to Jade and the lower center to the hotbar and action messages.
+        int y = Math.max(8, graphics.guiHeight() - 80 - (8 + count * 11));
+        int bottom = y + 8 + count * 11;
+        graphics.fill(10, y, 6 + width, bottom, 0xC0181C22);
+        graphics.fill(8, y + 2, 10, bottom - 2, 0xC0181C22);
+        graphics.fill(6 + width, y + 2, 8 + width, bottom - 2, 0xC0181C22);
         for (int line = 0; line < count; line++) {
             var text = line == count - 1 && count < wrapped.size() ? Component.translatable("overlay.deisdev.more").getVisualOrderText() : wrapped.get(line);
             graphics.text(client.font, text, 14, y + 5, 0xFFE4E6EA);
@@ -183,18 +190,17 @@ public final class ToolOverlay {
         offsets.sort(Comparator.comparingDouble(pos -> pos.distSqr(BlockPos.ZERO)));
         return List.copyOf(offsets);
     }
-    private static VoxelShape[] patterns() {
-        var result = new VoxelShape[Formulation.values().length];
-        for (int formulation = 0; formulation < result.length; formulation++) {
-            VoxelShape shape = Shapes.empty();
-            for (int mark = 0; mark <= formulation; mark++) {
-                double left = 0.25 + mark * 0.13;
-                // One to four small bars on each face distinguish coatings independently of color.
-                shape = Shapes.or(shape, Shapes.box(left, 0.72, -0.004, left + 0.045, 0.86, -0.002), Shapes.box(left, 0.72, 1.002, left + 0.045, 0.86, 1.004),
-                        Shapes.box(-0.004, 0.72, left, -0.002, 0.86, left + 0.045), Shapes.box(1.002, 0.72, left, 1.004, 0.86, left + 0.045),
-                        Shapes.box(left, 1.002, 0.72, left + 0.045, 1.004, 0.86), Shapes.box(left, -0.004, 0.72, left + 0.045, -0.002, 0.86));
-            }
-            result[formulation] = shape;
+    private static VoxelShape pattern(VoxelShape shape, Formulation formulation) {
+        var bounds = shape.bounds();
+        int count = formulation.ordinal() + 1;
+        double step = Math.min(0.1, bounds.getXsize() / 8), width = step * 0.35;
+        double start = (bounds.minX + bounds.maxX - (count - 1) * step - width) / 2;
+        double z = (bounds.minZ + bounds.maxZ) / 2, depth = Math.min(0.08, bounds.getZsize() / 4);
+        var result = Shapes.empty();
+        // A compact tally on the actual top surface keeps formulas distinct without six faces of decoration.
+        for (int mark = 0; mark < count; mark++) {
+            double x = start + mark * step;
+            result = Shapes.or(result, Shapes.box(x, bounds.maxY + 0.002, z - depth, x + width, bounds.maxY + 0.004, z + depth));
         }
         return result;
     }

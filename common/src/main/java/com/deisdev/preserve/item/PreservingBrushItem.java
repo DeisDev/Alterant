@@ -36,7 +36,7 @@ public final class PreservingBrushItem extends Item implements PreservationTool 
         var result = area(player.getMainHandItem())
                 ? com.deisdev.preserve.engine.SurfaceApplication.apply(player, context.getClickedPos(), context.getClickedFace(), context.isSecondaryUseActive())
                 : PreservationService.get(player.level()).applyWithBrush(context.getClickedPos(), player, context.isSecondaryUseActive());
-        player.sendOverlayMessage(Component.literal(result.message()));
+        player.sendOverlayMessage(Component.literal(result.message()).withColor(result.changed() ? 0xA9DDD0 : 0xE1BD84));
         return result.changed() ? InteractionResult.SUCCESS : InteractionResult.FAIL;
     }
     @Override public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> lines, TooltipFlag flag) {

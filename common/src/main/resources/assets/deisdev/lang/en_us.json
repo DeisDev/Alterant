@@ -156,5 +156,6 @@
   "config.deisdev.gameplay.trade.max_uses.description": "Number of times the offer can be used before the villager needs to restock.",
   "config.deisdev.gameplay.trade.end_stone": "Additional End stone cost",
   "config.deisdev.gameplay.trade.end_stone.description": "Set to 0 to charge only emeralds.",
-  "overlay.deisdev.serum_updating": "Updating serum status…"
+  "overlay.deisdev.serum_updating": "Updating serum status…",
+  "overlay.deisdev.need_serum": "Hold a serum dose in your offhand"
 }
