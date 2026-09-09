@@ -29,6 +29,7 @@ public final class PreserveClient {
     @SubscribeEvent
     public static void extract(net.neoforged.neoforge.client.event.ExtractLevelRenderStateEvent event) {
         ((OverlayRenderState) event.getRenderState()).preserve$overlay(ToolOverlay.extract(event.getLevel()));
+        ((OverlayRenderState) event.getRenderState()).preserve$serumCard(SerumFeedback.extract(Minecraft.getInstance()));
     }
     @SubscribeEvent
     public static void submit(net.neoforged.neoforge.client.event.SubmitCustomGeometryEvent event) {

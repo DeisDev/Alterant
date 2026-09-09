@@ -6,4 +6,6 @@ import java.util.List;
 public interface OverlayRenderState {
     List<ToolOverlay.Mark> preserve$overlay();
     void preserve$overlay(List<ToolOverlay.Mark> marks);
+    SerumCard.Card preserve$serumCard();
+    void preserve$serumCard(SerumCard.Card card);
 }

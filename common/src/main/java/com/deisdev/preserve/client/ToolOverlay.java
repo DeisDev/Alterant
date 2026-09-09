@@ -93,6 +93,7 @@ public final class ToolOverlay {
         return List.copyOf(marks);
     }
     public static void submit(LevelRenderState state, PoseStack pose, SubmitNodeCollector collector) {
+        SerumCard.submit(state, pose, collector);
         var camera = state.cameraRenderState.pos;
         for (var mark : ((OverlayRenderState) state).preserve$overlay()) {
             pose.pushPose();
@@ -152,7 +153,6 @@ public final class ToolOverlay {
         return Component.translatable("formulation.deisdev." + formulation.getSerializedName());
     }
     public static void hud(GuiGraphicsExtractor graphics, DeltaTracker delta) {
-        SerumFeedback.hud(graphics);
         var client = Minecraft.getInstance();
         var lines = tooltipLines(client);
         if (lines.isEmpty()) { return; }

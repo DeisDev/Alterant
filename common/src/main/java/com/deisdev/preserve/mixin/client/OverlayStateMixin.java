@@ -13,8 +13,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(LevelRenderState.class)
 public abstract class OverlayStateMixin implements OverlayRenderState {
     @Unique private List<ToolOverlay.Mark> preserve$marks = List.of();
+    @Unique private com.deisdev.preserve.client.SerumCard.Card preserve$card;
+    @Override public com.deisdev.preserve.client.SerumCard.Card preserve$serumCard() { return preserve$card; }
+    @Override public void preserve$serumCard(com.deisdev.preserve.client.SerumCard.Card card) { preserve$card = card; }
     @Override public List<ToolOverlay.Mark> preserve$overlay() { return preserve$marks; }
     @Override public void preserve$overlay(List<ToolOverlay.Mark> marks) { preserve$marks = List.copyOf(marks); }
     @Inject(method = "reset", at = @At("TAIL"))
-    private void preserve$clear(CallbackInfo ci) { preserve$marks = List.of(); }
+    private void preserve$clear(CallbackInfo ci) { preserve$marks = List.of(); preserve$card = null; }
 }

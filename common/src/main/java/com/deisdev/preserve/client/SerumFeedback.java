@@ -1,6 +1,5 @@
 package com.deisdev.preserve.client;
 
-import com.deisdev.preserve.api.Formulation;
 import com.deisdev.preserve.engine.PreservationLevel;
 import com.deisdev.preserve.network.SerumStatusPayload;
 import com.deisdev.preserve.network.SerumStatusRequest;
@@ -9,7 +8,6 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.function.Consumer;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -45,7 +43,13 @@ public final class SerumFeedback {
         var dimension = client.level.dimension().identifier();
         var marker = ((PreservationLevel) client.level).preserve$treatments().get(target.asLong());
         boolean same = pending != null && pending.position() == target.asLong() && pending.dimension().equals(dimension) && requestedMarker == marker;
-        if (same && client.player.tickCount - sentAt < (awaiting ? 30 : 10)) { return; }
+        if (same && client.player.tickCount - sentAt < (awaiting ? 6 : 10)) { return; }
+        if (same && awaiting) {
+            // Retry the same identity: replacing it would discard every reply on a high-latency connection.
+            sentAt = client.player.tickCount;
+            sender.accept(pending);
+            return;
+        }
         if (!same) { report = null; }
         sequence = (sequence + 1) & Integer.MAX_VALUE;
         pending = new SerumStatusRequest(sequence, dimension, target.asLong()); sentAt = client.player.tickCount; awaiting = true;
@@ -60,11 +64,19 @@ public final class SerumFeedback {
     }
     public static Optional<SerumStatusPayload> current(Minecraft client) {
         var target = target(client);
-        if (target == null || report == null || owner.get() != client.player || report.formulation() < 0 || report.position() != target.asLong()
+        if (target == null) { return Optional.empty(); }
+        var marker = ((PreservationLevel) client.level).preserve$treatments().get(target.asLong());
+        if (report == null || owner.get() != client.player || report.formulation() < 0 || report.position() != target.asLong()
                 || client.player.tickCount - receivedAt > 30 || !report.dimension().equals(client.level.dimension().identifier())
                 || !report.block().equals(BuiltInRegistries.BLOCK.getKey(client.level.getBlockState(target).getBlock()))
                 || ((PreservationLevel) client.level).preserve$treatments().get(target.asLong()) != reportedMarker
-                || reportedMarker.formulation().ordinal() != report.formulation()) { return Optional.empty(); }
+                || reportedMarker.formulation().ordinal() != report.formulation()) {
+            var sample = ((PreservationLevel) client.level).preserve$clientTreatments().serum(target.asLong());
+            if (sample == null || client.level.getGameTime() - sample.receivedAt() > 30
+                    || sample.payload().formulation() != marker.formulation().ordinal()
+                    || !sample.payload().block().equals(BuiltInRegistries.BLOCK.getKey(client.level.getBlockState(target).getBlock()))) { return Optional.empty(); }
+            return Optional.of(sample.payload());
+        }
         return Optional.of(report);
     }
     public static String multiplier(double value) { return String.format(Locale.ROOT, "%.2f", value).replaceFirst("\\.?0+$", "") + "×"; }
@@ -73,20 +85,20 @@ public final class SerumFeedback {
         return seconds >= 3600 ? String.format(Locale.ROOT, "%d:%02d:%02d", seconds / 3600, seconds / 60 % 60, seconds % 60)
                 : String.format(Locale.ROOT, "%d:%02d", seconds / 60, seconds % 60);
     }
-    public static void hud(GuiGraphicsExtractor graphics) {
-        var client = Minecraft.getInstance();
-        current(client).ifPresent(value -> {
-            var formulation = Formulation.values()[value.formulation()];
-            var title = Component.translatable("item.deisdev." + formulation.getSerializedName());
-            var detail = Component.translatable(value.ticking() ? "overlay.deisdev.serum_running" : "overlay.deisdev.serum_paused",
-                    multiplier(value.multiplier()), time(value.remainingTicks()));
-            int width = Math.min(graphics.guiWidth() - 16, Math.max(client.font.width(title), client.font.width(detail)) + 16);
-            int x = (graphics.guiWidth() - width) / 2, y = Math.max(8, graphics.guiHeight() / 2 - 48);
-            int color = ToolOverlay.color(formulation) | 0xFF000000;
-            graphics.fill(x, y, x + width, y + 32, 0xD0181C22);
-            graphics.fill(x, y, x + 2, y + 32, color);
-            graphics.text(client.font, title, x + 8, y + 5, 0xFFE4E6EA);
-            graphics.text(client.font, detail, x + 8, y + 18, color);
-        });
+    public static Component detail(SerumStatusPayload value) {
+        return Component.translatable(value.ticking() ? "overlay.deisdev.serum_running" : "overlay.deisdev.serum_paused",
+                multiplier(value.multiplier()), time(value.remainingTicks()));
+    }
+
+    public static SerumCard.Card extract(Minecraft client) {
+        var pos = target(client);
+        if (pos == null) { return null; }
+        var formulation = ((PreservationLevel) client.level).preserve$treatments().get(pos.asLong()).formulation();
+        var title = Component.translatable("item.deisdev." + formulation.getSerializedName());
+        var detail = current(client).map(SerumFeedback::detail).orElseGet(() -> Component.translatable("overlay.deisdev.serum_updating"));
+        var shape = client.level.getBlockState(pos).getShape(client.level, pos);
+        double top = shape.isEmpty() ? 1 : shape.max(net.minecraft.core.Direction.Axis.Y);
+        return SerumCard.layout(client.font, new net.minecraft.world.phys.Vec3(pos.getX() + 0.5, pos.getY() + top + 0.12, pos.getZ() + 0.5),
+                title, detail, ToolOverlay.color(formulation) | 0xFF000000);
     }
 }

@@ -92,8 +92,8 @@
   "overlay.deisdev.action.accelerate_block_entity": "Faster block entity ticks",
   "overlay.deisdev.action.accelerate_random_block": "Extra random tick attempts",
   "overlay.deisdev.action.accelerate_scheduled_block": "Shorter scheduled block delays",
-  "overlay.deisdev.serum_running": "%s speed  ·  %s remaining",
-  "overlay.deisdev.serum_paused": "%s speed  ·  %s paused",
+  "overlay.deisdev.serum_running": "%s speed  ·  %s left",
+  "overlay.deisdev.serum_paused": "%s speed  ·  %s left (paused)",
   "config.deisdev.gameplay": "Gameplay",
   "config.deisdev.gameplay.description": "Adjust serums, enchanting, treatment limits and component trades.",
   "config.deisdev.gameplay.open": "Gameplay settings",
@@ -155,5 +155,6 @@
   "config.deisdev.gameplay.trade.max_uses": "Purchases before restock",
   "config.deisdev.gameplay.trade.max_uses.description": "Number of times the offer can be used before the villager needs to restock.",
   "config.deisdev.gameplay.trade.end_stone": "Additional End stone cost",
-  "config.deisdev.gameplay.trade.end_stone.description": "Set to 0 to charge only emeralds."
+  "config.deisdev.gameplay.trade.end_stone.description": "Set to 0 to charge only emeralds.",
+  "overlay.deisdev.serum_updating": "Updating serum status…"
 }
