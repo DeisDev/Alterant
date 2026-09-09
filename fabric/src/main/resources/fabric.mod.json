@@ -10,6 +10,7 @@
   "license": "${license}",
   "environment": "*",
   "entrypoints": {
+    "jade": ["com.deisdev.preserve.integration.jade.PreserveJade"],
     "modmenu": ["com.deisdev.preserve.client.PreserveModMenu"],
     "client": ["com.deisdev.preserve.client.PreserveClient"],
     "main": [
@@ -21,6 +22,7 @@
     "${mod_id}.fabric.mixins.json"
   ],
   "suggests": {
+    "jade": "*",
     "yet_another_config_lib_v3": ">=3.9.6",
     "modmenu": ">=20.0.1"
   },

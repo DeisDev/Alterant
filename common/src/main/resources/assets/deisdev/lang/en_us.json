@@ -41,6 +41,7 @@
   "item.deisdev.preserving_brush.area": "Mode: 3\u00d73 surface",
   "item.deisdev.preserving_brush.mode": "Sneak-use in air to change mode",
   "overlay.deisdev.need_compound": "Hold a compound jar in your offhand",
+  "overlay.deisdev.need_serum": "Hold a serum dose in your offhand",
   "overlay.deisdev.surface_preview": "Center first \u00b7 Some targets may be skipped",
   "overlay.deisdev.treated": "%s coating \u00b7 %s bars",
   "item.deisdev.scraper.use": "Remove a coating (no refund)",
@@ -94,6 +95,11 @@
   "overlay.deisdev.action.accelerate_scheduled_block": "Shorter scheduled block delays",
   "overlay.deisdev.serum_running": "%s speed  ·  %s left",
   "overlay.deisdev.serum_paused": "%s speed  ·  %s left (paused)",
+  "overlay.deisdev.serum_updating": "Updating serum status…",
+  "config.jade.plugin_deisdev.treatment": "Applied formula",
+  "jade.deisdev.formula": "Formula: %s",
+  "jade.deisdev.permanent": "Duration: until removed",
+  "jade.deisdev.loaded_time": "Timer pauses outside ticking chunks",
   "config.deisdev.gameplay": "Gameplay",
   "config.deisdev.gameplay.description": "Adjust serums, enchanting, treatment limits and component trades.",
   "config.deisdev.gameplay.open": "Gameplay settings",
@@ -155,7 +161,5 @@
   "config.deisdev.gameplay.trade.max_uses": "Purchases before restock",
   "config.deisdev.gameplay.trade.max_uses.description": "Number of times the offer can be used before the villager needs to restock.",
   "config.deisdev.gameplay.trade.end_stone": "Additional End stone cost",
-  "config.deisdev.gameplay.trade.end_stone.description": "Set to 0 to charge only emeralds.",
-  "overlay.deisdev.serum_updating": "Updating serum status…",
-  "overlay.deisdev.need_serum": "Hold a serum dose in your offhand"
+  "config.deisdev.gameplay.trade.end_stone.description": "Set to 0 to charge only emeralds."
 }
