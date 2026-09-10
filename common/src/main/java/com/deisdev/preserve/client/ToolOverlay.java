@@ -156,23 +156,7 @@ public final class ToolOverlay {
     }
     public static void hud(GuiGraphicsExtractor graphics, DeltaTracker delta) {
         var client = Minecraft.getInstance();
-        var lines = tooltipLines(client);
-        if (lines.isEmpty() || graphics.guiWidth() < 48 || graphics.guiHeight() < 48) { return; }
-        boolean basic = ClientConfig.get().settings().tooltip() == ClientConfig.TooltipMode.BASIC;
-        int width = Math.min(graphics.guiWidth() - 16, Math.min(basic ? 200 : 260, lines.stream().mapToInt(client.font::width).max().orElse(140) + 12));
-        var wrapped = lines.stream().flatMap(line -> client.font.split(line, width - 12).stream()).toList();
-        int count = Math.min(wrapped.size(), Math.max(1, (graphics.guiHeight() - 96) / 11));
-        // Leave the top center to Jade and the lower center to the hotbar and action messages.
-        int y = Math.max(8, graphics.guiHeight() - 80 - (8 + count * 11));
-        int bottom = y + 8 + count * 11;
-        graphics.fill(10, y, 6 + width, bottom, 0xC0181C22);
-        graphics.fill(8, y + 2, 10, bottom - 2, 0xC0181C22);
-        graphics.fill(6 + width, y + 2, 8 + width, bottom - 2, 0xC0181C22);
-        for (int line = 0; line < count; line++) {
-            var text = line == count - 1 && count < wrapped.size() ? Component.translatable("overlay.deisdev.more").getVisualOrderText() : wrapped.get(line);
-            graphics.text(client.font, text, 14, y + 5, 0xFFE4E6EA);
-            y += 11;
-        }
+        TooltipHud.render(graphics, client.font, tooltipLines(client), ClientConfig.get().settings());
     }
     private static VoxelShape face(Direction face) {
         return switch (face) {

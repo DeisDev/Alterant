@@ -98,7 +98,8 @@ public final class SerumFeedback {
         var detail = current(client).map(SerumFeedback::detail).orElseGet(() -> Component.translatable("overlay.deisdev.serum_updating"));
         var shape = client.level.getBlockState(pos).getShape(client.level, pos);
         double top = shape.isEmpty() ? 1 : shape.max(net.minecraft.core.Direction.Axis.Y);
-        return SerumCard.layout(client.font, new net.minecraft.world.phys.Vec3(pos.getX() + 0.5, pos.getY() + top + 0.12, pos.getZ() + 0.5),
-                title, detail, ToolOverlay.color(formulation) | 0xFF000000);
+        var display = ClientConfig.get().settings().serum();
+        return SerumCard.layout(client.font, new net.minecraft.world.phys.Vec3(pos.getX() + 0.5, pos.getY() + top + display.y() / 100.0, pos.getZ() + 0.5),
+                title, detail, ToolOverlay.color(formulation) | 0xFF000000, display);
     }
 }
