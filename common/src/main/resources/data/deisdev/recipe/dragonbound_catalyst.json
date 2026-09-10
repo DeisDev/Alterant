@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "minecraft:dragon_breath",
+    "minecraft:dragon_breath",
+    "deisdev:chronal_alloy",
+    "deisdev:chronal_alloy",
+    "minecraft:end_crystal",
+    "minecraft:end_crystal",
+    "minecraft:shulker_shell",
+    "minecraft:shulker_shell"
+  ],
+  "result": {
+    "id": "deisdev:dragonbound_catalyst",
+    "count": 2
+  }
+}

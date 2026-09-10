@@ -5,12 +5,12 @@ import java.util.function.Supplier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Recipe;
 
-/** Vanilla recipe-book counts and selection use item identity; narrow their shared inventory paths to this recipe. */
+/** Vanilla recipe-book counts and selection use item identity; narrow their shared inventory paths to recipes requiring full jars. */
 public final class FullJarCrafting {
     private static final ScopedValue<Boolean> TEMPORAL = ScopedValue.newInstance();
     private FullJarCrafting() {}
     public static <T> T placing(Recipe<?> recipe, Supplier<T> operation) {
-        boolean temporal = recipe instanceof TemporalRecipe;
+        boolean temporal = recipe instanceof TemporalRecipe || recipe instanceof SerumUpgradeRecipe;
         if (!TEMPORAL.isBound() && !temporal) { return operation.get(); }
         return ScopedValue.where(TEMPORAL, temporal).call(operation::get);
     }

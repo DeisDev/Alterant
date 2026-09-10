@@ -11,7 +11,10 @@
   },
   "formulations": [
     "time_serum",
-    "suspicious_time_serum"
+    "suspicious_time_serum",
+    "refined_time_serum",
+    "enduring_time_serum",
+    "overcharged_time_serum"
   ],
   "actions": [
     "accelerate_scheduled_block"

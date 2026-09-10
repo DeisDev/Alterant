@@ -1,0 +1,17 @@
+Preserve Assets
+Copyright (C) 2026 DeisDev. All Rights Reserved.
+SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
+
+This notice covers all Preserve assets, including:
+
+- Every file under common/src/main/resources/assets/ and any loader's
+  src/main/resources/assets/ directory, distributed under assets/ in jars.
+- Textures, sprites, models, animations, GUI artwork, icons, logos, sounds,
+  music, fonts, localization and associated asset definitions.
+- Original artwork and asset source files, including those under art/,
+  and Preserve visual or audio assets elsewhere in the project.
+
+These assets are excluded from the GNU GPL license that covers Preserve's
+code and other non-asset material. No permission to copy, modify, redistribute,
+sublicense or reuse these assets is granted by that GPL license. Such uses
+require written permission from DeisDev, except as permitted by applicable law.

@@ -4,10 +4,47 @@
   "coatings_per_chunk": 4096,
   "area_limit": 9,
   "time_serums": {
-    "multiplier": 2.0,
-    "suspicious_min": 1.5,
-    "suspicious_max": 8.0,
-    "duration_ticks": 24000,
+    "regular": {
+      "multiplier": 2.0,
+      "duration_ticks": 3600
+    },
+    "suspicious": {
+      "duration_ticks": 2400,
+      "outcomes": [
+        {
+          "multiplier": 1.5,
+          "weight": 10
+        },
+        {
+          "multiplier": 2.0,
+          "weight": 40
+        },
+        {
+          "multiplier": 3.0,
+          "weight": 30
+        },
+        {
+          "multiplier": 4.0,
+          "weight": 18
+        },
+        {
+          "multiplier": 8.0,
+          "weight": 2
+        }
+      ]
+    },
+    "refined": {
+      "multiplier": 4.0,
+      "duration_ticks": 2400
+    },
+    "enduring": {
+      "multiplier": 2.0,
+      "duration_ticks": 9600
+    },
+    "overcharged": {
+      "multiplier": 8.0,
+      "duration_ticks": 1200
+    },
     "enchant_level": 35,
     "enchant_levels_spent": 3,
     "lapis_cost": 3,

@@ -49,6 +49,9 @@ public final class ToolOverlay {
             case PRESERVING_SEALANT -> 0xDDE1B957;
             case STRUCTURAL_STASIS -> 0xDD72BAE8;
             case TEMPORAL_STASIS -> 0xDDB89BE7;
+            case REFINED_TIME_SERUM -> 0xDD80B4CF;
+            case ENDURING_TIME_SERUM -> 0xDDE5B753;
+            case OVERCHARGED_TIME_SERUM -> 0xDDD568EB;
             case TIME_SERUM -> 0xDD49DDE0;
             case SUSPICIOUS_TIME_SERUM -> 0xDDD568EB;
         };

@@ -12,7 +12,7 @@ java {
 }
 
 tasks.withType(Jar).configureEach {
-    from(rootProject.files('LICENSE', 'LICENSE-CC0', 'NOTICE')) {
+    from(rootProject.files('LICENSE', 'LICENSE-ASSETS', 'LICENSE-CC0', 'NOTICE')) {
         rename { "${it}_${mod_name}" }
     }
 }

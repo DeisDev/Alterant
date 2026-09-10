@@ -86,8 +86,8 @@ public final class InspectionQueries {
                 "Speed: %.2fx; %.1f loaded minutes remaining", effect.multiplier(), effect.remainingTicks() / 1200.0))); }
         else if (requested.accelerates()) {
             var time = rules.policy().time();
-            details.add(requested == Formulation.TIME_SERUM ? "Speed: " + time.multiplier() + "x" : "Random speed: " + time.suspiciousMin() + "x - " + time.suspiciousMax() + "x");
-            details.add("Duration: " + time.durationTicks() / 1200.0 + " loaded minutes");
+            details.add(requested == Formulation.SUSPICIOUS_TIME_SERUM ? "Random speed: " + time.suspicious().minimum() + "x - " + time.suspicious().maximum() + "x" : "Speed: " + time.profile(requested).multiplier() + "x");
+            details.add("Duration: " + time.durationTicks(requested) / 1200.0 + " loaded minutes");
         }
         for (var profile : report.profiles()) { details.add("Profile: " + profile); }
         for (var adapter : report.adapters()) { details.add("Integration: " + adapter); }

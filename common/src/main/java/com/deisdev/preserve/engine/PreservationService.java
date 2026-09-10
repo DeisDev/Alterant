@@ -258,9 +258,9 @@ public final class PreservationService {
 
     private Acceleration newAcceleration(Formulation formulation) {
         var settings = RuleRegistry.get(level.getServer()).policy().time();
-        double speed = formulation == Formulation.TIME_SERUM ? settings.multiplier()
-                : settings.suspiciousMin() + level.getRandom().nextDouble() * (settings.suspiciousMax() - settings.suspiciousMin());
-        return new Acceleration(speed, settings.durationTicks());
+        double speed = formulation == Formulation.SUSPICIOUS_TIME_SERUM ? settings.suspicious().roll(level.getRandom())
+                : settings.profile(formulation).multiplier();
+        return new Acceleration(speed, settings.durationTicks(formulation));
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})

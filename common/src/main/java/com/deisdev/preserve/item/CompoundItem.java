@@ -48,6 +48,9 @@ public final class CompoundItem extends Item {
             case PRESERVING_SEALANT -> 0xE5B753;
             case STRUCTURAL_STASIS -> 0x80B4CF;
             case TEMPORAL_STASIS -> 0xB891DF;
+            case REFINED_TIME_SERUM -> 0x80B4CF;
+            case ENDURING_TIME_SERUM -> 0xE5B753;
+            case OVERCHARGED_TIME_SERUM -> 0xD568EB;
             case TIME_SERUM -> 0x49DDE0;
             case SUSPICIOUS_TIME_SERUM -> 0xD568EB;
         };

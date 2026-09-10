@@ -1,0 +1,10 @@
+{
+  "type": "deisdev:serum_upgrade",
+  "category": "misc",
+  "input": "time_serum",
+  "result": "enduring_time_serum",
+  "additives": [
+    "deisdev:echo_matrix",
+    "minecraft:ghast_tear"
+  ]
+}

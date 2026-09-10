@@ -25,6 +25,12 @@ public final class PreserveItems {
     public static final Supplier<Item> CHRONAL_DUST = material("chronal_dust");
     public static final Supplier<Item> RESONANT_CRYSTAL = material("resonant_crystal");
     public static final Supplier<Item> QUANTUM_LENS = material("quantum_lens");
+    public static final Supplier<Item> CHRONAL_ALLOY = material("chronal_alloy");
+    public static final Supplier<Item> ECHO_MATRIX = material("echo_matrix");
+    public static final Supplier<Item> DRAGONBOUND_CATALYST = material("dragonbound_catalyst");
+    public static final Supplier<CompoundItem> REFINED_TIME_SERUM = registerCompound(Formulation.REFINED_TIME_SERUM);
+    public static final Supplier<CompoundItem> ENDURING_TIME_SERUM = registerCompound(Formulation.ENDURING_TIME_SERUM);
+    public static final Supplier<CompoundItem> OVERCHARGED_TIME_SERUM = registerCompound(Formulation.OVERCHARGED_TIME_SERUM);
     public static final Supplier<CompoundItem> TIME_SERUM = registerCompound(Formulation.TIME_SERUM);
     public static final Supplier<CompoundItem> SUSPICIOUS_TIME_SERUM = registerCompound(Formulation.SUSPICIOUS_TIME_SERUM);
     public static final Supplier<QuantumApplicatorItem> QUANTUM_APPLICATOR = Services.PLATFORM.registerItem("quantum_applicator", QuantumApplicatorItem::new);
@@ -48,7 +54,8 @@ public final class PreserveItems {
     public static List<Supplier<? extends Item>> all() {
         return List.of(BINDING_PASTE, INERT_POWDER, WAXED_MEMBRANE, STABILIZING_LATTICE, TEMPORAL_CORE,
                 GROWTH_INHIBITOR, PRESERVING_SEALANT, STRUCTURAL_STASIS, TEMPORAL_STASIS, PRESERVING_BRUSH, SCRAPER,
-                CHRONAL_DUST, RESONANT_CRYSTAL, QUANTUM_LENS, TIME_SERUM, SUSPICIOUS_TIME_SERUM, QUANTUM_APPLICATOR);
+                CHRONAL_DUST, RESONANT_CRYSTAL, QUANTUM_LENS, TIME_SERUM, SUSPICIOUS_TIME_SERUM, QUANTUM_APPLICATOR,
+                CHRONAL_ALLOY, ECHO_MATRIX, DRAGONBOUND_CATALYST, REFINED_TIME_SERUM, ENDURING_TIME_SERUM, OVERCHARGED_TIME_SERUM);
     }
     public static CompoundItem compound(Formulation formulation) {
         return switch (formulation) {
@@ -56,6 +63,9 @@ public final class PreserveItems {
             case PRESERVING_SEALANT -> PRESERVING_SEALANT.get();
             case STRUCTURAL_STASIS -> STRUCTURAL_STASIS.get();
             case TEMPORAL_STASIS -> TEMPORAL_STASIS.get();
+            case REFINED_TIME_SERUM -> REFINED_TIME_SERUM.get();
+            case ENDURING_TIME_SERUM -> ENDURING_TIME_SERUM.get();
+            case OVERCHARGED_TIME_SERUM -> OVERCHARGED_TIME_SERUM.get();
             case TIME_SERUM -> TIME_SERUM.get();
             case SUSPICIOUS_TIME_SERUM -> SUSPICIOUS_TIME_SERUM.get();
         };

@@ -14,7 +14,7 @@ import net.minecraft.world.item.trading.MerchantOffer;
 /** Prices affect newly generated offers; vanilla retains existing offers and their stock. */
 public record ComponentTrade(String component, String profession, int level, int emeralds, int count, int maxUses, int endStone) {
     private static final Set<String> COMPONENTS = Set.of("binding_paste", "inert_powder", "waxed_membrane", "stabilizing_lattice",
-            "temporal_core", "chronal_dust", "resonant_crystal", "quantum_lens");
+            "temporal_core", "chronal_dust", "resonant_crystal", "quantum_lens", "chronal_alloy", "echo_matrix", "dragonbound_catalyst");
     private static final Set<String> PROFESSIONS = Set.of("cleric", "mason", "leatherworker", "toolsmith", "armorer", "weaponsmith", "librarian", "farmer", "fisherman", "shepherd", "fletcher", "cartographer", "butcher");
     public static final List<ComponentTrade> DEFAULT = List.of(
             new ComponentTrade("binding_paste", "mason", 2, 8, 2, 8, 0),

@@ -47,10 +47,33 @@ public final class GameplayConfigScreen {
         var time = ConfigCategory.createBuilder().name(text("serums")).option(LabelOption.create(status))
                 .option(LabelOption.create(text("future")));
         var defaults = TimeSettings.DEFAULT;
-        time.option(draft.decimal("multiplier", defaults.multiplier(), () -> draft.multiplier, value -> draft.multiplier = value, 1.01, 8));
-        time.option(draft.decimal("suspicious_min", defaults.suspiciousMin(), () -> draft.minimum, value -> draft.minimum = value, 1.01, 8));
-        time.option(draft.decimal("suspicious_max", defaults.suspiciousMax(), () -> draft.maximum, value -> draft.maximum = value, 1.01, 8));
-        time.option(draft.decimal("duration", 20, () -> draft.minutes, value -> draft.minutes = value, 1.0 / 1200, 1440));
+        for (int index = 0; index < Draft.PROFILES.size(); index++) {
+            final int slot = index;
+            String key = Draft.PROFILES.get(index);
+            var base = defaults.profile(Draft.FORMULATIONS.get(index));
+            var group = OptionGroup.createBuilder().name(Component.translatable("item.deisdev." + Draft.FORMULATIONS.get(index).getSerializedName()));
+            group.option(draft.decimal(key + ".multiplier", base.multiplier(), () -> draft.speeds[slot], value -> draft.speeds[slot] = value, 1.01, 8));
+            group.option(draft.decimal(key + ".duration", base.durationTicks() / 1200.0, () -> draft.minutes[slot], value -> draft.minutes[slot] = value, 1.0 / 1200, 1440));
+            time.group(group.build());
+        }
+        var suspicious = OptionGroup.createBuilder().name(Component.translatable("item.deisdev.suspicious_time_serum"));
+        suspicious.option(draft.decimal("suspicious.duration", 2, () -> draft.minutes[4], value -> draft.minutes[4] = value, 1.0 / 1200, 1440));
+        suspicious.option(LabelOption.create(text("outcomes.description")));
+        time.group(suspicious.build());
+        for (int index = 0; index < 16; index++) {
+            final int slot = index;
+            String key = "outcome." + index;
+            var base = index < TimeSettings.Suspicious.DEFAULT_OUTCOMES.size() ? TimeSettings.Suspicious.DEFAULT_OUTCOMES.get(index) : null;
+            var group = OptionGroup.createBuilder().name(Component.translatable("config.deisdev.gameplay.outcome", index + 1)).collapsed(true);
+            group.option(draft.decimal(key + ".multiplier", base == null ? 2 : base.multiplier(), () -> draft.rollSpeeds[slot], value -> draft.rollSpeeds[slot] = value, 1.01, 8));
+            group.option(draft.integer(key + ".weight", base == null ? 0 : base.weight(), () -> draft.weights[slot], value -> draft.weights[slot] = value, 0, 1000000));
+            var chance = new ChanceState(() -> draft.chance(slot));
+            draft.chances.add(chance);
+            group.option(LabelOption.createBuilder().state(chance).build());
+            time.group(group.build());
+        }
+        draft.refreshChances();
+        draft.options.forEach((key, option) -> { if (key.startsWith("outcome.") && key.endsWith(".weight")) { option.addListener((changed, value) -> draft.refreshChances()); } });
         var enchanting = OptionGroup.createBuilder().name(text("enchanting"));
         enchanting.option(draft.integer("enchant_level", defaults.enchantLevel(), () -> draft.level, value -> draft.level = value, 1, 100));
         enchanting.option(draft.integer("enchant_levels_spent", defaults.enchantLevelsSpent(), () -> draft.spent, value -> draft.spent = value, 1, 100));
@@ -128,6 +151,25 @@ public final class GameplayConfigScreen {
         @Override public void onClose() { minecraft.gui.setScreen(parent); }
     }
     private enum Profession { CLERIC, MASON, LEATHERWORKER, TOOLSMITH, ARMORER, WEAPONSMITH, LIBRARIAN, FARMER, FISHERMAN, SHEPHERD, FLETCHER, CARTOGRAPHER, BUTCHER }
+    /** Derived text emits updates to YACL widgets without becoming a pending gameplay edit. */
+    private static final class ChanceState implements StateManager<Component> {
+        private final Supplier<Component> calculate;
+        private Component value;
+        private StateListener<Component> listener = StateListener.noop();
+        ChanceState(Supplier<Component> calculate) { this.calculate = calculate; value = calculate.get(); }
+        @Override public Component get() { return value; }
+        @Override public void sync() {
+            var previous = value; value = calculate.get();
+            if (!value.equals(previous)) { listener.onStateChange(previous, value); }
+        }
+        @Override public void set(Component ignored) {}
+        @Override public void apply() {}
+        @Override public void resetToDefault(ResetAction action) {}
+        @Override public boolean isSynced() { return true; }
+        @Override public boolean isAlwaysSynced() { return true; }
+        @Override public boolean isDefault() { return true; }
+        @Override public void addListener(StateListener<Component> next) { listener = listener.andThen(next); }
+    }
     private static final class TradeDraft {
         final String component;
         final ComponentTrade defaults;
@@ -150,12 +192,20 @@ public final class GameplayConfigScreen {
         final Map<String, Option<?>> options = new LinkedHashMap<>();
         final EnumSet<Formulation> disabled;
         final List<TradeDraft> trades = new ArrayList<>();
-        double multiplier, minimum, maximum, minutes;
+        final List<ChanceState> chances = new ArrayList<>();
+        static final List<String> PROFILES = List.of("regular", "refined", "enduring", "overcharged");
+        static final List<Formulation> FORMULATIONS = List.of(Formulation.TIME_SERUM, Formulation.REFINED_TIME_SERUM, Formulation.ENDURING_TIME_SERUM, Formulation.OVERCHARGED_TIME_SERUM);
+        final double[] speeds = new double[4], minutes = new double[5], rollSpeeds = new double[16];
+        final int[] weights = new int[16];
         int level, spent, lapis, shelves, chunkLimit, areaLimit;
         boolean partial;
         Draft(ServerPolicy policy, boolean editable) {
             this.editable = editable;
-            var time = policy.time(); multiplier = time.multiplier(); minimum = time.suspiciousMin(); maximum = time.suspiciousMax(); minutes = time.durationTicks() / 1200.0;
+            var time = policy.time();
+            for (int index = 0; index < 4; index++) { var profile = time.profile(FORMULATIONS.get(index)); speeds[index] = profile.multiplier(); minutes[index] = profile.durationTicks() / 1200.0; }
+            minutes[4] = time.suspicious().durationTicks() / 1200.0;
+            var outcomes = time.suspicious().outcomes();
+            for (int index = 0; index < 16; index++) { rollSpeeds[index] = index < outcomes.size() ? outcomes.get(index).multiplier() : 2; weights[index] = index < outcomes.size() ? outcomes.get(index).weight() : 0; }
             level = time.enchantLevel(); spent = time.enchantLevelsSpent(); lapis = time.lapisCost(); shelves = time.bookshelves();
             disabled = EnumSet.noneOf(Formulation.class); disabled.addAll(policy.disabled());
             partial = policy.allowPartial(); chunkLimit = policy.chunkLimit(); areaLimit = policy.areaLimit();
@@ -165,7 +215,8 @@ public final class GameplayConfigScreen {
             }
         }
         <T> Option<T> track(String key, Option<T> option) { options.put(key, option); return option; }
-        String label(String key) { return key.startsWith("trade.") ? "trade." + key.substring(key.lastIndexOf('.') + 1) : key; }
+        String label(String key) { return key.startsWith("trade.") ? "trade." + key.substring(key.lastIndexOf('.') + 1)
+                    : key.startsWith("outcome.") ? "outcome." + key.substring(key.lastIndexOf('.') + 1) : key; }
         Option<Boolean> toggle(String key, boolean def, Supplier<Boolean> get, Consumer<Boolean> set) {
             return track(key, Option.<Boolean>createBuilder().name(text(label(key))).description(OptionDescription.of(text(label(key) + ".description")))
                     .available(editable).binding(def, get, set).controller(TickBoxControllerBuilder::create).build());
@@ -175,17 +226,31 @@ public final class GameplayConfigScreen {
                     .available(editable).binding(def, get, set).controller(option -> IntegerFieldControllerBuilder.create(option).range(min, max)).build());
         }
         Option<Double> decimal(String key, double def, Supplier<Double> get, Consumer<Double> set, double min, double max) {
-            return track(key, Option.<Double>createBuilder().name(text(key)).description(OptionDescription.of(text(key + ".description")))
+            return track(key, Option.<Double>createBuilder().name(text(label(key))).description(OptionDescription.of(text(label(key) + ".description")))
                     .available(editable).binding(def, get, set).controller(option -> DoubleFieldControllerBuilder.create(option).range(min, max)).build());
         }
         double number(String key) { return ((Number) options.get(key).pendingValue()).doubleValue(); }
+        void refreshChances() { chances.forEach(ChanceState::sync); }
+        Component chance(int index) {
+            int total = 0;
+            for (int slot = 0; slot < 16; slot++) { var weight = options.get("outcome." + slot + ".weight"); if (weight != null) { total += ((Number) weight.pendingValue()).intValue(); } }
+            var weight = options.get("outcome." + index + ".weight");
+            if (total == 0 || weight == null) { return text("outcome.empty"); }
+            return Component.translatable("config.deisdev.gameplay.outcome.chance", String.format(Locale.ROOT, "%.2f", 100.0 * ((Number) weight.pendingValue()).intValue() / total));
+        }
+        TimeSettings.Profile pendingProfile(String key) {
+            return new TimeSettings.Profile(number(key + ".multiplier"), (int) Math.round(number(key + ".duration") * 1200));
+        }
         TimeSettings pendingTime() {
-            return new TimeSettings(number("multiplier"), number("suspicious_min"), number("suspicious_max"), (int) Math.round(number("duration") * 1200),
+            var outcomes = new ArrayList<TimeSettings.Outcome>();
+            for (int index = 0; index < 16; index++) { int weight = (int) number("outcome." + index + ".weight"); if (weight > 0) { outcomes.add(new TimeSettings.Outcome(number("outcome." + index + ".multiplier"), weight)); } }
+            var suspicious = new TimeSettings.Suspicious((int) Math.round(number("suspicious.duration") * 1200), outcomes);
+            return new TimeSettings(pendingProfile("regular"), suspicious, pendingProfile("refined"), pendingProfile("enduring"), pendingProfile("overcharged"),
                     (int) number("enchant_level"), (int) number("enchant_levels_spent"), (int) number("lapis_cost"), (int) number("bookshelves"));
         }
         ServerPolicy policy() {
             return new ServerPolicy(disabled, partial, chunkLimit, areaLimit,
-                    new TimeSettings(multiplier, minimum, maximum, (int) Math.round(minutes * 1200), level, spent, lapis, shelves),
+                    pendingTime(),
                     trades.stream().filter(trade -> trade.enabled).map(TradeDraft::build).toList());
         }
     }

@@ -21,7 +21,9 @@
       "selectors": [
         "deisdev:preserving_sealant",
         "deisdev:waxed_membrane",
-        "deisdev:chronal_dust"
+        "deisdev:chronal_dust",
+        "deisdev:chronal_alloy",
+        "deisdev:enduring_time_serum"
       ]
     },
     {
@@ -32,7 +34,8 @@
       "bgColor": "#F0181C22",
       "priority": 0,
       "selectors": [
-        "deisdev:structural_stasis"
+        "deisdev:structural_stasis",
+        "deisdev:refined_time_serum"
       ]
     },
     {
@@ -58,7 +61,8 @@
         "deisdev:temporal_core",
         "deisdev:resonant_crystal",
         "deisdev:quantum_lens",
-        "deisdev:quantum_applicator"
+        "deisdev:quantum_applicator",
+        "deisdev:echo_matrix"
       ]
     },
     {
@@ -69,7 +73,9 @@
       "bgColor": "#F0181C22",
       "priority": 0,
       "selectors": [
-        "deisdev:suspicious_time_serum"
+        "deisdev:suspicious_time_serum",
+        "deisdev:dragonbound_catalyst",
+        "deisdev:overcharged_time_serum"
       ]
     },
     {

@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "deisdev:resonant_crystal",
+    "deisdev:resonant_crystal",
+    "minecraft:netherite_scrap",
+    "minecraft:netherite_scrap",
+    "minecraft:diamond",
+    "deisdev:chronal_dust",
+    "deisdev:chronal_dust",
+    "minecraft:blaze_rod"
+  ],
+  "result": {
+    "id": "deisdev:chronal_alloy",
+    "count": 1
+  }
+}

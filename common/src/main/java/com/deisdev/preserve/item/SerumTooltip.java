@@ -20,10 +20,10 @@ public final class SerumTooltip {
     }
     private static void append(Formulation formulation, TimeSettings time, Consumer<Component> lines) {
         var strength = formulation == Formulation.SUSPICIOUS_TIME_SERUM
-                ? Component.translatable("item.deisdev.serum.random_strength", number(time.suspiciousMin()), number(time.suspiciousMax()))
-                : Component.translatable("item.deisdev.serum.strength", number(time.multiplier()));
+                ? Component.translatable("item.deisdev.serum.random_strength", number(time.suspicious().minimum()), number(time.suspicious().maximum()))
+                : Component.translatable("item.deisdev.serum.strength", number(time.profile(formulation).multiplier()));
         lines.accept(strength.withStyle(ChatFormatting.GRAY));
-        String minutes = BigDecimal.valueOf(time.durationTicks()).divide(BigDecimal.valueOf(1200), 5, RoundingMode.HALF_UP)
+        String minutes = BigDecimal.valueOf(time.durationTicks(formulation)).divide(BigDecimal.valueOf(1200), 5, RoundingMode.HALF_UP)
                 .stripTrailingZeros().toPlainString();
         lines.accept(Component.translatable("item.deisdev.serum.duration", minutes).withStyle(ChatFormatting.GRAY));
     }

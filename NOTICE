@@ -1,8 +1,9 @@
 Preserve
 Copyright (C) 2026 DeisDev
 
-Except for material with separate notices below, Preserve's source code and
-original assets are offered under the GNU General Public License as published
+Except for assets covered by LICENSE-ASSETS and material with separate notices
+below, Preserve's code, build scripts, gameplay data, documentation and other
+non-asset material are offered under the GNU General Public License as published
 by the Free Software Foundation, either version 3 of the License, or (at your
 option) any later version (SPDX-License-Identifier: GPL-3.0-or-later).
 
@@ -10,6 +11,15 @@ Preserve is distributed in the hope that it will be useful, but WITHOUT ANY
 WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 The complete license is supplied in LICENSE (LICENSE_Preserve in jars).
+
+Assets: All Rights Reserved
+
+Preserve's assets are excluded from the GNU GPL grant above. All rights are
+reserved by DeisDev. Their scope and terms are supplied in LICENSE-ASSETS
+(LICENSE-ASSETS_Preserve in jars; LicenseRef-All-Rights-Reserved).
+
+The package metadata lists both licenses because they cover different parts
+of the mod. The asset terms do not restrict the GPL-covered code.
 
 Additional permission under GNU GPL version 3 section 7
 
@@ -33,6 +43,3 @@ https://github.com/jaredlll08/MultiLoader-Template
 The template material remains available under CC0 1.0 Universal (CC0-1.0).
 Its original license text is preserved in LICENSE-CC0
 (LICENSE-CC0_Preserve in jars).
-
-Preserve material previously made available under CC0 retains that permission.
-Adopting GPLv3-or-later does not revoke or restrict earlier CC0 grants.

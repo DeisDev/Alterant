@@ -1,13 +1,17 @@
 # Changelog
 
-Preserve follows [Semantic Versioning 2.0.0](https://semver.org/). Versions before 1.0.0 are experimental and may introduce incompatible changes.
+Preserve is unreleased and under active development.
 
 ## [Unreleased]
 
 ### Added
 
-- An ongoing changelog.
+- Refined, Enduring and Overcharged Time Serums.
+- Chronal Alloy, Echo Matrix and Dragonbound Catalyst crafting materials.
+- Settings for each serum's speed, duration and Suspicious Serum chances.
 
 ### Changed
 
-- Adopt GNU GPL version 3 or later.
+- Rebalanced serum durations and Suspicious Serum rolls.
+- Removed the old serum settings format.
+- Code uses GPLv3 or later; assets are All Rights Reserved.

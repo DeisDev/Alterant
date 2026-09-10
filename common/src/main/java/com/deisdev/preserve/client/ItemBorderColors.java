@@ -22,11 +22,11 @@ public final class ItemBorderColors {
         if (!id.getNamespace().equals("deisdev")) { return fallback; }
         return switch (id.getPath()) {
             case "growth_inhibitor" -> GREEN;
-            case "preserving_sealant", "waxed_membrane", "chronal_dust" -> GOLD;
-            case "structural_stasis" -> BLUE;
+            case "preserving_sealant", "waxed_membrane", "chronal_dust", "chronal_alloy", "enduring_time_serum" -> GOLD;
+            case "structural_stasis", "refined_time_serum" -> BLUE;
             case "temporal_stasis" -> PURPLE;
-            case "time_serum", "temporal_core", "resonant_crystal", "quantum_lens", "quantum_applicator" -> CYAN;
-            case "suspicious_time_serum" -> PINK;
+            case "time_serum", "temporal_core", "resonant_crystal", "quantum_lens", "quantum_applicator", "echo_matrix" -> CYAN;
+            case "suspicious_time_serum", "overcharged_time_serum", "dragonbound_catalyst" -> PINK;
             case "binding_paste", "preserving_brush" -> BEIGE;
             case "inert_powder", "stabilizing_lattice", "scraper" -> STEEL;
             default -> fallback;
