@@ -33,4 +33,8 @@ Serum feedback appears immediately above the targeted block, with its saved spee
 
 **Uninstall:** back up the world, discard Preserve items, run `/preserve prepare-uninstall start`, and wait for **complete**. Then stop the server and remove the mod.
 
-Experimental alpha. Build: `./gradlew build`; jars: each loader's `build/libs`. Based on [MultiLoader-Template](https://github.com/jaredlll08/MultiLoader-Template), under CC0.
+Experimental alpha. Build: `./gradlew build`; jars: each loader's `build/libs`.
+
+Preserve follows [Semantic Versioning 2.0.0](https://semver.org/); see [CHANGELOG.md](CHANGELOG.md).
+
+Licensed under [GNU GPL version 3 or later](LICENSE), with a Minecraft/mod-loader linking permission in [NOTICE](NOTICE). Based on [MultiLoader-Template](https://github.com/jaredlll08/MultiLoader-Template); its [CC0 license](LICENSE-CC0) and attribution are preserved. Earlier CC0 grants remain valid.

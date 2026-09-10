@@ -1,0 +1,38 @@
+Preserve
+Copyright (C) 2026 DeisDev
+
+Except for material with separate notices below, Preserve's source code and
+original assets are offered under the GNU General Public License as published
+by the Free Software Foundation, either version 3 of the License, or (at your
+option) any later version (SPDX-License-Identifier: GPL-3.0-or-later).
+
+Preserve is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+The complete license is supplied in LICENSE (LICENSE_Preserve in jars).
+
+Additional permission under GNU GPL version 3 section 7
+
+If you modify Preserve, or any covered work, by linking or combining it with
+Minecraft: Java Edition (or a modified version of that game), containing parts
+covered by the Minecraft End User License Agreement, or with Fabric Loader,
+Fabric API, or NeoForge (or modified versions of those components), containing
+parts covered by their respective licenses, the licensors of Preserve grant
+you additional permission to convey the resulting work.
+
+This permission applies only to the named game and loader components. It does
+not grant rights to distribute Minecraft or change those components' licenses.
+Preserve's covered source remains subject to the GNU GPL version 3 or later.
+
+MultiLoader-Template attribution
+
+Preserve is based on Jaredlll08's MultiLoader-Template, Minecraft 26.2 branch,
+revision 178d1abb85e7d4ef7903bdd8fe9f4f9e0748c80c:
+https://github.com/jaredlll08/MultiLoader-Template
+
+The template material remains available under CC0 1.0 Universal (CC0-1.0).
+Its original license text is preserved in LICENSE-CC0
+(LICENSE-CC0_Preserve in jars).
+
+Preserve material previously made available under CC0 retains that permission.
+Adopting GPLv3-or-later does not revoke or restrict earlier CC0 grants.
