@@ -19,8 +19,12 @@ Alterant is unreleased and under active development.
 
 ### Changed
 
+- Basic now includes a compact tool HUD with doses, modes and controls.
 - Renamed the mod to Alterant.
-- Basic display keeps world feedback quiet; detailed panels are available in Advanced.
 - Rebalanced serum durations and Suspicious Serum rolls.
 - Removed the old serum settings format.
 - Code uses GPLv3 or later; assets are All Rights Reserved.
+
+### Fixed
+
+- Restored missing Jade formulation status and serum cards in Basic mode.

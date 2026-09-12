@@ -11,14 +11,14 @@ import snownee.jade.api.IBlockComponentProvider;
 import snownee.jade.api.ITooltip;
 import snownee.jade.api.config.IPluginConfig;
 
-/** Isolated optional client provider; detailed world status is opt-in with Advanced inspection. */
+/** Isolated optional client provider; applied formulation status is visible unless tooltips are hidden. */
 public final class JadeTreatmentProvider implements IBlockComponentProvider {
     public static final JadeTreatmentProvider INSTANCE = new JadeTreatmentProvider();
     private JadeTreatmentProvider() {}
     @Override public Identifier getUid() { return JadeSerumData.ID; }
 
     @Override public void appendTooltip(ITooltip tooltip, BlockAccessor accessor, IPluginConfig config) {
-        if (ClientConfig.get().settings().tooltip() != ClientConfig.TooltipMode.ADVANCED || !accessor.getLevel().hasChunkAt(accessor.getPosition())) { return; }
+        if (ClientConfig.get().settings().tooltip() == ClientConfig.TooltipMode.HIDDEN || !accessor.getLevel().hasChunkAt(accessor.getPosition())) { return; }
         var state = (PreservationLevel) accessor.getLevel();
         var treatment = state.alterant$treatments().get(accessor.getPosition().asLong());
         if (treatment == null) { return; }

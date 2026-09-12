@@ -7,6 +7,8 @@ import com.deisdev.alterant.engine.SurfaceTargets;
 import com.deisdev.alterant.item.CompoundItem;
 import com.deisdev.alterant.item.AlterantItems;
 import com.deisdev.alterant.item.PreservingBrushItem;
+import com.deisdev.alterant.item.ReleaseSolventItem;
+import com.deisdev.alterant.item.ShapingStylusItem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -126,7 +128,8 @@ public final class ToolOverlay {
     }
     public static List<Component> tooltipLines(Minecraft client) {
         var mode = ClientConfig.get().settings().tooltip();
-        if (!active(client) || mode != ClientConfig.TooltipMode.ADVANCED) { return List.of(); }
+        if (!active(client) || mode == ClientConfig.TooltipMode.HIDDEN) { return List.of(); }
+        if (mode == ClientConfig.TooltipMode.BASIC) { return basicLines(client); }
         var player = client.player;
         if (player.getMainHandItem().is(AlterantItems.MASKING_STRIPS.get())) { return List.of(); }
         if (player.getMainHandItem().is(AlterantItems.SHAPING_STYLUS.get())) { return List.of(Component.translatable("item.alterant.shaping_stylus.use")); }
@@ -174,6 +177,65 @@ public final class ToolOverlay {
             for (var detail : report.details()) { lines.add(Component.literal(detail)); }
         }); }
         return List.copyOf(lines);
+    }
+    private static List<Component> basicLines(Minecraft client) {
+        var player = client.player;
+        var tool = player.getMainHandItem();
+        boolean sneaking = player.isSecondaryUseActive();
+        boolean brush = tool.getItem() instanceof PreservingBrushItem;
+        boolean applicator = tool.is(AlterantItems.QUANTUM_APPLICATOR.get());
+        if (brush || applicator) {
+            var jar = player.getOffhandItem();
+            var needed = Component.translatable("overlay.alterant.basic." + (applicator ? "need_serum" : "need_compound"));
+            if (!(jar.getItem() instanceof CompoundItem compound) || compound.formulation().accelerates() != applicator) {
+                return List.of(tool.getHoverName(), needed);
+            }
+            var title = doses(jar.getHoverName(), compound.remaining(jar), compound.formulation().capacity())
+                    .withColor(color(compound.formulation()) & 0xFFFFFF);
+            var action = compound.remaining(jar) == 0 ? needed : applicator
+                    ? Component.translatable("overlay.alterant.basic.apply_serum")
+                    : sneaking ? Component.translatable("overlay.alterant.basic.replace_mode")
+                    : Component.translatable("overlay.alterant.basic.apply", surfaceMode(PreservingBrushItem.area(tool)));
+            return List.of(title, action);
+        }
+        if (tool.getItem() instanceof ReleaseSolventItem) {
+            return List.of(doses(tool.getHoverName(), ReleaseSolventItem.remaining(tool), ReleaseSolventItem.CAPACITY),
+                    sneaking ? Component.translatable("overlay.alterant.basic.change_mode")
+                            : Component.translatable("overlay.alterant.basic.dissolve", surfaceMode(ReleaseSolventItem.area(tool))));
+        }
+        if (tool.is(AlterantItems.SHAPING_STYLUS.get())) {
+            int mode = ShapingStylusItem.mode(tool);
+            return List.of(Component.translatable("item.alterant.shaping_stylus.mode." + mode),
+                    Component.translatable("overlay.alterant.basic." + (sneaking ? (mode == 1 ? "change_mode" : "commit_mode")
+                            : mode == 1 ? "sample" : "preview")));
+        }
+        if (tool.is(AlterantItems.MASKING_STRIPS.get())) {
+            return List.of(Component.translatable("overlay.alterant.basic.count", tool.getHoverName(), tool.getCount()),
+                    Component.translatable("overlay.alterant.basic." + (sneaking ? "peel" : "mask")));
+        }
+        if (tool.is(AlterantItems.SCRAPER.get())) {
+            Component title = tool.getHoverName();
+            boolean peel = false;
+            if (client.hitResult instanceof BlockHitResult hit && hit.getType() == HitResult.Type.BLOCK
+                    && player.isWithinBlockInteractionRange(hit.getBlockPos(), 0) && client.level.hasChunkAt(hit.getBlockPos())) {
+                var store = ((PreservationLevel) client.level).alterant$treatments();
+                peel = sneaking && store.mask(hit.getBlockPos().asLong()) != null;
+                var treatment = store.get(hit.getBlockPos().asLong());
+                if (peel) { title = Component.translatable("item.alterant.masking_strips"); }
+                else if (treatment != null) {
+                    title = Component.translatable("item.alterant." + treatment.formulation().getSerializedName())
+                            .withColor(color(treatment.formulation()) & 0xFFFFFF);
+                }
+            }
+            return List.of(title, Component.translatable("overlay.alterant.basic." + (peel ? "peel" : "scrape")));
+        }
+        return List.of(tool.getHoverName());
+    }
+    private static net.minecraft.network.chat.MutableComponent doses(Component name, int remaining, int capacity) {
+        return Component.translatable("overlay.alterant.basic.doses", name, remaining, capacity);
+    }
+    private static Component surfaceMode(boolean area) {
+        return Component.translatable(area ? "overlay.alterant.mode.area" : "overlay.alterant.mode.single");
     }
     private static Component description(Formulation formulation) {
         return Component.translatable("formulation.alterant." + formulation.getSerializedName());

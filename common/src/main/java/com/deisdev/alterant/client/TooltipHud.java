@@ -20,9 +20,12 @@ public final class TooltipHud {
         int availableWidth = (int) ((screenWidth - 16) / scale);
         int availableHeight = (int) ((screenHeight - 16) / scale);
         if (availableWidth < 24 || availableHeight < 19) { return null; }
-        int width = Math.min(availableWidth, Math.min(settings.tooltip() == ClientConfig.TooltipMode.BASIC ? 200 : 260,
+        boolean basic = settings.tooltip() == ClientConfig.TooltipMode.BASIC;
+        int width = Math.min(availableWidth, Math.min(basic ? 200 : 260,
                 lines.stream().mapToInt(font::width).max().orElse(140) + 12));
-        var wrapped = lines.stream().flatMap(line -> font.split(line, width - 12).stream()).toList();
+        // Basic always stays within two rows, including long translations and renamed items.
+        var wrapped = basic ? lines.stream().limit(2).map(line -> compact(font, line, width - 12)).toList()
+                : lines.stream().flatMap(line -> font.split(line, width - 12).stream()).toList();
         int count = Math.min(wrapped.size(), (availableHeight - 8) / 11);
         if (count == 0) { return null; }
         var visible = new java.util.ArrayList<>(wrapped.subList(0, count));
@@ -37,6 +40,13 @@ public final class TooltipHud {
         int x = Math.clamp(hud.anchor().x(remainingX) + hud.x(), 8, remainingX - 8);
         int y = Math.clamp(hud.anchor().y(remainingY) + hud.y(), 8, remainingY - 8);
         return new Panel(x, y, width, height, scale, visible);
+    }
+
+    private static FormattedCharSequence compact(Font font, Component line, int width) {
+        if (font.width(line) <= width) { return line.getVisualOrderText(); }
+        var ellipsis = Component.literal("…").withStyle(line.getStyle());
+        return net.minecraft.locale.Language.getInstance().getVisualOrder(net.minecraft.network.chat.FormattedText.composite(
+                font.substrByWidth(line, width - font.width(ellipsis)), ellipsis));
     }
 
     public static void render(GuiGraphicsExtractor graphics, Font font, List<Component> lines, ClientConfig.Settings settings) {
