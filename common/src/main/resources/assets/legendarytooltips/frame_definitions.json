@@ -8,7 +8,9 @@
       "bgColor": "#F0181C22",
       "priority": 0,
       "selectors": [
-        "deisdev:growth_inhibitor"
+        "deisdev:growth_inhibitor",
+        "deisdev:growth_regulator",
+        "deisdev:dried_compound"
       ]
     },
     {
@@ -20,6 +22,7 @@
       "priority": 0,
       "selectors": [
         "deisdev:preserving_sealant",
+        "deisdev:sealant_scrap",
         "deisdev:waxed_membrane",
         "deisdev:chronal_dust",
         "deisdev:chronal_alloy",
@@ -35,7 +38,9 @@
       "priority": 0,
       "selectors": [
         "deisdev:structural_stasis",
-        "deisdev:refined_time_serum"
+        "deisdev:lattice_fragments",
+        "deisdev:refined_time_serum",
+        "deisdev:shaping_stylus"
       ]
     },
     {
@@ -46,7 +51,8 @@
       "bgColor": "#F0181C22",
       "priority": 0,
       "selectors": [
-        "deisdev:temporal_stasis"
+        "deisdev:temporal_stasis",
+        "deisdev:chronal_dross"
       ]
     },
     {
@@ -87,7 +93,8 @@
       "priority": 0,
       "selectors": [
         "deisdev:binding_paste",
-        "deisdev:preserving_brush"
+        "deisdev:preserving_brush",
+        "deisdev:masking_strips"
       ]
     },
     {
@@ -100,7 +107,11 @@
       "selectors": [
         "deisdev:inert_powder",
         "deisdev:stabilizing_lattice",
-        "deisdev:scraper"
+        "deisdev:scraper",
+        "deisdev:reclamation_jar",
+        "deisdev:reclaiming_basin",
+        "deisdev:release_solvent",
+        "deisdev:transfer_seal"
       ]
     }
   ]

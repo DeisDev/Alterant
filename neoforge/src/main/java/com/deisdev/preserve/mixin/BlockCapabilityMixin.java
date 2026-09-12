@@ -24,10 +24,10 @@ public abstract class BlockCapabilityMixin {
         // Wrap on every supported query, before a consumer can cache the handle. No per-tick invalidation is needed.
         Object capability = this;
         if (capability == Capabilities.Item.BLOCK || capability == Capabilities.Fluid.BLOCK) {
-            return new GuardedResourceHandler((ResourceHandler) result, new TransferGuard(level, pos));
+            return new GuardedResourceHandler((ResourceHandler) result, new TransferGuard(level, pos, context instanceof net.minecraft.core.Direction side ? side : null, entity));
         }
         if (capability == Capabilities.Energy.BLOCK) {
-            return new GuardedEnergyHandler((EnergyHandler) result, new TransferGuard(level, pos));
+            return new GuardedEnergyHandler((EnergyHandler) result, new TransferGuard(level, pos, null, entity));
         }
         return result;
     }

@@ -31,11 +31,11 @@ public class GuardedStorage<T extends TransferVariant<?>> implements Storage<T> 
     @Override public boolean supportsExtraction() { return delegate.supportsExtraction(); }
     @Override public long insert(T resource, long amount, TransactionContext transaction) {
         StoragePreconditions.notBlankNotNegative(resource, amount);
-        return guard.allowsMutation() ? delegate.insert(resource, amount, transaction) : 0;
+        return guard.allowsInsertion() ? delegate.insert(resource, amount, transaction) : 0;
     }
     @Override public long extract(T resource, long amount, TransactionContext transaction) {
         StoragePreconditions.notBlankNotNegative(resource, amount);
-        return guard.allowsMutation() ? delegate.extract(resource, amount, transaction) : 0;
+        return guard.allowsExtraction() ? delegate.extract(resource, amount, transaction) : 0;
     }
     @Override public Iterator<StorageView<T>> iterator() {
         var iterator = delegate.iterator();
@@ -44,7 +44,7 @@ public class GuardedStorage<T extends TransferVariant<?>> implements Storage<T> 
             @Override public StorageView<T> next() { return new View<>(iterator.next(), guard); }
         };
     }
-    @Override public long getVersion() { return (delegate.getVersion() << 1) | (guard.allowsMutation() ? 0 : 1); }
+    @Override public long getVersion() { return (delegate.getVersion() << 2) | guard.policyBits(); }
 
     private static final class Slots<T extends TransferVariant<?>> extends GuardedStorage<T> implements SlottedStorage<T> {
         private final SlottedStorage<T> slots;
@@ -74,7 +74,7 @@ public class GuardedStorage<T extends TransferVariant<?>> implements Storage<T> 
         @Override public long getCapacity() { return delegate.getCapacity(); }
         @Override public long extract(T resource, long amount, TransactionContext transaction) {
             StoragePreconditions.notBlankNotNegative(resource, amount);
-            return guard.allowsMutation() ? delegate.extract(resource, amount, transaction) : 0;
+            return guard.allowsExtraction() ? delegate.extract(resource, amount, transaction) : 0;
         }
         @Override public StorageView<T> getUnderlyingView() { return identity(delegate.getUnderlyingView()); }
     }

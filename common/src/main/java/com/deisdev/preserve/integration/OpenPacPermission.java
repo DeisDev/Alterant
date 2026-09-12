@@ -22,4 +22,11 @@ public final class OpenPacPermission implements PreservationPermission {
                 true, false, false);
         return protectedTarget ? Optional.of("This claim does not allow changing preservation") : Optional.empty();
     }
+    @Override public Optional<String> denial(com.deisdev.preserve.api.AutomationContext source, PreservationContext context, Change change) {
+        // OPAC's placed-block policy compares source and destination protection, including wilderness rules.
+        boolean denied = OpenPACServerAPI.get(context.level().getServer()).getChunkProtection().onPosAffectedByAnotherPos(
+                context.level(), net.minecraft.world.level.ChunkPos.containing(context.pos()), source.level(),
+                net.minecraft.world.level.ChunkPos.containing(source.source()), true, true, false);
+        return denied ? Optional.of("This claim does not allow changing preservation") : Optional.empty();
+    }
 }

@@ -58,6 +58,10 @@ public final class InspectionQueries {
                 if (!level.hasChunkAt(target) || level.isOutsideBuildHeight(target)) { throw new IllegalArgumentException("Load every linked target first"); }
                 access.validate(new PreservationContext(level, target, level.getBlockState(target), report.formulation(), player.getStringUUID()),
                         brush ? PreservationPermission.Change.APPLY : PreservationPermission.Change.REMOVE);
+                if (brush && !report.treated() && requested == Formulation.GROWTH_REGULATOR) {
+                    com.deisdev.preserve.engine.GrowthControl.validate(level, target, level.getBlockState(target),
+                            jar.getOrDefault(com.deisdev.preserve.item.PreserveItems.GROWTH_LIMIT.get(), com.deisdev.preserve.engine.GrowthLimit.DEFAULT));
+                }
             }
             if (brush && (!(jar.getItem() instanceof CompoundItem compound) || compound.remaining(jar) == 0
                     || (!player.hasInfiniteMaterials() && compound.remaining(jar) < report.positions()))) {
@@ -82,6 +86,16 @@ public final class InspectionQueries {
         List<Protection> protections = existing == null ? rules.evaluate(state, requested).protections() : existing.protections();
         var properties = new TreeSet<String>();
         var details = new java.util.ArrayList<String>();
+        if (report.formulation() == Formulation.TRANSFER_SEAL) {
+            var policy = existing == null ? jar.getOrDefault(com.deisdev.preserve.item.PreserveItems.TRANSFER_POLICY.get(), com.deisdev.preserve.engine.TransferPolicy.DEFAULT)
+                    : existing.options().transfer().orElse(com.deisdev.preserve.engine.TransferPolicy.DEFAULT);
+            details.add("Sealed direction: " + switch (policy.mode()) { case BOTH -> "input and output"; case INSERT -> "input"; case EXTRACT -> "output"; });
+            details.add("Sealed faces: " + java.util.Arrays.stream(net.minecraft.core.Direction.values()).filter(policy::selects).map(net.minecraft.core.Direction::getSerializedName).collect(java.util.stream.Collectors.joining(", ")));
+        }
+        if (existing != null) { existing.options().growth().ifPresent(limit -> details.add(growthDetail(limit))); }
+        else if (requested == Formulation.GROWTH_REGULATOR) {
+            details.add(growthDetail(jar.getOrDefault(com.deisdev.preserve.item.PreserveItems.GROWTH_LIMIT.get(), com.deisdev.preserve.engine.GrowthLimit.DEFAULT)));
+        }
         if (existing != null) { existing.acceleration().ifPresent(effect -> details.add(String.format(java.util.Locale.ROOT,
                 "Speed: %.2fx; %.1f loaded minutes remaining", effect.multiplier(), effect.remainingTicks() / 1200.0))); }
         else if (requested.accelerates()) {
@@ -111,6 +125,9 @@ public final class InspectionQueries {
                 InspectionPayload.bounded(String.join(", ", properties)), InspectionPayload.bounded(reason),
                 report.limitations().stream().limit(InspectionPayload.LIMITATIONS_LIMIT).map(InspectionPayload::bounded).toList(),
                 details.stream().map(InspectionPayload::bounded).toList(), rules.policy().areaLimit()));
+    }
+    private static String growthDetail(com.deisdev.preserve.engine.GrowthLimit limit) {
+        return (limit.mode() == com.deisdev.preserve.engine.GrowthLimit.Mode.STAGE ? "Maximum stage: " : "Maximum root height: ") + limit.target();
     }
     private static String condition(BlockCondition condition) {
         String blocks = condition.all() ? "any block" : String.join(", ", condition.blocks().stream().map(Object::toString).sorted().limit(3).toList())

@@ -20,18 +20,21 @@ import org.jspecify.annotations.Nullable;
 /** Per-dimension, sparse chunk index. Contains values only, never live levels or block entities. */
 public final class TreatmentStore extends SavedData {
     public static final int SCHEMA = 1;
-    private record Payload(int schema, List<Treatment> records, List<ResumingTicks> resuming) {}
+    private record Payload(int schema, List<Treatment> records, List<ResumingTicks> resuming, List<MaskMark> masks) {}
     private static final Codec<Payload> PAYLOAD = RecordCodecBuilder.create(instance -> instance.group(
             Codec.INT.fieldOf("schema").forGetter(Payload::schema),
             Treatment.CODEC.listOf().fieldOf("records").forGetter(Payload::records),
-            ResumingTicks.CODEC.listOf().optionalFieldOf("resuming", List.of()).forGetter(Payload::resuming)
+            ResumingTicks.CODEC.listOf().optionalFieldOf("resuming", List.of()).forGetter(Payload::resuming),
+            MaskMark.CODEC.listOf().optionalFieldOf("masks", List.of()).forGetter(Payload::masks)
     ).apply(instance, Payload::new));
     public static final Codec<TreatmentStore> CODEC = PAYLOAD.flatXmap(TreatmentStore::decode,
-            store -> DataResult.success(new Payload(SCHEMA, store.snapshot(), List.copyOf(store.resuming.values()))));
+            store -> DataResult.success(new Payload(SCHEMA, store.snapshot(), List.copyOf(store.resuming.values()), store.maskSnapshot())));
     public static final SavedDataType<TreatmentStore> TYPE = new SavedDataType<>(
             Identifier.fromNamespaceAndPath("deisdev", "treatments"), TreatmentStore::new, CODEC, DataFixTypes.LEVEL);
 
     private final Long2ObjectMap<Long2ObjectMap<Treatment>> chunks = new Long2ObjectOpenHashMap<>();
+    private final Long2ObjectMap<Long2ObjectMap<MaskMark>> masks = new Long2ObjectOpenHashMap<>();
+    private int maskSize;
     private final Long2ObjectMap<Long2ObjectMap<Treatment>> acceleratedChunks = new Long2ObjectOpenHashMap<>();
     private final Long2ObjectMap<ResumingTicks> resuming = new Long2ObjectOpenHashMap<>();
     private final Long2ObjectMap<LongOpenHashSet> resumingChunks = new Long2ObjectOpenHashMap<>();
@@ -57,6 +60,12 @@ public final class TreatmentStore extends SavedData {
                 return DataResult.error(() -> "Duplicate or conflicting Preserve resumption " + work.position());
             }
             store.putResuming(work);
+        }
+        for (var mask : payload.masks) {
+            if (store.mask(mask.position()) != null || store.chunkMaskSize(chunkKey(mask.position())) >= 4096) {
+                return DataResult.error(() -> "Duplicate or excessive Preserve masks");
+            }
+            store.putMask(mask);
         }
         store.setDirty(false);
         return DataResult.success(store);
@@ -94,6 +103,34 @@ public final class TreatmentStore extends SavedData {
     }
 
     public int size() { return size; }
+    public int maskSize() { return maskSize; }
+    public @Nullable MaskMark mask(long position) {
+        var chunk = masks.get(chunkKey(position));
+        return chunk == null ? null : chunk.get(position);
+    }
+    public void putMask(MaskMark mask) {
+        var chunk = masks.computeIfAbsent(chunkKey(mask.position()), key -> new Long2ObjectOpenHashMap<>());
+        if (chunk.put(mask.position(), mask) == null) { maskSize++; }
+        revision++; setDirty();
+    }
+    public @Nullable MaskMark removeMask(long position) {
+        var chunk = masks.get(chunkKey(position));
+        if (chunk == null) { return null; }
+        var removed = chunk.remove(position);
+        if (removed != null) {
+            maskSize--; if (chunk.isEmpty()) { masks.remove(chunkKey(position)); }
+            revision++; setDirty();
+        }
+        return removed;
+    }
+    public List<MaskMark> chunkMasks(long key) {
+        var chunk = masks.get(key); return chunk == null ? List.of() : List.copyOf(chunk.values());
+    }
+    public int chunkMaskSize(long key) { var chunk = masks.get(key); return chunk == null ? 0 : chunk.size(); }
+    /** Save and explicit administration only. */
+    public List<MaskMark> maskSnapshot() {
+        return masks.values().stream().flatMap(chunk -> chunk.values().stream()).sorted(Comparator.comparingLong(MaskMark::position)).toList();
+    }
     public List<Treatment> acceleratedChunk(long key) {
         var chunk = acceleratedChunks.get(key);
         return chunk == null ? List.of() : List.copyOf(chunk.values());
@@ -111,6 +148,7 @@ public final class TreatmentStore extends SavedData {
     public List<Long> pendingChunks() {
         var keys = new LongOpenHashSet(chunks.keySet());
         keys.addAll(resumingChunks.keySet());
+        keys.addAll(masks.keySet());
         return java.util.Arrays.stream(keys.toLongArray()).sorted().boxed().toList();
     }
     public long revision() { return revision; }

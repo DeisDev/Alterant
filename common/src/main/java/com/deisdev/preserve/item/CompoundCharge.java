@@ -24,6 +24,13 @@ public final class CompoundCharge {
     public static CompoundCharge capture(ServerPlayer player) {
         return capture(player, false);
     }
+    public static CompoundCharge captureStylus(ServerPlayer player) {
+        if (!player.getMainHandItem().is(PreserveItems.SHAPING_STYLUS.get()) || player.getMainHandItem().getCount() != 1
+                || !player.getOffhandItem().is(PreserveItems.STRUCTURAL_STASIS.get()) || PreserveItems.STRUCTURAL_STASIS.get().remaining(player.getOffhandItem()) == 0) {
+            throw new IllegalArgumentException("Hold Structural Stasis offhand to shape this block");
+        }
+        return new CompoundCharge(player, PreserveItems.STRUCTURAL_STASIS.get());
+    }
     public static CompoundCharge capture(ServerPlayer player, boolean serum) {
         if (!(serum ? player.getMainHandItem().getItem() instanceof QuantumApplicatorItem
                 : player.getMainHandItem().getItem() instanceof PreservingBrushItem) || player.getMainHandItem().getCount() != 1) {
@@ -38,6 +45,15 @@ public final class CompoundCharge {
         return new CompoundCharge(player, compound);
     }
     public Formulation formulation() { return compound.formulation(); }
+    public com.deisdev.preserve.engine.TreatmentOptions options() {
+        if (formulation() == Formulation.TRANSFER_SEAL) { return new com.deisdev.preserve.engine.TreatmentOptions(1, java.util.Optional.empty(),
+                java.util.Optional.of(jar.getOrDefault(PreserveItems.TRANSFER_POLICY.get(), com.deisdev.preserve.engine.TransferPolicy.DEFAULT))); }
+        return formulation() == Formulation.GROWTH_REGULATOR ? new com.deisdev.preserve.engine.TreatmentOptions(1,
+                java.util.Optional.of(jar.getOrDefault(PreserveItems.GROWTH_LIMIT.get(), com.deisdev.preserve.engine.GrowthLimit.DEFAULT))) : com.deisdev.preserve.engine.TreatmentOptions.EMPTY;
+    }
+    public java.util.Optional<com.deisdev.preserve.engine.RecoveryEntitlement> recovery() {
+        return infinite ? java.util.Optional.empty() : java.util.Optional.of(new com.deisdev.preserve.engine.RecoveryEntitlement(1, ResidueFamily.forFormulation(formulation()), 1));
+    }
     public int available() { return infinite ? TargetLink.LIMIT : compound.remaining(jar); }
     public boolean ready() {
         return player.hasInfiniteMaterials() == infinite && matches(tool, player.getMainHandItem()) && matches(jar, player.getOffhandItem());

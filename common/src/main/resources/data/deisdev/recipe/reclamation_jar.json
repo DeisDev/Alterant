@@ -1,0 +1,5 @@
+{
+  "type": "minecraft:crafting_shapeless", "category": "misc",
+  "ingredients": ["minecraft:glass_bottle", "minecraft:copper_ingot", "minecraft:paper", "deisdev:binding_paste"],
+  "result": {"id": "deisdev:reclamation_jar", "count": 1}
+}

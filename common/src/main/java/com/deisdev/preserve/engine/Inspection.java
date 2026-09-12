@@ -66,6 +66,9 @@ public final class Inspection {
                 var report = requested.accelerates() ? new IntegrationRegistry.Description(List.of(), false)
                         : IntegrationRegistry.describe(new PreservationContext(level, target, state, requested, ""));
                 complete &= report.complete();
+                if (requested == Formulation.TRANSFER_SEAL && report.adapters().isEmpty() && !com.deisdev.preserve.platform.Services.PLATFORM.supportsTransferSeal(level, target)) {
+                    return denied(requested, Coverage.DENIED, "This target has no supported item or fluid transfer route");
+                }
                 adapters.addAll(report.adapters());
                 for (var protection : decision.protections()) { actions.add(protection.action()); profiles.add(protection.rule().toString()); }
             }
@@ -81,6 +84,11 @@ public final class Inspection {
         return complete ? Coverage.VERIFIED_INTEGRATION : formulation == Formulation.TEMPORAL_STASIS ? Coverage.STANDARD_ROUTES : Coverage.PROFILED_ACTIONS;
     }
     private static List<String> limits(Formulation formulation, boolean complete) {
+        if (formulation == Formulation.TRANSFER_SEAL) { return List.of("Standard block item/fluid interfaces and vanilla hopper paths are sealed; ticking, energy and native menus remain available",
+                "Unsided handlers intersect all selected faces; direct storage networks and custom menus require explicit support"); }
+        if (formulation == Formulation.GROWTH_REGULATOR) { return List.of("Only wheat, carrots, potatoes, beetroot, berries, cocoa and nether wart support stage limits",
+                "Height limits cover bamboo stalk roots and sugar cane; other harvest or growth integrations require explicit support",
+                "Breaking and replanting clears regulation; existing plants are never reduced to the selected limit"); }
         if (formulation.accelerates()) { return List.of("Only configured block-entity, random and scheduled block tick routes accelerate",
                 "World clocks, external controllers and networks keep their normal rate", "Scheduled work runs at most once per game tick; fractional delays round up"); }
         return complete ? List.of() : formulation == Formulation.TEMPORAL_STASIS ? STANDARD_LIMITS : List.of("Only the listed semantic profiles are covered");

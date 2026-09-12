@@ -1,0 +1,76 @@
+{
+  "textures": {
+    "material": "deisdev:block/basin_lattice_fragments",
+    "particle": "#material"
+  },
+  "elements": [
+    {
+      "from": [
+        4.01,
+        6.5,
+        4.01
+      ],
+      "to": [
+        11.99,
+        6.6,
+        11.99
+      ],
+      "faces": {
+        "up": {
+          "texture": "#material",
+          "uv": [
+            4,
+            4,
+            12,
+            12
+          ]
+        },
+        "down": {
+          "texture": "#material",
+          "uv": [
+            4,
+            4,
+            12,
+            12
+          ]
+        },
+        "north": {
+          "texture": "#material",
+          "uv": [
+            4,
+            4,
+            12,
+            12
+          ]
+        },
+        "south": {
+          "texture": "#material",
+          "uv": [
+            4,
+            4,
+            12,
+            12
+          ]
+        },
+        "west": {
+          "texture": "#material",
+          "uv": [
+            4,
+            4,
+            12,
+            12
+          ]
+        },
+        "east": {
+          "texture": "#material",
+          "uv": [
+            4,
+            4,
+            12,
+            12
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -13,10 +13,10 @@ public final class GuardedEnergyHandler implements EnergyHandler {
     @Override public long getCapacityAsLong() { return delegate.getCapacityAsLong(); }
     @Override public int insert(int amount, TransactionContext transaction) {
         TransferPreconditions.checkNonNegative(amount);
-        return guard.allowsMutation() ? delegate.insert(amount, transaction) : 0;
+        return guard.allowsEnergyMutation() ? delegate.insert(amount, transaction) : 0;
     }
     @Override public int extract(int amount, TransactionContext transaction) {
         TransferPreconditions.checkNonNegative(amount);
-        return guard.allowsMutation() ? delegate.extract(amount, transaction) : 0;
+        return guard.allowsEnergyMutation() ? delegate.extract(amount, transaction) : 0;
     }
 }

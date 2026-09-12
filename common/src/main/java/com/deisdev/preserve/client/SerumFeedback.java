@@ -28,7 +28,7 @@ public final class SerumFeedback {
     public static void init(Consumer<SerumStatusRequest> send) { sender = send; }
     private static BlockPos target(Minecraft client) {
         if (client.level == null || client.player == null || client.gui.screen() != null || client.gui.hud.isHidden()
-                || client.getDebugOverlay().showDebugScreen() || ClientConfig.get().settings().tooltip() == ClientConfig.TooltipMode.HIDDEN
+                || client.getDebugOverlay().showDebugScreen() || ClientConfig.get().settings().tooltip() != ClientConfig.TooltipMode.ADVANCED
                 || !(client.hitResult instanceof BlockHitResult hit) || hit.getType() != HitResult.Type.BLOCK
                 || !client.player.isWithinBlockInteractionRange(hit.getBlockPos(), 0) || !client.level.hasChunkAt(hit.getBlockPos())) { return null; }
         var treatment = ((PreservationLevel) client.level).preserve$treatments().get(hit.getBlockPos().asLong());

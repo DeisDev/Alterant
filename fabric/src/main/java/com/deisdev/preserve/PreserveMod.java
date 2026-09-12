@@ -26,6 +26,10 @@ public final class PreserveMod implements ModInitializer {
         net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry.clientboundPlay().register(
                 com.deisdev.preserve.network.ChunkTreatmentsPayload.TYPE, com.deisdev.preserve.network.ChunkTreatmentsPayload.STREAM_CODEC);
         Preserve.init();
+        com.deisdev.preserve.item.SolventDispenser.register();
+        net.fabricmc.fabric.api.transfer.v1.item.ItemStorage.SIDED.registerForBlockEntities((basin, side) -> side == null
+                ? net.fabricmc.fabric.api.transfer.v1.storage.Storage.empty()
+                : net.fabricmc.fabric.api.transfer.v1.item.ContainerStorage.of((com.deisdev.preserve.basin.ReclaimingBasinEntity) basin, side), com.deisdev.preserve.basin.PreserveBlocks.BASIN_ENTITY.get());
         net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents.modifyOutputEvent(com.deisdev.preserve.item.PreserveItems.INGREDIENTS_TAB)
                 .register(output -> com.deisdev.preserve.item.PreserveItems.fillCreativeTab(output::accept));
         net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents.modifyOutputEvent(com.deisdev.preserve.item.PreserveItems.TOOLS_TAB)

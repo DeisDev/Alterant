@@ -6,7 +6,7 @@ import java.util.function.BooleanSupplier;
 import net.minecraft.server.level.ServerPlayer;
 
 /** Exists only during one synchronous tool operation; its item check reads authoritative inventory state. */
-public record PlayerAccess(ServerPlayer player, BooleanSupplier itemReady) {
+public record PlayerAccess(ServerPlayer player, BooleanSupplier itemReady) implements OperationAccess {
     public PlayerAccess { java.util.Objects.requireNonNull(player); java.util.Objects.requireNonNull(itemReady); }
     public void validate(PreservationContext context, PreservationPermission.Change change) {
         if (player.level() != context.level() || !player.isAlive() || player.isSpectator() || !player.mayBuild()

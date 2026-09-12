@@ -3,7 +3,7 @@
   "minVersion": "0.8",
   "package": "com.deisdev.preserve.mixin",
   "compatibilityLevel": "JAVA_25",
-  "mixins": ["BlockCapabilityMixin", "CropEventsMixin"],
+  "mixins": ["BlockCapabilityMixin", "CropEventsMixin", "ResourceHandlerSlotMixin"],
   "client": [],
   "server": [],
   "injectors": {

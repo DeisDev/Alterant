@@ -17,7 +17,7 @@ public record Treatment(long position, Formulation formulation, Identifier block
                         Map<String, String> structure, List<DeferredTick> deferred,
                         List<String> profiles, Map<String, String> adapterData, String owner,
                         List<com.deisdev.preserve.rules.Protection> protections, List<AdapterSnapshot> adapters, Optional<TargetLink> link,
-                        Optional<Acceleration> acceleration) {
+                        Optional<Acceleration> acceleration, Optional<RecoveryEntitlement> recovery, TreatmentOptions options) {
     public static final Codec<Treatment> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Codec.LONG.fieldOf("position").forGetter(Treatment::position),
             Formulation.CODEC.fieldOf("formulation").forGetter(Treatment::formulation),
@@ -31,13 +31,20 @@ public record Treatment(long position, Formulation formulation, Identifier block
             com.deisdev.preserve.rules.Protection.CODEC.listOf(0, Action.values().length).optionalFieldOf("protections", List.of()).forGetter(Treatment::protections),
             AdapterSnapshot.CODEC.listOf(0, AdapterSnapshot.MAX_ADAPTERS).optionalFieldOf("adapters", List.of()).forGetter(Treatment::adapters),
             TargetLink.CODEC.optionalFieldOf("link").forGetter(Treatment::link),
-            Acceleration.CODEC.optionalFieldOf("acceleration").forGetter(Treatment::acceleration)
+            Acceleration.CODEC.optionalFieldOf("acceleration").forGetter(Treatment::acceleration),
+            RecoveryEntitlement.CODEC.optionalFieldOf("recovery").forGetter(Treatment::recovery),
+            TreatmentOptions.CODEC.optionalFieldOf("options", TreatmentOptions.EMPTY).forGetter(Treatment::options)
     ).apply(instance, Treatment::new));
 
     public Treatment {
         java.util.Objects.requireNonNull(formulation);
         java.util.Objects.requireNonNull(blockId);
         java.util.Objects.requireNonNull(owner);
+        java.util.Objects.requireNonNull(recovery);
+        java.util.Objects.requireNonNull(options);
+        if (recovery.isPresent() && recovery.get().family() != com.deisdev.preserve.item.ResidueFamily.forFormulation(formulation)) {
+            throw new IllegalArgumentException("Recovery family does not match formulation");
+        }
         actions = Set.copyOf(actions);
         structure = Map.copyOf(structure);
         deferred = List.copyOf(deferred);
@@ -58,11 +65,24 @@ public record Treatment(long position, Formulation formulation, Identifier block
     public Treatment(long position, Formulation formulation, Identifier blockId, Set<Action> actions,
                      Map<String, String> structure, List<DeferredTick> deferred, List<String> profiles,
                      Map<String, String> adapterData, String owner, List<com.deisdev.preserve.rules.Protection> protections,
+                     List<AdapterSnapshot> adapters, Optional<TargetLink> link, Optional<Acceleration> acceleration, Optional<RecoveryEntitlement> recovery) {
+        this(position, formulation, blockId, actions, structure, deferred, profiles, adapterData, owner, protections, adapters, link, acceleration, recovery, TreatmentOptions.EMPTY);
+    }
+
+    public Treatment(long position, Formulation formulation, Identifier blockId, Set<Action> actions,
+                     Map<String, String> structure, List<DeferredTick> deferred, List<String> profiles,
+                     Map<String, String> adapterData, String owner, List<com.deisdev.preserve.rules.Protection> protections,
                      List<AdapterSnapshot> adapters, Optional<TargetLink> link) {
         this(position, formulation, blockId, actions, structure, deferred, profiles, adapterData, owner, protections, adapters, link, Optional.empty());
     }
 
-    /** Schema 1's first payloads predate semantic policy snapshots; their standard action gates remain valid. */
+    public Treatment(long position, Formulation formulation, Identifier blockId, Set<Action> actions,
+                     Map<String, String> structure, List<DeferredTick> deferred, List<String> profiles,
+                     Map<String, String> adapterData, String owner, List<com.deisdev.preserve.rules.Protection> protections,
+                     List<AdapterSnapshot> adapters, Optional<TargetLink> link, Optional<Acceleration> acceleration) {
+        this(position, formulation, blockId, actions, structure, deferred, profiles, adapterData, owner, protections, adapters, link, acceleration, Optional.empty());
+    }
+
     public Treatment(long position, Formulation formulation, Identifier blockId, Set<Action> actions,
                      Map<String, String> structure, List<DeferredTick> deferred, List<String> profiles,
                      Map<String, String> adapterData, String owner) {
@@ -87,6 +107,16 @@ public record Treatment(long position, Formulation formulation, Identifier block
         if (deferred.stream().anyMatch(previous -> previous.sameIdentity(tick))) { return this; }
         var next = new ArrayList<>(deferred);
         next.add(tick);
-        return new Treatment(position, formulation, blockId, actions, structure, next, profiles, adapterData, owner, protections, adapters, link, acceleration);
+        return new Treatment(position, formulation, blockId, actions, structure, next, profiles, adapterData, owner, protections, adapters, link, acceleration, recovery, options);
+    }
+
+    Treatment withRecovery(Optional<RecoveryEntitlement> entitlement) {
+        return new Treatment(position, formulation, blockId, actions, structure, deferred, profiles, adapterData, owner, protections, adapters, link, acceleration, entitlement, options);
+    }
+    Treatment withOptions(TreatmentOptions value) {
+        return new Treatment(position, formulation, blockId, actions, structure, deferred, profiles, adapterData, owner, protections, adapters, link, acceleration, recovery, value);
+    }
+    Treatment withStructure(Map<String, String> value) {
+        return new Treatment(position, formulation, blockId, actions, value, deferred, profiles, adapterData, owner, protections, adapters, link, acceleration, recovery, options);
     }
 }

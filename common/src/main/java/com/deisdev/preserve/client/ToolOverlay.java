@@ -45,8 +45,9 @@ public final class ToolOverlay {
     }
     public static int color(Formulation formulation) {
         return switch (formulation) {
-            case GROWTH_INHIBITOR -> 0xDD79CF78;
+            case GROWTH_INHIBITOR, GROWTH_REGULATOR -> 0xDD79CF78;
             case PRESERVING_SEALANT -> 0xDDE1B957;
+            case TRANSFER_SEAL -> 0xDD8A939E;
             case STRUCTURAL_STASIS -> 0xDD72BAE8;
             case TEMPORAL_STASIS -> 0xDDB89BE7;
             case REFINED_TIME_SERUM -> 0xDD80B4CF;
@@ -72,9 +73,15 @@ public final class ToolOverlay {
                 var pos = origin.offset(offset);
                 if (!client.player.isWithinBlockInteractionRange(pos, 0) || !level.getChunkSource().hasChunk(pos.getX() >> 4, pos.getZ() >> 4)) { continue; }
                 var treatment = store.get(pos.asLong());
-                if (treatment == null) { continue; }
+                var mask = store.mask(pos.asLong());
+                if (treatment == null && mask == null) { continue; }
                 var shape = level.getBlockState(pos).getShape(level, pos);
                 if (shape.isEmpty()) { continue; }
+                if (mask != null && SurfaceTargets.masked(level, List.of(pos))) {
+                    marks.add(new Mark(pos, strip(shape.bounds(), mask.face()), 0xDDE1D2A4, 1.5F, false));
+                    if (marks.size() == TREATMENT_LIMIT) { break; }
+                }
+                if (treatment == null) { continue; }
                 boolean focused = client.hitResult instanceof BlockHitResult hit && hit.getBlockPos().equals(pos);
                 marks.add(new Mark(pos, Shapes.or(shape, pattern(shape, treatment.formulation())),
                         (color(treatment.formulation()) & 0xFFFFFF) | (focused ? 0xDD000000 : 0x88000000), focused ? 1.5F : 1.0F, false));
@@ -83,13 +90,24 @@ public final class ToolOverlay {
             cachedMarks = List.copyOf(marks);
         }
         var marks = new ArrayList<Mark>(settings.coatingOutlines() ? cachedMarks : List.of());
-        if (settings.surfacePreview() && PreservingBrushItem.area(client.player.getMainHandItem()) && client.hitResult instanceof BlockHitResult hit && hit.getType() == HitResult.Type.BLOCK
+        var shapePreview = client.player.getMainHandItem().get(PreserveItems.SHAPE_PREVIEW.get());
+        if (settings.surfacePreview() && client.player.getMainHandItem().is(PreserveItems.SHAPING_STYLUS.get()) && shapePreview != null
+                && shapePreview.dimension().equals(level.dimension().identifier())) {
+            var pos = BlockPos.of(shapePreview.position());
+            if (client.player.isWithinBlockInteractionRange(pos, 0) && level.getChunkSource().hasChunk(pos.getX() >> 4, pos.getZ() >> 4)
+                    && level.getBlockState(pos) == shapePreview.before()) {
+                try { marks.add(new Mark(pos, shapePreview.pattern().apply(shapePreview.before()).getShape(level, pos), 0xDDE4E6EA, 2.5F, true)); }
+                catch (IllegalArgumentException ignored) { /* A drawing hint never authorizes a block change. */ }
+            }
+        }
+        if (settings.surfacePreview() && (PreservingBrushItem.area(client.player.getMainHandItem()) || com.deisdev.preserve.item.ReleaseSolventItem.area(client.player.getMainHandItem())) && client.hitResult instanceof BlockHitResult hit && hit.getType() == HitResult.Type.BLOCK
                 && client.player.isWithinBlockInteractionRange(hit.getBlockPos(), 0)) {
             int order = 0;
             for (var pos : SurfaceTargets.positions(hit.getBlockPos(), hit.getDirection())) {
                 if (client.player.isWithinBlockInteractionRange(pos, 0) && SurfaceTargets.exposed(level, pos, hit.getDirection())) {
                     // Neutral outlines mark candidates, without claiming that unseen server rules or claims allow them.
-                    marks.add(new Mark(pos, face(hit.getDirection()), 0xDDE4E6EA, order == 0 ? 2.5F : 1.0F, true));
+                    boolean masked = SurfaceTargets.masked(level, SurfaceTargets.previewTargets(level, pos));
+                    marks.add(new Mark(pos, masked ? dashedFace(hit.getDirection()) : face(hit.getDirection()), masked ? 0xC0CABB8A : 0xDDE4E6EA, order == 0 ? 2.5F : 1.0F, true));
                 }
                 order++;
             }
@@ -108,8 +126,10 @@ public final class ToolOverlay {
     }
     public static List<Component> tooltipLines(Minecraft client) {
         var mode = ClientConfig.get().settings().tooltip();
-        if (!active(client) || mode == ClientConfig.TooltipMode.HIDDEN) { return List.of(); }
+        if (!active(client) || mode != ClientConfig.TooltipMode.ADVANCED) { return List.of(); }
         var player = client.player;
+        if (player.getMainHandItem().is(PreserveItems.MASKING_STRIPS.get())) { return List.of(); }
+        if (player.getMainHandItem().is(PreserveItems.SHAPING_STYLUS.get())) { return List.of(Component.translatable("item.deisdev.shaping_stylus.use")); }
         var brush = player.getMainHandItem().getItem() instanceof PreservingBrushItem;
         var applicator = player.getMainHandItem().getItem() instanceof com.deisdev.preserve.item.QuantumApplicatorItem;
         var lines = new ArrayList<Component>();
@@ -130,7 +150,8 @@ public final class ToolOverlay {
                 lines.add(description(treatment.formulation()).copy().withStyle(net.minecraft.ChatFormatting.GRAY));
             }
         }
-        if (!brush && !applicator) { lines.add(Component.translatable("overlay.deisdev.scraper_controls")); }
+        if (!brush && !applicator) { lines.add(Component.translatable(player.getMainHandItem().is(PreserveItems.RELEASE_SOLVENT.get())
+                ? "item.deisdev.release_solvent.use" : "overlay.deisdev.scraper_controls")); }
         if (mode == ClientConfig.TooltipMode.ADVANCED) { ClientInspection.current(client).ifPresent(report -> {
             lines.add(Component.translatable("overlay.deisdev.coverage." + report.coverage().name().toLowerCase(java.util.Locale.ROOT)));
             if (!report.reason().isBlank()) { lines.add(Component.literal(report.reason())); }
@@ -171,6 +192,33 @@ public final class ToolOverlay {
             case NORTH -> Shapes.box(0.025, 0.025, -0.004, 0.975, 0.975, -0.003);
         };
     }
+    private static VoxelShape onFace(Direction face, double a, double b, double c, double d) {
+        return switch (face) {
+            case UP -> Shapes.box(a, 1.003, b, c, 1.004, d);
+            case DOWN -> Shapes.box(a, -.004, b, c, -.003, d);
+            case EAST -> Shapes.box(1.003, b, a, 1.004, d, c);
+            case WEST -> Shapes.box(-.004, b, a, -.003, d, c);
+            case SOUTH -> Shapes.box(a, b, 1.003, c, d, 1.004);
+            case NORTH -> Shapes.box(a, b, -.004, c, d, -.003);
+        };
+    }
+    private static VoxelShape dashedFace(Direction face) {
+        var result = Shapes.empty();
+        for (int n = 0; n < 5; n++) {
+            double start = .04 + n * .19, end = start + .10;
+            result = Shapes.or(result, onFace(face, start, .035, end, .04), onFace(face, start, .96, end, .965),
+                    onFace(face, .035, start, .04, end), onFace(face, .96, start, .965, end));
+        }
+        return result;
+    }
+    private static VoxelShape strip(net.minecraft.world.phys.AABB bounds, Direction face) {
+        var result = Shapes.empty();
+        for (var box : onFace(face, .18, .75, .62, .86).toAabbs()) {
+            result = Shapes.or(result, Shapes.box(bounds.minX + box.minX * bounds.getXsize(), bounds.minY + box.minY * bounds.getYsize(), bounds.minZ + box.minZ * bounds.getZsize(),
+                    bounds.minX + box.maxX * bounds.getXsize(), bounds.minY + box.maxY * bounds.getYsize(), bounds.minZ + box.maxZ * bounds.getZsize()));
+        }
+        return result;
+    }
     private static List<BlockPos> offsets() {
         var offsets = new ArrayList<BlockPos>();
         for (int x = -4; x <= 4; x++) { for (int y = -4; y <= 4; y++) { for (int z = -4; z <= 4; z++) { offsets.add(new BlockPos(x, y, z)); } } }
@@ -180,7 +228,7 @@ public final class ToolOverlay {
     private static VoxelShape pattern(VoxelShape shape, Formulation formulation) {
         var bounds = shape.bounds();
         int count = formulation.ordinal() + 1;
-        double step = Math.min(0.1, bounds.getXsize() / 8), width = step * 0.35;
+        double step = Math.min(0.1, bounds.getXsize() / Math.max(8, count + 1)), width = step * 0.35;
         double start = (bounds.minX + bounds.maxX - (count - 1) * step - width) / 2;
         double z = (bounds.minZ + bounds.maxZ) / 2, depth = Math.min(0.08, bounds.getZsize() / 4);
         var result = Shapes.empty();

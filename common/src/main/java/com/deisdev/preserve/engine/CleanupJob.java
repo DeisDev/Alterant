@@ -57,7 +57,7 @@ public final class CleanupJob {
         int remaining = 0;
         for (var dimension : server.getAllLevels()) {
             var store = PreservationService.get(dimension).store();
-            remaining += store.size() + store.resumingSize();
+            remaining += store.size() + store.resumingSize() + store.maskSize();
         }
         return remaining;
     }
@@ -165,13 +165,14 @@ public final class CleanupJob {
             var next = new java.util.LinkedHashSet<Long>();
             for (var record : store.chunkSnapshot(task.key())) { next.add(record.position()); }
             for (var record : store.chunkResumptions(task.key())) { next.add(record.position()); }
+            for (var mask : store.chunkMasks(task.key())) { next.add(mask.position()); }
             positions.addAll(next);
             return;
         }
         position = positions.removeFirst();
         var store = PreservationService.get(level).store();
         var record = store.get(position);
-        if (record == null && store.resuming(position) == null) { return; }
+        if (record == null && store.resuming(position) == null && store.mask(position) == null) { return; }
         group = record == null ? List.of(position) : record.link().map(TargetLink::members).orElse(List.of(position));
         var needed = new it.unimi.dsi.fastutil.longs.LongLinkedOpenHashSet();
         for (long member : group) {
@@ -206,10 +207,11 @@ public final class CleanupJob {
         for (long member : group) { if (!level.hasChunkAt(BlockPos.of(member))) { return; } }
         var service = PreservationService.get(level);
         if (service.store().get(position) != null) {
-            var result = service.remove(BlockPos.of(position));
+            var result = service.removeForUninstall(BlockPos.of(position));
             if (!result.changed()) { throw new IllegalStateException(result.message()); }
             removed += result.changedPositions();
         }
+        for (long member : group) { service.clearMaskForUninstall(BlockPos.of(member)); }
         phase = Phase.RETURNING_WORK;
         detail = "Waiting for retained work to enter the normal scheduler; remaining delays are preserved";
     }

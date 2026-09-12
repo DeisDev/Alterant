@@ -43,7 +43,8 @@ public final class CleanupFiles {
         var data = tag.getCompound("data").orElseThrow(() -> new IOException("Missing Preserve payload at " + file));
         if (data.getInt("schema").orElse(-1) != TreatmentStore.SCHEMA
                 || data.getList("records").filter(List::isEmpty).isEmpty()
-                || data.contains("resuming") && data.getList("resuming").filter(List::isEmpty).isEmpty()) {
+                || data.contains("resuming") && data.getList("resuming").filter(List::isEmpty).isEmpty()
+                || data.contains("masks") && data.getList("masks").filter(List::isEmpty).isEmpty()) {
             throw new IOException("Preserve data is not empty or has an unsupported schema at " + file);
         }
     }

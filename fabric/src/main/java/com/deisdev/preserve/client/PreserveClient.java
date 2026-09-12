@@ -7,6 +7,10 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 
 public final class PreserveClient implements ClientModInitializer {
     @Override public void onInitializeClient() {
+        net.minecraft.client.gui.screens.MenuScreens.register(com.deisdev.preserve.item.PreserveMenus.RECLAMATION.get(), ReclamationScreen::new);
+        net.minecraft.client.gui.screens.MenuScreens.register(com.deisdev.preserve.item.PreserveMenus.GROWTH_LIMIT.get(), GrowthLimitScreen::new);
+        net.minecraft.client.gui.screens.MenuScreens.register(com.deisdev.preserve.item.PreserveMenus.TRANSFER_POLICY.get(), TransferPolicyScreen::new);
+        net.minecraft.client.gui.screens.MenuScreens.register(com.deisdev.preserve.item.PreserveMenus.BASIN.get(), ReclaimingBasinScreen::new);
         ClientGameplay.init(payload -> { if (!ClientPlayNetworking.canSend(payload.type())) { return false; } ClientPlayNetworking.send(payload); return true; });
         SerumFeedback.init(payload -> { if (ClientPlayNetworking.canSend(payload.type())) { ClientPlayNetworking.send(payload); } });
         ClientPlayNetworking.registerGlobalReceiver(com.deisdev.preserve.network.GameplayPayload.TYPE,

@@ -1,0 +1,1651 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "basin_stone": "deisdev:block/basin_stone",
+    "basin_inner": "deisdev:block/basin_inner",
+    "basin_copper": "deisdev:block/basin_copper",
+    "basin_mesh": "deisdev:block/basin_mesh",
+    "basin_dried_compound": "deisdev:block/basin_dried_compound",
+    "basin_sealant_scrap": "deisdev:block/basin_sealant_scrap",
+    "basin_lattice_fragments": "deisdev:block/basin_lattice_fragments",
+    "basin_chronal_dross": "deisdev:block/basin_chronal_dross",
+    "particle": "deisdev:block/basin_stone"
+  },
+  "display": {
+    "gui": {
+      "rotation": [
+        30,
+        225,
+        0
+      ],
+      "translation": [
+        0,
+        1,
+        0
+      ],
+      "scale": [
+        0.65,
+        0.65,
+        0.65
+      ]
+    },
+    "ground": {
+      "translation": [
+        0,
+        3,
+        0
+      ],
+      "scale": [
+        0.3,
+        0.3,
+        0.3
+      ]
+    },
+    "fixed": {
+      "scale": [
+        0.65,
+        0.65,
+        0.65
+      ]
+    },
+    "firstperson_righthand": {
+      "rotation": [
+        0,
+        45,
+        0
+      ],
+      "translation": [
+        0,
+        1,
+        0
+      ],
+      "scale": [
+        0.45,
+        0.45,
+        0.45
+      ]
+    },
+    "thirdperson_righthand": {
+      "rotation": [
+        75,
+        45,
+        0
+      ],
+      "translation": [
+        0,
+        2.5,
+        0
+      ],
+      "scale": [
+        0.375,
+        0.375,
+        0.375
+      ]
+    }
+  },
+  "elements": [
+    {
+      "name": "foot_2_2",
+      "from": [
+        2,
+        0,
+        2
+      ],
+      "to": [
+        5,
+        2,
+        5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            2,
+            14,
+            5,
+            16
+          ],
+          "texture": "#basin_copper"
+        },
+        "south": {
+          "uv": [
+            2,
+            14,
+            5,
+            16
+          ],
+          "texture": "#basin_copper"
+        },
+        "west": {
+          "uv": [
+            2,
+            14,
+            5,
+            16
+          ],
+          "texture": "#basin_copper"
+        },
+        "east": {
+          "uv": [
+            2,
+            14,
+            5,
+            16
+          ],
+          "texture": "#basin_copper"
+        },
+        "up": {
+          "uv": [
+            2,
+            2,
+            5,
+            5
+          ],
+          "texture": "#basin_copper"
+        },
+        "down": {
+          "uv": [
+            2,
+            2,
+            5,
+            5
+          ],
+          "texture": "#basin_copper"
+        }
+      }
+    },
+    {
+      "name": "foot_2_11",
+      "from": [
+        2,
+        0,
+        11
+      ],
+      "to": [
+        5,
+        2,
+        14
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            2,
+            14,
+            5,
+            16
+          ],
+          "texture": "#basin_copper"
+        },
+        "south": {
+          "uv": [
+            2,
+            14,
+            5,
+            16
+          ],
+          "texture": "#basin_copper"
+        },
+        "west": {
+          "uv": [
+            11,
+            14,
+            14,
+            16
+          ],
+          "texture": "#basin_copper"
+        },
+        "east": {
+          "uv": [
+            11,
+            14,
+            14,
+            16
+          ],
+          "texture": "#basin_copper"
+        },
+        "up": {
+          "uv": [
+            2,
+            11,
+            5,
+            14
+          ],
+          "texture": "#basin_copper"
+        },
+        "down": {
+          "uv": [
+            2,
+            11,
+            5,
+            14
+          ],
+          "texture": "#basin_copper"
+        }
+      }
+    },
+    {
+      "name": "foot_11_2",
+      "from": [
+        11,
+        0,
+        2
+      ],
+      "to": [
+        14,
+        2,
+        5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            11,
+            14,
+            14,
+            16
+          ],
+          "texture": "#basin_copper"
+        },
+        "south": {
+          "uv": [
+            11,
+            14,
+            14,
+            16
+          ],
+          "texture": "#basin_copper"
+        },
+        "west": {
+          "uv": [
+            2,
+            14,
+            5,
+            16
+          ],
+          "texture": "#basin_copper"
+        },
+        "east": {
+          "uv": [
+            2,
+            14,
+            5,
+            16
+          ],
+          "texture": "#basin_copper"
+        },
+        "up": {
+          "uv": [
+            11,
+            2,
+            14,
+            5
+          ],
+          "texture": "#basin_copper"
+        },
+        "down": {
+          "uv": [
+            11,
+            2,
+            14,
+            5
+          ],
+          "texture": "#basin_copper"
+        }
+      }
+    },
+    {
+      "name": "foot_11_11",
+      "from": [
+        11,
+        0,
+        11
+      ],
+      "to": [
+        14,
+        2,
+        14
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            11,
+            14,
+            14,
+            16
+          ],
+          "texture": "#basin_copper"
+        },
+        "south": {
+          "uv": [
+            11,
+            14,
+            14,
+            16
+          ],
+          "texture": "#basin_copper"
+        },
+        "west": {
+          "uv": [
+            11,
+            14,
+            14,
+            16
+          ],
+          "texture": "#basin_copper"
+        },
+        "east": {
+          "uv": [
+            11,
+            14,
+            14,
+            16
+          ],
+          "texture": "#basin_copper"
+        },
+        "up": {
+          "uv": [
+            11,
+            11,
+            14,
+            14
+          ],
+          "texture": "#basin_copper"
+        },
+        "down": {
+          "uv": [
+            11,
+            11,
+            14,
+            14
+          ],
+          "texture": "#basin_copper"
+        }
+      }
+    },
+    {
+      "name": "bowl_bottom",
+      "from": [
+        2,
+        2,
+        2
+      ],
+      "to": [
+        14,
+        4,
+        14
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            2,
+            12,
+            14,
+            14
+          ],
+          "texture": "#basin_stone"
+        },
+        "south": {
+          "uv": [
+            2,
+            12,
+            14,
+            14
+          ],
+          "texture": "#basin_stone"
+        },
+        "west": {
+          "uv": [
+            2,
+            12,
+            14,
+            14
+          ],
+          "texture": "#basin_stone"
+        },
+        "east": {
+          "uv": [
+            2,
+            12,
+            14,
+            14
+          ],
+          "texture": "#basin_stone"
+        },
+        "up": {
+          "uv": [
+            2,
+            2,
+            14,
+            14
+          ],
+          "texture": "#basin_inner"
+        },
+        "down": {
+          "uv": [
+            2,
+            2,
+            14,
+            14
+          ],
+          "texture": "#basin_stone"
+        }
+      }
+    },
+    {
+      "name": "left_wall",
+      "from": [
+        2,
+        4,
+        2
+      ],
+      "to": [
+        4,
+        8,
+        14
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            2,
+            8,
+            4,
+            12
+          ],
+          "texture": "#basin_stone"
+        },
+        "south": {
+          "uv": [
+            2,
+            8,
+            4,
+            12
+          ],
+          "texture": "#basin_stone"
+        },
+        "west": {
+          "uv": [
+            2,
+            8,
+            14,
+            12
+          ],
+          "texture": "#basin_stone"
+        },
+        "east": {
+          "uv": [
+            2,
+            8,
+            14,
+            12
+          ],
+          "texture": "#basin_inner"
+        },
+        "up": {
+          "uv": [
+            2,
+            2,
+            4,
+            14
+          ],
+          "texture": "#basin_stone"
+        },
+        "down": {
+          "uv": [
+            2,
+            2,
+            4,
+            14
+          ],
+          "texture": "#basin_stone"
+        }
+      }
+    },
+    {
+      "name": "right_wall",
+      "from": [
+        12,
+        4,
+        2
+      ],
+      "to": [
+        14,
+        8,
+        14
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            12,
+            8,
+            14,
+            12
+          ],
+          "texture": "#basin_stone"
+        },
+        "south": {
+          "uv": [
+            12,
+            8,
+            14,
+            12
+          ],
+          "texture": "#basin_stone"
+        },
+        "west": {
+          "uv": [
+            2,
+            8,
+            14,
+            12
+          ],
+          "texture": "#basin_inner"
+        },
+        "east": {
+          "uv": [
+            2,
+            8,
+            14,
+            12
+          ],
+          "texture": "#basin_stone"
+        },
+        "up": {
+          "uv": [
+            12,
+            2,
+            14,
+            14
+          ],
+          "texture": "#basin_stone"
+        },
+        "down": {
+          "uv": [
+            12,
+            2,
+            14,
+            14
+          ],
+          "texture": "#basin_stone"
+        }
+      }
+    },
+    {
+      "name": "front_wall",
+      "from": [
+        4,
+        4,
+        2
+      ],
+      "to": [
+        12,
+        8,
+        4
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            4,
+            8,
+            12,
+            12
+          ],
+          "texture": "#basin_stone"
+        },
+        "south": {
+          "uv": [
+            4,
+            8,
+            12,
+            12
+          ],
+          "texture": "#basin_inner"
+        },
+        "west": {
+          "uv": [
+            2,
+            8,
+            4,
+            12
+          ],
+          "texture": "#basin_stone"
+        },
+        "east": {
+          "uv": [
+            2,
+            8,
+            4,
+            12
+          ],
+          "texture": "#basin_stone"
+        },
+        "up": {
+          "uv": [
+            4,
+            2,
+            12,
+            4
+          ],
+          "texture": "#basin_stone"
+        },
+        "down": {
+          "uv": [
+            4,
+            2,
+            12,
+            4
+          ],
+          "texture": "#basin_stone"
+        }
+      }
+    },
+    {
+      "name": "back_wall",
+      "from": [
+        4,
+        4,
+        12
+      ],
+      "to": [
+        12,
+        8,
+        14
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            4,
+            8,
+            12,
+            12
+          ],
+          "texture": "#basin_inner"
+        },
+        "south": {
+          "uv": [
+            4,
+            8,
+            12,
+            12
+          ],
+          "texture": "#basin_stone"
+        },
+        "west": {
+          "uv": [
+            12,
+            8,
+            14,
+            12
+          ],
+          "texture": "#basin_stone"
+        },
+        "east": {
+          "uv": [
+            12,
+            8,
+            14,
+            12
+          ],
+          "texture": "#basin_stone"
+        },
+        "up": {
+          "uv": [
+            4,
+            12,
+            12,
+            14
+          ],
+          "texture": "#basin_stone"
+        },
+        "down": {
+          "uv": [
+            4,
+            12,
+            12,
+            14
+          ],
+          "texture": "#basin_stone"
+        }
+      }
+    },
+    {
+      "name": "left_rim",
+      "from": [
+        1,
+        8,
+        1
+      ],
+      "to": [
+        3,
+        10,
+        15
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            1,
+            6,
+            3,
+            8
+          ],
+          "texture": "#basin_stone"
+        },
+        "south": {
+          "uv": [
+            1,
+            6,
+            3,
+            8
+          ],
+          "texture": "#basin_stone"
+        },
+        "west": {
+          "uv": [
+            1,
+            6,
+            15,
+            8
+          ],
+          "texture": "#basin_stone"
+        },
+        "east": {
+          "uv": [
+            1,
+            6,
+            15,
+            8
+          ],
+          "texture": "#basin_stone"
+        },
+        "up": {
+          "uv": [
+            1,
+            1,
+            3,
+            15
+          ],
+          "texture": "#basin_stone"
+        },
+        "down": {
+          "uv": [
+            1,
+            1,
+            3,
+            15
+          ],
+          "texture": "#basin_stone"
+        }
+      }
+    },
+    {
+      "name": "right_rim",
+      "from": [
+        13,
+        8,
+        1
+      ],
+      "to": [
+        15,
+        10,
+        15
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            13,
+            6,
+            15,
+            8
+          ],
+          "texture": "#basin_stone"
+        },
+        "south": {
+          "uv": [
+            13,
+            6,
+            15,
+            8
+          ],
+          "texture": "#basin_stone"
+        },
+        "west": {
+          "uv": [
+            1,
+            6,
+            15,
+            8
+          ],
+          "texture": "#basin_stone"
+        },
+        "east": {
+          "uv": [
+            1,
+            6,
+            15,
+            8
+          ],
+          "texture": "#basin_stone"
+        },
+        "up": {
+          "uv": [
+            13,
+            1,
+            15,
+            15
+          ],
+          "texture": "#basin_stone"
+        },
+        "down": {
+          "uv": [
+            13,
+            1,
+            15,
+            15
+          ],
+          "texture": "#basin_stone"
+        }
+      }
+    },
+    {
+      "name": "front_rim",
+      "from": [
+        3,
+        8,
+        1
+      ],
+      "to": [
+        13,
+        10,
+        3
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            3,
+            6,
+            13,
+            8
+          ],
+          "texture": "#basin_stone"
+        },
+        "south": {
+          "uv": [
+            3,
+            6,
+            13,
+            8
+          ],
+          "texture": "#basin_stone"
+        },
+        "west": {
+          "uv": [
+            1,
+            6,
+            3,
+            8
+          ],
+          "texture": "#basin_stone"
+        },
+        "east": {
+          "uv": [
+            1,
+            6,
+            3,
+            8
+          ],
+          "texture": "#basin_stone"
+        },
+        "up": {
+          "uv": [
+            3,
+            1,
+            13,
+            3
+          ],
+          "texture": "#basin_stone"
+        },
+        "down": {
+          "uv": [
+            3,
+            1,
+            13,
+            3
+          ],
+          "texture": "#basin_stone"
+        }
+      }
+    },
+    {
+      "name": "back_rim",
+      "from": [
+        3,
+        8,
+        13
+      ],
+      "to": [
+        13,
+        10,
+        15
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            3,
+            6,
+            13,
+            8
+          ],
+          "texture": "#basin_stone"
+        },
+        "south": {
+          "uv": [
+            3,
+            6,
+            13,
+            8
+          ],
+          "texture": "#basin_stone"
+        },
+        "west": {
+          "uv": [
+            13,
+            6,
+            15,
+            8
+          ],
+          "texture": "#basin_stone"
+        },
+        "east": {
+          "uv": [
+            13,
+            6,
+            15,
+            8
+          ],
+          "texture": "#basin_stone"
+        },
+        "up": {
+          "uv": [
+            3,
+            13,
+            13,
+            15
+          ],
+          "texture": "#basin_stone"
+        },
+        "down": {
+          "uv": [
+            3,
+            13,
+            13,
+            15
+          ],
+          "texture": "#basin_stone"
+        }
+      }
+    },
+    {
+      "name": "left_binding",
+      "from": [
+        1.75,
+        5,
+        2
+      ],
+      "to": [
+        2,
+        6,
+        14
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            1.75,
+            10,
+            2,
+            11
+          ],
+          "texture": "#basin_copper"
+        },
+        "south": {
+          "uv": [
+            1.75,
+            10,
+            2,
+            11
+          ],
+          "texture": "#basin_copper"
+        },
+        "west": {
+          "uv": [
+            2,
+            10,
+            14,
+            11
+          ],
+          "texture": "#basin_copper"
+        },
+        "east": {
+          "uv": [
+            2,
+            10,
+            14,
+            11
+          ],
+          "texture": "#basin_copper"
+        },
+        "up": {
+          "uv": [
+            1.75,
+            2,
+            2,
+            14
+          ],
+          "texture": "#basin_copper"
+        },
+        "down": {
+          "uv": [
+            1.75,
+            2,
+            2,
+            14
+          ],
+          "texture": "#basin_copper"
+        }
+      }
+    },
+    {
+      "name": "right_binding",
+      "from": [
+        14,
+        5,
+        2
+      ],
+      "to": [
+        14.25,
+        6,
+        14
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            14,
+            10,
+            14.25,
+            11
+          ],
+          "texture": "#basin_copper"
+        },
+        "south": {
+          "uv": [
+            14,
+            10,
+            14.25,
+            11
+          ],
+          "texture": "#basin_copper"
+        },
+        "west": {
+          "uv": [
+            2,
+            10,
+            14,
+            11
+          ],
+          "texture": "#basin_copper"
+        },
+        "east": {
+          "uv": [
+            2,
+            10,
+            14,
+            11
+          ],
+          "texture": "#basin_copper"
+        },
+        "up": {
+          "uv": [
+            14,
+            2,
+            14.25,
+            14
+          ],
+          "texture": "#basin_copper"
+        },
+        "down": {
+          "uv": [
+            14,
+            2,
+            14.25,
+            14
+          ],
+          "texture": "#basin_copper"
+        }
+      }
+    },
+    {
+      "name": "front_binding",
+      "from": [
+        2,
+        5,
+        1.75
+      ],
+      "to": [
+        14,
+        6,
+        2
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            2,
+            10,
+            14,
+            11
+          ],
+          "texture": "#basin_copper"
+        },
+        "south": {
+          "uv": [
+            2,
+            10,
+            14,
+            11
+          ],
+          "texture": "#basin_copper"
+        },
+        "west": {
+          "uv": [
+            1.75,
+            10,
+            2,
+            11
+          ],
+          "texture": "#basin_copper"
+        },
+        "east": {
+          "uv": [
+            1.75,
+            10,
+            2,
+            11
+          ],
+          "texture": "#basin_copper"
+        },
+        "up": {
+          "uv": [
+            2,
+            1.75,
+            14,
+            2
+          ],
+          "texture": "#basin_copper"
+        },
+        "down": {
+          "uv": [
+            2,
+            1.75,
+            14,
+            2
+          ],
+          "texture": "#basin_copper"
+        }
+      }
+    },
+    {
+      "name": "back_binding",
+      "from": [
+        2,
+        5,
+        14
+      ],
+      "to": [
+        14,
+        6,
+        14.25
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            2,
+            10,
+            14,
+            11
+          ],
+          "texture": "#basin_copper"
+        },
+        "south": {
+          "uv": [
+            2,
+            10,
+            14,
+            11
+          ],
+          "texture": "#basin_copper"
+        },
+        "west": {
+          "uv": [
+            14,
+            10,
+            14.25,
+            11
+          ],
+          "texture": "#basin_copper"
+        },
+        "east": {
+          "uv": [
+            14,
+            10,
+            14.25,
+            11
+          ],
+          "texture": "#basin_copper"
+        },
+        "up": {
+          "uv": [
+            2,
+            14,
+            14,
+            14.25
+          ],
+          "texture": "#basin_copper"
+        },
+        "down": {
+          "uv": [
+            2,
+            14,
+            14,
+            14.25
+          ],
+          "texture": "#basin_copper"
+        }
+      }
+    },
+    {
+      "name": "sieve_left",
+      "from": [
+        5,
+        8,
+        12
+      ],
+      "to": [
+        6,
+        13,
+        13
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            5,
+            3,
+            6,
+            8
+          ],
+          "texture": "#basin_copper"
+        },
+        "south": {
+          "uv": [
+            5,
+            3,
+            6,
+            8
+          ],
+          "texture": "#basin_copper"
+        },
+        "west": {
+          "uv": [
+            12,
+            3,
+            13,
+            8
+          ],
+          "texture": "#basin_copper"
+        },
+        "east": {
+          "uv": [
+            12,
+            3,
+            13,
+            8
+          ],
+          "texture": "#basin_copper"
+        },
+        "up": {
+          "uv": [
+            5,
+            12,
+            6,
+            13
+          ],
+          "texture": "#basin_copper"
+        },
+        "down": {
+          "uv": [
+            5,
+            12,
+            6,
+            13
+          ],
+          "texture": "#basin_copper"
+        }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          8,
+          12
+        ],
+        "axis": "x",
+        "angle": 22.5
+      }
+    },
+    {
+      "name": "sieve_right",
+      "from": [
+        10,
+        8,
+        12
+      ],
+      "to": [
+        11,
+        13,
+        13
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            10,
+            3,
+            11,
+            8
+          ],
+          "texture": "#basin_copper"
+        },
+        "south": {
+          "uv": [
+            10,
+            3,
+            11,
+            8
+          ],
+          "texture": "#basin_copper"
+        },
+        "west": {
+          "uv": [
+            12,
+            3,
+            13,
+            8
+          ],
+          "texture": "#basin_copper"
+        },
+        "east": {
+          "uv": [
+            12,
+            3,
+            13,
+            8
+          ],
+          "texture": "#basin_copper"
+        },
+        "up": {
+          "uv": [
+            10,
+            12,
+            11,
+            13
+          ],
+          "texture": "#basin_copper"
+        },
+        "down": {
+          "uv": [
+            10,
+            12,
+            11,
+            13
+          ],
+          "texture": "#basin_copper"
+        }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          8,
+          12
+        ],
+        "axis": "x",
+        "angle": 22.5
+      }
+    },
+    {
+      "name": "sieve_top",
+      "from": [
+        6,
+        12,
+        12
+      ],
+      "to": [
+        10,
+        13,
+        13
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            6,
+            3,
+            10,
+            4
+          ],
+          "texture": "#basin_copper"
+        },
+        "south": {
+          "uv": [
+            6,
+            3,
+            10,
+            4
+          ],
+          "texture": "#basin_copper"
+        },
+        "west": {
+          "uv": [
+            12,
+            3,
+            13,
+            4
+          ],
+          "texture": "#basin_copper"
+        },
+        "east": {
+          "uv": [
+            12,
+            3,
+            13,
+            4
+          ],
+          "texture": "#basin_copper"
+        },
+        "up": {
+          "uv": [
+            6,
+            12,
+            10,
+            13
+          ],
+          "texture": "#basin_copper"
+        },
+        "down": {
+          "uv": [
+            6,
+            12,
+            10,
+            13
+          ],
+          "texture": "#basin_copper"
+        }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          8,
+          12
+        ],
+        "axis": "x",
+        "angle": 22.5
+      }
+    },
+    {
+      "name": "sieve_bottom",
+      "from": [
+        6,
+        8,
+        12
+      ],
+      "to": [
+        10,
+        9,
+        13
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            6,
+            7,
+            10,
+            8
+          ],
+          "texture": "#basin_copper"
+        },
+        "south": {
+          "uv": [
+            6,
+            7,
+            10,
+            8
+          ],
+          "texture": "#basin_copper"
+        },
+        "west": {
+          "uv": [
+            12,
+            7,
+            13,
+            8
+          ],
+          "texture": "#basin_copper"
+        },
+        "east": {
+          "uv": [
+            12,
+            7,
+            13,
+            8
+          ],
+          "texture": "#basin_copper"
+        },
+        "up": {
+          "uv": [
+            6,
+            12,
+            10,
+            13
+          ],
+          "texture": "#basin_copper"
+        },
+        "down": {
+          "uv": [
+            6,
+            12,
+            10,
+            13
+          ],
+          "texture": "#basin_copper"
+        }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          8,
+          12
+        ],
+        "axis": "x",
+        "angle": 22.5
+      }
+    },
+    {
+      "name": "sieve_mesh",
+      "from": [
+        6,
+        9,
+        12.25
+      ],
+      "to": [
+        10,
+        12,
+        12.75
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            6,
+            4,
+            10,
+            7
+          ],
+          "texture": "#basin_mesh"
+        },
+        "south": {
+          "uv": [
+            6,
+            4,
+            10,
+            7
+          ],
+          "texture": "#basin_mesh"
+        },
+        "west": {
+          "uv": [
+            12.25,
+            4,
+            12.75,
+            7
+          ],
+          "texture": "#basin_mesh"
+        },
+        "east": {
+          "uv": [
+            12.25,
+            4,
+            12.75,
+            7
+          ],
+          "texture": "#basin_mesh"
+        },
+        "up": {
+          "uv": [
+            6,
+            12.25,
+            10,
+            12.75
+          ],
+          "texture": "#basin_mesh"
+        },
+        "down": {
+          "uv": [
+            6,
+            12.25,
+            10,
+            12.75
+          ],
+          "texture": "#basin_mesh"
+        }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          8,
+          12
+        ],
+        "axis": "x",
+        "angle": 22.5
+      }
+    }
+  ]
+}

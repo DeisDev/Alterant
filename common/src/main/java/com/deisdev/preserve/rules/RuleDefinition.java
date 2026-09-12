@@ -51,8 +51,9 @@ public record RuleDefinition(int schema, Identifier id, int priority, Set<String
         for (var formulation : formulations) {
             if (formulation == Formulation.TEMPORAL_STASIS) { continue; }
             Set<Action> allowed = switch (formulation) {
-                case GROWTH_INHIBITOR -> Set.of(Action.NATURAL_GROWTH);
+                case GROWTH_INHIBITOR, GROWTH_REGULATOR -> Set.of(Action.NATURAL_GROWTH);
                 case PRESERVING_SEALANT -> Set.of(Action.ENVIRONMENTAL_CHANGE);
+                case TRANSFER_SEAL -> Set.of(Action.RESOURCE_TRANSFER);
                 case STRUCTURAL_STASIS -> Set.of(Action.STRUCTURAL_CHANGE, Action.PISTON_MOVEMENT, Action.GRAVITY);
                 case TIME_SERUM, SUSPICIOUS_TIME_SERUM, REFINED_TIME_SERUM, ENDURING_TIME_SERUM, OVERCHARGED_TIME_SERUM -> Set.of(Action.ACCELERATE_BLOCK_ENTITY, Action.ACCELERATE_RANDOM_BLOCK, Action.ACCELERATE_SCHEDULED_BLOCK);
                 default -> throw new AssertionError(formulation);

@@ -15,9 +15,16 @@ public final class PreserveItems {
             net.minecraft.core.registries.Registries.CREATIVE_MODE_TAB, net.minecraft.resources.Identifier.withDefaultNamespace("tools_and_utilities"));
     public static final Supplier<DataComponentType<JarContents>> JAR_CONTENTS = Services.PLATFORM.registerComponent("jar_contents",
             () -> DataComponentType.<JarContents>builder().persistent(JarContents.CODEC).networkSynchronized(JarContents.STREAM_CODEC).build());
+    public static final Supplier<DataComponentType<ReclamationContents>> RECLAMATION_CONTENTS = Services.PLATFORM.registerComponent("reclamation_contents",
+            () -> DataComponentType.<ReclamationContents>builder().persistent(ReclamationContents.CODEC).networkSynchronized(ReclamationContents.STREAM_CODEC).build());
+    public static final Supplier<ReclamationJarItem> RECLAMATION_JAR = Services.PLATFORM.registerItem("reclamation_jar", ReclamationJarItem::new);
     public static final Supplier<DataComponentType<Boolean>> BRUSH_AREA = Services.PLATFORM.registerComponent("brush_area",
             () -> DataComponentType.<Boolean>builder().persistent(com.mojang.serialization.Codec.BOOL).networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.BOOL).build());
     public static final Supplier<Item> BINDING_PASTE = material("binding_paste");
+    public static final Supplier<Item> DRIED_COMPOUND = material("dried_compound");
+    public static final Supplier<Item> SEALANT_SCRAP = material("sealant_scrap");
+    public static final Supplier<Item> LATTICE_FRAGMENTS = material("lattice_fragments");
+    public static final Supplier<Item> CHRONAL_DROSS = material("chronal_dross");
     public static final Supplier<Item> INERT_POWDER = material("inert_powder");
     public static final Supplier<Item> WAXED_MEMBRANE = material("waxed_membrane");
     public static final Supplier<Item> STABILIZING_LATTICE = material("stabilizing_lattice");
@@ -35,11 +42,33 @@ public final class PreserveItems {
     public static final Supplier<CompoundItem> SUSPICIOUS_TIME_SERUM = registerCompound(Formulation.SUSPICIOUS_TIME_SERUM);
     public static final Supplier<QuantumApplicatorItem> QUANTUM_APPLICATOR = Services.PLATFORM.registerItem("quantum_applicator", QuantumApplicatorItem::new);
     public static final Supplier<CompoundItem> GROWTH_INHIBITOR = registerCompound(Formulation.GROWTH_INHIBITOR);
+    public static final Supplier<DataComponentType<com.deisdev.preserve.engine.GrowthLimit>> GROWTH_LIMIT = Services.PLATFORM.registerComponent("growth_limit",
+            () -> DataComponentType.<com.deisdev.preserve.engine.GrowthLimit>builder().persistent(com.deisdev.preserve.engine.GrowthLimit.CODEC)
+                    .networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.fromCodec(com.deisdev.preserve.engine.GrowthLimit.CODEC)).build());
+    public static final Supplier<CompoundItem> GROWTH_REGULATOR = registerCompound(Formulation.GROWTH_REGULATOR);
+    public static final Supplier<DataComponentType<com.deisdev.preserve.engine.TransferPolicy>> TRANSFER_POLICY = Services.PLATFORM.registerComponent("transfer_policy",
+            () -> DataComponentType.<com.deisdev.preserve.engine.TransferPolicy>builder().persistent(com.deisdev.preserve.engine.TransferPolicy.CODEC)
+                    .networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.fromCodec(com.deisdev.preserve.engine.TransferPolicy.CODEC)).build());
+    public static final Supplier<CompoundItem> TRANSFER_SEAL = registerCompound(Formulation.TRANSFER_SEAL);
     public static final Supplier<CompoundItem> PRESERVING_SEALANT = registerCompound(Formulation.PRESERVING_SEALANT);
     public static final Supplier<CompoundItem> STRUCTURAL_STASIS = registerCompound(Formulation.STRUCTURAL_STASIS);
     public static final Supplier<CompoundItem> TEMPORAL_STASIS = registerCompound(Formulation.TEMPORAL_STASIS);
     public static final Supplier<PreservingBrushItem> PRESERVING_BRUSH = Services.PLATFORM.registerItem("preserving_brush", PreservingBrushItem::new);
-    public static final Supplier<ScraperItem> SCRAPER = Services.PLATFORM.registerItem("scraper", ScraperItem::new);
+    public static final Supplier<ScraperItem> SCRAPER = Services.PLATFORM.registerScraper();
+    public static final Supplier<DataComponentType<Integer>> STYLUS_MODE = Services.PLATFORM.registerComponent("stylus_mode",
+            () -> DataComponentType.<Integer>builder().persistent(com.mojang.serialization.Codec.intRange(0, 2)).networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.fromCodec(com.mojang.serialization.Codec.intRange(0, 2))).build());
+    public static final Supplier<DataComponentType<com.deisdev.preserve.engine.ShapePattern>> SHAPE_SAMPLE = Services.PLATFORM.registerComponent("shape_sample",
+            () -> DataComponentType.<com.deisdev.preserve.engine.ShapePattern>builder().persistent(com.deisdev.preserve.engine.ShapePattern.CODEC).networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.fromCodec(com.deisdev.preserve.engine.ShapePattern.CODEC)).build());
+    public static final Supplier<DataComponentType<com.deisdev.preserve.engine.ShapePreview>> SHAPE_PREVIEW = Services.PLATFORM.registerComponent("shape_preview",
+            () -> DataComponentType.<com.deisdev.preserve.engine.ShapePreview>builder().networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.fromCodec(com.deisdev.preserve.engine.ShapePreview.CODEC)).build());
+    public static final Supplier<ShapingStylusItem> SHAPING_STYLUS = Services.PLATFORM.registerStylus();
+    public static final Supplier<MaskingStripsItem> MASKING_STRIPS = Services.PLATFORM.registerItem("masking_strips", MaskingStripsItem::new);
+    public static final Supplier<DataComponentType<Integer>> SOLVENT_DOSES = Services.PLATFORM.registerComponent("solvent_doses",
+            () -> DataComponentType.<Integer>builder().persistent(com.mojang.serialization.Codec.intRange(1, ReleaseSolventItem.CAPACITY))
+                    .networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.fromCodec(com.mojang.serialization.Codec.intRange(1, ReleaseSolventItem.CAPACITY))).build());
+    public static final Supplier<ReleaseSolventItem> RELEASE_SOLVENT = Services.PLATFORM.registerSolvent();
+    public static final Supplier<DataComponentType<Boolean>> SOLVENT_AREA = Services.PLATFORM.registerComponent("solvent_area",
+            () -> DataComponentType.<Boolean>builder().persistent(com.mojang.serialization.Codec.BOOL).networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.BOOL).build());
 
     private PreserveItems() {}
     public static void init() {}
@@ -47,19 +76,25 @@ public final class PreserveItems {
         all().stream().map(Supplier::get).filter(item -> !(item instanceof com.deisdev.preserve.api.PreservationTool)).forEach(item -> output.accept(item.getDefaultInstance()));
     }
     public static void fillToolsTab(java.util.function.Consumer<net.minecraft.world.item.ItemStack> output) {
+        output.accept(com.deisdev.preserve.basin.PreserveBlocks.BASIN_ITEM.get().getDefaultInstance());
         output.accept(PRESERVING_BRUSH.get().getDefaultInstance());
         output.accept(SCRAPER.get().getDefaultInstance());
+        output.accept(SHAPING_STYLUS.get().getDefaultInstance());
         output.accept(QUANTUM_APPLICATOR.get().getDefaultInstance());
+        output.accept(MASKING_STRIPS.get().getDefaultInstance());
+        output.accept(RELEASE_SOLVENT.get().getDefaultInstance());
     }
     public static List<Supplier<? extends Item>> all() {
-        return List.of(BINDING_PASTE, INERT_POWDER, WAXED_MEMBRANE, STABILIZING_LATTICE, TEMPORAL_CORE,
-                GROWTH_INHIBITOR, PRESERVING_SEALANT, STRUCTURAL_STASIS, TEMPORAL_STASIS, PRESERVING_BRUSH, SCRAPER,
+        return List.of(RELEASE_SOLVENT, MASKING_STRIPS, RECLAMATION_JAR, BINDING_PASTE, DRIED_COMPOUND, SEALANT_SCRAP, LATTICE_FRAGMENTS, CHRONAL_DROSS, INERT_POWDER, WAXED_MEMBRANE, STABILIZING_LATTICE, TEMPORAL_CORE,
+                GROWTH_INHIBITOR, GROWTH_REGULATOR, TRANSFER_SEAL, PRESERVING_SEALANT, STRUCTURAL_STASIS, TEMPORAL_STASIS, PRESERVING_BRUSH, SCRAPER, SHAPING_STYLUS,
                 CHRONAL_DUST, RESONANT_CRYSTAL, QUANTUM_LENS, TIME_SERUM, SUSPICIOUS_TIME_SERUM, QUANTUM_APPLICATOR,
                 CHRONAL_ALLOY, ECHO_MATRIX, DRAGONBOUND_CATALYST, REFINED_TIME_SERUM, ENDURING_TIME_SERUM, OVERCHARGED_TIME_SERUM);
     }
     public static CompoundItem compound(Formulation formulation) {
         return switch (formulation) {
             case GROWTH_INHIBITOR -> GROWTH_INHIBITOR.get();
+            case GROWTH_REGULATOR -> GROWTH_REGULATOR.get();
+            case TRANSFER_SEAL -> TRANSFER_SEAL.get();
             case PRESERVING_SEALANT -> PRESERVING_SEALANT.get();
             case STRUCTURAL_STASIS -> STRUCTURAL_STASIS.get();
             case TEMPORAL_STASIS -> TEMPORAL_STASIS.get();

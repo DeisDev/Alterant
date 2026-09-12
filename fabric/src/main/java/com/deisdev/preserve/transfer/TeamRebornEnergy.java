@@ -11,8 +11,8 @@ import team.reborn.energy.api.EnergyStorage;
 /** Loaded only when Team Reborn Energy is present. Covers its sided block lookup, including cached handles. */
 final class TeamRebornEnergy {
     private TeamRebornEnergy() {}
-    static Object wrap(BlockApiLookup<?, ?> lookup, Object result, Level level, BlockPos pos) {
-        return lookup == EnergyStorage.SIDED ? new Guarded((EnergyStorage) result, new TransferGuard(level, pos)) : result;
+    static Object wrap(BlockApiLookup<?, ?> lookup, Object result, Level level, BlockPos pos, net.minecraft.world.level.block.entity.BlockEntity entity) {
+        return lookup == EnergyStorage.SIDED ? new Guarded((EnergyStorage) result, new TransferGuard(level, pos, null, entity)) : result;
     }
     private static final class Guarded implements EnergyStorage {
         private final EnergyStorage delegate;
@@ -20,11 +20,11 @@ final class TeamRebornEnergy {
         private Guarded(EnergyStorage delegate, TransferGuard guard) { this.delegate = delegate; this.guard = guard; }
         @Override public long insert(long amount, TransactionContext transaction) {
             StoragePreconditions.notNegative(amount);
-            return guard.allowsMutation() ? delegate.insert(amount, transaction) : 0;
+            return guard.allowsEnergyMutation() ? delegate.insert(amount, transaction) : 0;
         }
         @Override public long extract(long amount, TransactionContext transaction) {
             StoragePreconditions.notNegative(amount);
-            return guard.allowsMutation() ? delegate.extract(amount, transaction) : 0;
+            return guard.allowsEnergyMutation() ? delegate.extract(amount, transaction) : 0;
         }
         // Preserve connection metadata: the API expects a neighbor update when these declarations change.
         @Override public boolean supportsInsertion() { return delegate.supportsInsertion(); }

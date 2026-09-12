@@ -21,14 +21,14 @@ public final class ItemBorderColors {
         var id = BuiltInRegistries.ITEM.getKey(stack.getItem());
         if (!id.getNamespace().equals("deisdev")) { return fallback; }
         return switch (id.getPath()) {
-            case "growth_inhibitor" -> GREEN;
-            case "preserving_sealant", "waxed_membrane", "chronal_dust", "chronal_alloy", "enduring_time_serum" -> GOLD;
-            case "structural_stasis", "refined_time_serum" -> BLUE;
-            case "temporal_stasis" -> PURPLE;
+            case "growth_inhibitor", "growth_regulator", "dried_compound" -> GREEN;
+            case "preserving_sealant", "sealant_scrap", "waxed_membrane", "chronal_dust", "chronal_alloy", "enduring_time_serum" -> GOLD;
+            case "structural_stasis", "shaping_stylus", "lattice_fragments", "refined_time_serum" -> BLUE;
+            case "temporal_stasis", "chronal_dross" -> PURPLE;
             case "time_serum", "temporal_core", "resonant_crystal", "quantum_lens", "quantum_applicator", "echo_matrix" -> CYAN;
             case "suspicious_time_serum", "overcharged_time_serum", "dragonbound_catalyst" -> PINK;
-            case "binding_paste", "preserving_brush" -> BEIGE;
-            case "inert_powder", "stabilizing_lattice", "scraper" -> STEEL;
+            case "binding_paste", "preserving_brush", "masking_strips" -> BEIGE;
+            case "inert_powder", "stabilizing_lattice", "scraper", "reclamation_jar", "reclaiming_basin", "release_solvent", "transfer_seal" -> STEEL;
             default -> fallback;
         };
     }

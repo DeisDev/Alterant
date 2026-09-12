@@ -1,0 +1,10 @@
+{
+  "type": "deisdev:reclaiming",
+  "family": "dried_compound",
+  "count": 64,
+  "result": {
+    "id": "deisdev:binding_paste",
+    "count": 1
+  },
+  "duration": 100
+}

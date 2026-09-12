@@ -14,7 +14,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
-@Mixin({CropBlock.class, BambooStalkBlock.class, GrowingPlantHeadBlock.class})
+@Mixin({CropBlock.class, BambooStalkBlock.class, GrowingPlantHeadBlock.class,
+        net.minecraft.world.level.block.SweetBerryBushBlock.class, net.minecraft.world.level.block.CocoaBlock.class, net.minecraft.world.level.block.NetherWartBlock.class})
 public abstract class CropEventsMixin {
     @WrapOperation(method = "randomTick", at = @At(value = "INVOKE", target = "Lnet/neoforged/neoforge/common/CommonHooks;canCropGrow(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Z)Z"))
     private boolean preserve$beforeGrowthEvent(Level receiver, BlockPos eventPos, BlockState eventState, boolean chance, Operation<Boolean> original,

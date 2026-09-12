@@ -22,6 +22,10 @@ public final class IntegrationRegistry {
     private static volatile List<PreservationPermission> permissions = List.of();
     private static boolean locked;
     private IntegrationRegistry() {}
+    private static boolean selects(PreservationAdapter adapter, PreservationContext context) {
+        return context.formulation() == com.deisdev.preserve.api.Formulation.TRANSFER_SEAL
+                ? adapter.supportsTransferSeal(context) : adapter.supports(context);
+    }
 
     public static synchronized void register(PreservationAdapter adapter) {
         if (locked) { throw new IllegalStateException("Register Preserve adapters during mod initialization, before the first server starts"); }
@@ -44,11 +48,18 @@ public final class IntegrationRegistry {
         }
     }
 
+    public static void checkPermissions(com.deisdev.preserve.api.AutomationContext source, PreservationContext context, PreservationPermission.Change change) {
+        for (var permission : permissions) {
+            var denial = permission.denial(source, context, change);
+            if (denial.isPresent()) { throw new IllegalArgumentException(denial.get()); }
+        }
+    }
+
     public static List<net.minecraft.core.BlockPos> targets(PreservationContext context) {
         var result = TargetLink.validate(context.pos(), VanillaTargets.resolve(context));
         int matching = 0;
         for (var adapter : ordered) {
-            if (!adapter.supports(context)) { continue; }
+            if (!selects(adapter, context)) { continue; }
             if (++matching > AdapterSnapshot.MAX_ADAPTERS) { throw new IllegalArgumentException("Too many adapters select this target"); }
             var selected = TargetLink.validate(context.pos(), adapter.targets(context));
             if (selected.size() == 1) { continue; }
@@ -62,7 +73,7 @@ public final class IntegrationRegistry {
         var snapshots = new ArrayList<AdapterSnapshot>();
         boolean complete = false;
         for (var adapter : ordered) {
-            if (!adapter.supports(context)) { continue; }
+            if (!selects(adapter, context)) { continue; }
             if (snapshots.size() == AdapterSnapshot.MAX_ADAPTERS) { throw new IllegalArgumentException("Too many adapters select this target"); }
             var denial = adapter.validate(context);
             if (denial.isPresent()) { throw new IllegalArgumentException(adapter.id() + ": " + denial.get()); }
@@ -78,7 +89,7 @@ public final class IntegrationRegistry {
         var adapters = new ArrayList<String>();
         boolean complete = false;
         for (var adapter : ordered) {
-            if (!adapter.supports(context)) { continue; }
+            if (!selects(adapter, context)) { continue; }
             if (adapters.size() == AdapterSnapshot.MAX_ADAPTERS) { throw new IllegalArgumentException("Too many adapters select this target"); }
             var denial = adapter.validate(context);
             if (denial.isPresent()) { throw new IllegalArgumentException(adapter.id() + ": " + denial.get()); }

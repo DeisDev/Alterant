@@ -16,7 +16,7 @@ public final class QuantumApplicatorItem extends Item implements PreservationToo
         if (context.getLevel().isClientSide()) { return InteractionResult.SUCCESS; }
         if (!(context.getPlayer() instanceof ServerPlayer player)) { return InteractionResult.FAIL; }
         var result = PreservationService.get(player.level()).applyWithApplicator(context.getClickedPos(), player);
-        player.sendOverlayMessage(Component.literal(result.message()).withColor(result.changed() ? 0xA9DDD0 : 0xE1BD84));
+        if (!result.changed()) { ToolFeedback.failure(player, result); }
         return result.changed() ? InteractionResult.SUCCESS : InteractionResult.FAIL;
     }
     @Override public void appendHoverText(net.minecraft.world.item.ItemStack stack, TooltipContext context,

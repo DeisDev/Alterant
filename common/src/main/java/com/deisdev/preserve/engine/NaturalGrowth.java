@@ -16,11 +16,11 @@ public final class NaturalGrowth {
     private NaturalGrowth() {}
     public static void run(Level level, BlockPos source, Runnable operation) {
         // The empty path creates no scope object. Queries still distinguish nested callbacks at another source.
-        if (!CURRENT.isBound() && !TickGate.blocks(level, source, Action.NATURAL_GROWTH)) { operation.run(); return; }
+        if (!CURRENT.isBound() && !TickGate.blocks(level, source, Action.NATURAL_GROWTH) && !GrowthControl.hasRootPolicy(level, source)) { operation.run(); return; }
         ScopedValue.where(CURRENT, new Attempt(level, source)).run(operation);
     }
     public static boolean blocks(Level level, BlockPos source, BlockPos target) {
-        boolean blocked = PolicyEngine.blocks(level, source, Action.NATURAL_GROWTH, source, target);
+        boolean blocked = PolicyEngine.blocks(level, source, Action.NATURAL_GROWTH, source, target) || GrowthControl.blocksExtension(level, source, target);
         if (blocked && active(level, source)) { CURRENT.get().blocked = true; }
         return blocked;
     }

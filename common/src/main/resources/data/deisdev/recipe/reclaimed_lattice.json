@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": ["FFF", "F F", "FFF"],
+  "key": {"F": "deisdev:lattice_fragments"},
+  "result": {"id": "deisdev:stabilizing_lattice", "count": 1}
+}

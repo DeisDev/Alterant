@@ -17,10 +17,17 @@ public final class GuardedResourceHandler<T extends Resource> implements Resourc
     @Override public boolean isValid(int index, T resource) { return delegate.isValid(index, resource); }
     @Override public int insert(int index, T resource, int amount, TransactionContext transaction) {
         TransferPreconditions.checkNonEmptyNonNegative(resource, amount);
-        return guard.allowsMutation() ? delegate.insert(index, resource, amount, transaction) : 0;
+        return guard.allowsInsertion() ? delegate.insert(index, resource, amount, transaction) : 0;
     }
     @Override public int extract(int index, T resource, int amount, TransactionContext transaction) {
         TransferPreconditions.checkNonEmptyNonNegative(resource, amount);
-        return guard.allowsMutation() ? delegate.extract(index, resource, amount, transaction) : 0;
+        return guard.allowsExtraction() ? delegate.extract(index, resource, amount, transaction) : 0;
+    }
+    /** Native ResourceHandlerSlot pickup check only; this method owns an always-aborted simulation. */
+    public boolean mayPickUp(int index, T resource) {
+        if (!guard.allowsManualPickup()) { return false; }
+        try (var transaction = net.neoforged.neoforge.transfer.transaction.Transaction.openRoot()) {
+            return delegate.extract(index, resource, 1, transaction) == 1;
+        }
     }
 }

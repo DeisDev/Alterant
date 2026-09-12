@@ -14,7 +14,8 @@ import net.minecraft.world.level.block.VineBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
 
-@Mixin({CropBlock.class, BambooStalkBlock.class, BambooSaplingBlock.class, VineBlock.class, GrowingPlantHeadBlock.class})
+@Mixin({CropBlock.class, BambooStalkBlock.class, BambooSaplingBlock.class, VineBlock.class, GrowingPlantHeadBlock.class,
+        net.minecraft.world.level.block.SweetBerryBushBlock.class, net.minecraft.world.level.block.CocoaBlock.class, net.minecraft.world.level.block.NetherWartBlock.class})
 public abstract class NaturalGrowthScopeMixin {
     @WrapMethod(method = "randomTick")
     private void preserve$growthAttempt(BlockState state, ServerLevel level, BlockPos source, RandomSource random, Operation<Void> original) {

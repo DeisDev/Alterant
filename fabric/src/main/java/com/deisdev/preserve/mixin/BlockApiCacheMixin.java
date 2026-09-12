@@ -10,9 +10,9 @@ import org.spongepowered.asm.mixin.injection.At;
 @Mixin(BlockApiCacheImpl.class)
 public abstract class BlockApiCacheMixin {
     @ModifyReturnValue(method = "find", at = @At("RETURN"))
-    private Object preserve$guard(Object result) {
+    private Object preserve$guard(Object result, net.minecraft.world.level.block.state.BlockState state, Object context) {
         // Fabric's cached lookup invokes providers directly, bypassing BlockApiLookupImpl.find.
         var cache = (BlockApiCache<?, ?>) this;
-        return FabricTransfers.wrap(cache.getLookup(), result, cache.getLevel(), cache.getPos());
+        return FabricTransfers.wrap(cache.getLookup(), result, cache.getLevel(), cache.getPos(), context, cache.getBlockEntity());
     }
 }

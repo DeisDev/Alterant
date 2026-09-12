@@ -13,7 +13,9 @@ public enum Formulation implements StringRepresentable {
     SUSPICIOUS_TIME_SERUM("suspicious_time_serum", 1),
     REFINED_TIME_SERUM("refined_time_serum", 1),
     ENDURING_TIME_SERUM("enduring_time_serum", 1),
-    OVERCHARGED_TIME_SERUM("overcharged_time_serum", 1);
+    OVERCHARGED_TIME_SERUM("overcharged_time_serum", 1),
+    GROWTH_REGULATOR("growth_regulator", 16),
+    TRANSFER_SEAL("transfer_seal", 16);
 
     public static final Codec<Formulation> CODEC = StringRepresentable.fromEnum(Formulation::values);
     private final String id;

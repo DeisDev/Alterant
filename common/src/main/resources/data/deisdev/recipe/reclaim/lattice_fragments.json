@@ -1,0 +1,10 @@
+{
+  "type": "deisdev:reclaiming",
+  "family": "lattice_fragments",
+  "count": 8,
+  "result": {
+    "id": "deisdev:stabilizing_lattice",
+    "count": 1
+  },
+  "duration": 100
+}

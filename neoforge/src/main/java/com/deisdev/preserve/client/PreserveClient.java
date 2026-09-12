@@ -11,6 +11,13 @@ import net.neoforged.neoforge.client.network.event.RegisterClientPayloadHandlers
 @EventBusSubscriber(modid = "deisdev", value = Dist.CLIENT)
 public final class PreserveClient {
     @SubscribeEvent
+    public static void menus(net.neoforged.neoforge.client.event.RegisterMenuScreensEvent event) {
+        event.register(com.deisdev.preserve.item.PreserveMenus.RECLAMATION.get(), ReclamationScreen::new);
+        event.register(com.deisdev.preserve.item.PreserveMenus.GROWTH_LIMIT.get(), GrowthLimitScreen::new);
+        event.register(com.deisdev.preserve.item.PreserveMenus.TRANSFER_POLICY.get(), TransferPolicyScreen::new);
+        event.register(com.deisdev.preserve.item.PreserveMenus.BASIN.get(), ReclaimingBasinScreen::new);
+    }
+    @SubscribeEvent
     public static void setup(net.neoforged.fml.event.lifecycle.FMLClientSetupEvent event) {
         ClientConfig.initialize(net.neoforged.fml.loading.FMLPaths.CONFIGDIR.get());
         if (net.neoforged.fml.ModList.get().isLoaded("yet_another_config_lib_v3")) {

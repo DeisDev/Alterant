@@ -29,8 +29,9 @@ import net.minecraft.world.ticks.ScheduledTick;
 
 /** Authoritative operations, called only on the server thread; tick gates only read the store. */
 public final class PreservationService {
-    public record Result(int changedPositions, String message) {
+    public record Result(int changedPositions, String message, java.util.Optional<RemovalReceipt> receipt) {
         public Result { if (message == null || message.isBlank()) { message = "Preservation could not complete"; } }
+        public Result(int changedPositions, String message) { this(changedPositions, message, java.util.Optional.empty()); }
         public Result(boolean changed, String message) { this(changed ? 1 : 0, message); }
         public boolean changed() { return changedPositions > 0; }
     }
@@ -40,6 +41,7 @@ public final class PreservationService {
     private final TreatmentStore store;
     private final DeferredTickStore deferred;
     private final LongOpenHashSet inProgress = new LongOpenHashSet();
+    private final ShapeSelections shapeSelections = new ShapeSelections();
 
     public PreservationService(ServerLevel level) {
         this.level = level;
@@ -67,7 +69,7 @@ public final class PreservationService {
 
     public TreatmentStore store() { return store; }
     public void tickResumptions() { deferred.tick(); }
-    public void chunkUnloaded(net.minecraft.world.level.ChunkPos chunk) { deferred.chunkUnloaded(chunk.pack()); }
+    public void chunkUnloaded(net.minecraft.world.level.ChunkPos chunk) { deferred.chunkUnloaded(chunk.pack()); shapeSelections.unloaded(chunk.pack()); }
 
     /** Called only for a chunk Minecraft is actively ticking. Unloaded time never consumes serum. */
     public void tickSerums(net.minecraft.world.level.chunk.LevelChunk chunk) {
@@ -126,7 +128,7 @@ public final class PreservationService {
 
     /** The brush's inventory cost commits with the coating, before scheduler notifications or adapter observations. */
     public Result applyWithBrush(BlockPos pos, net.minecraft.server.level.ServerPlayer player, boolean replace) {
-        return applyWithBrush(pos, player, replace, TargetLink.LIMIT);
+        return applyWithBrush(pos, player, replace, TargetLink.LIMIT, false);
     }
 
     public Result applyWithApplicator(BlockPos pos, net.minecraft.server.level.ServerPlayer player) {
@@ -138,11 +140,15 @@ public final class PreservationService {
     }
 
     Result applyWithBrush(BlockPos pos, net.minecraft.server.level.ServerPlayer player, boolean replace, int limit) {
+        return applyWithBrush(pos, player, replace, limit, true);
+    }
+
+    private Result applyWithBrush(BlockPos pos, net.minecraft.server.level.ServerPlayer player, boolean replace, int limit, boolean area) {
         checkThread();
         CompoundCharge cost;
         try { cost = CompoundCharge.capture(player); }
         catch (IllegalArgumentException error) { return new Result(false, error.getMessage()); }
-        return apply(pos, cost.formulation(), player.getStringUUID(), replace, Math.min(limit, cost.available()), new PlayerAccess(player, cost::ready), cost);
+        return apply(pos, cost.formulation(), player.getStringUUID(), replace, Math.min(limit, cost.available()), new PlayerAccess(player, cost::ready), cost, area);
     }
 
     private Result apply(BlockPos pos, Formulation formulation, String owner, boolean replace, int available, PlayerAccess access) {
@@ -150,6 +156,10 @@ public final class PreservationService {
     }
 
     private Result apply(BlockPos pos, Formulation formulation, String owner, boolean replace, int available, PlayerAccess access, CompoundCharge cost) {
+        return apply(pos, formulation, owner, replace, available, access, cost, false);
+    }
+
+    private Result apply(BlockPos pos, Formulation formulation, String owner, boolean replace, int available, PlayerAccess access, CompoundCharge cost, boolean area) {
         checkThread();
         if (CleanupJob.get(level.getServer()).blocksApplication()) { return new Result(false, "Uninstall preparation blocks new coatings; cancel cleanup to continue playing"); }
         if (com.deisdev.preserve.platform.Services.PLATFORM.transferInProgress()) { return new Result(false, "Wait for the current transfer to finish"); }
@@ -167,12 +177,19 @@ public final class PreservationService {
                 var targets = formulation.accelerates() ? List.of(pos) : IntegrationRegistry.targets(context);
                 if (targets.size() > available) { return new Result(false, "Not enough charges for the entire linked target"); }
                 lockTargets(targets, locked);
+                if (area && SurfaceTargets.masked(level, targets)) { return new Result(false, "Masked target"); }
                 if (level.getBlockState(pos) != context.state() || level.getBlockEntity(pos) != entity) {
                     return new Result(false, "Target changed during integration validation");
                 }
                 var link = targets.size() == 1 ? java.util.Optional.<TargetLink>empty()
                         : java.util.Optional.of(new TargetLink(java.util.UUID.randomUUID(), targets.stream().map(BlockPos::asLong).toList()));
-                for (var target : targets) { prepared.add(prepare(target, formulation, owner, replace, link, access)); }
+                var options = cost != null ? cost.options() : formulation == Formulation.GROWTH_REGULATOR
+                        ? new TreatmentOptions(1, java.util.Optional.of(GrowthLimit.DEFAULT)) : TreatmentOptions.EMPTY;
+                for (var target : targets) {
+                    var entry = prepare(target, formulation, owner, replace, link, access);
+                    if (formulation == Formulation.GROWTH_REGULATOR) { GrowthControl.validate(level, target, entry.context().state(), options.growth().orElseThrow()); }
+                    prepared.add(new Prepared(entry.old(), entry.next().withOptions(options), entry.context(), entry.entity()));
+                }
                 var added = new java.util.HashMap<Long, Integer>();
                 for (var entry : prepared) {
                     if (entry.old() == null) { added.merge(TreatmentStore.chunkKey(entry.next().position()), 1, Integer::sum); }
@@ -184,7 +201,11 @@ public final class PreservationService {
                     if (store.chunkSize(entry.getKey()) + entry.getValue() > limit) { return new Result(false, "This chunk has reached its coating limit"); }
                 }
                 if (access != null) { access.validateItem(); }
-                if (cost != null) { payment = cost.prepare(prepared.size()); }
+                for (var entry : prepared) { validateIdentity(entry); }
+                if (cost != null) {
+                    payment = cost.prepare(prepared.size());
+                    prepared.replaceAll(entry -> new Prepared(entry.old(), entry.next().withRecovery(cost.recovery()), entry.context(), entry.entity()));
+                }
             } catch (RuntimeException error) { return new Result(false, error.getMessage()); }
             // Publish the whole group before collecting work or notifying integrations; no callback can see half a coating.
             for (var entry : prepared) { store.put(entry.next()); }
@@ -228,6 +249,9 @@ public final class PreservationService {
         var entity = level.getBlockEntity(pos);
         if (access != null) { access.validate(context, Change.APPLY); }
         var integration = formulation.accelerates() ? new IntegrationRegistry.Prepared(List.of(), false) : IntegrationRegistry.prepare(context);
+        if (formulation == Formulation.TRANSFER_SEAL && integration.snapshots().isEmpty() && !com.deisdev.preserve.platform.Services.PLATFORM.supportsTransferSeal(level, pos)) {
+            throw new IllegalArgumentException("This target has no supported item or fluid transfer route");
+        }
         if (formulation == Formulation.TEMPORAL_STASIS && !rules.policy().allowPartial() && !integration.complete()) {
             throw new IllegalArgumentException("This target requires a verified integration");
         }
@@ -269,15 +293,153 @@ public final class PreservationService {
                 && block.getTicker(level, state, (net.minecraft.world.level.block.entity.BlockEntityType) entity.getType()) != null;
     }
 
+    public void clearShapePreview(net.minecraft.server.level.ServerPlayer player) { checkThread(); shapeSelections.clear(player); }
+
+    /** Selection and sampling change only the actual held tool, never the block or its policy. */
+    public Result selectShape(BlockPos pos, net.minecraft.core.Direction face, net.minecraft.server.level.ServerPlayer player) {
+        checkThread();
+        if (!level.hasChunkAt(pos) || level.isOutsideBuildHeight(pos)) { return new Result(false, "Target is not loaded"); }
+        if (!inProgress.add(pos.asLong())) { return new Result(false, "Target is busy"); }
+        try {
+            var tool = player.getMainHandItem(); var snapshot = tool.copy(); var state = level.getBlockState(pos);
+            var access = new PlayerAccess(player, () -> player.getMainHandItem() == tool && tool.is(com.deisdev.preserve.item.PreserveItems.SHAPING_STYLUS.get())
+                    && tool.getCount() == 1 && net.minecraft.world.item.ItemStack.matches(snapshot, tool));
+            access.validate(new PreservationContext(level, pos, state, Formulation.STRUCTURAL_STASIS, player.getStringUUID()), Change.APPLY);
+            var pattern = ShapePattern.capture(state); int mode = com.deisdev.preserve.item.ShapingStylusItem.mode(tool);
+            if (mode == 2) {
+                pattern = tool.get(com.deisdev.preserve.item.PreserveItems.SHAPE_SAMPLE.get());
+                if (pattern == null) { throw new IllegalArgumentException("Sample a matching block shape first"); }
+                pattern.apply(state);
+            } else if (mode == 0) {
+                var previous = shapeSelections.get(player, pos);
+                pattern = (previous == null ? pattern : previous.preview.pattern()).cycle(face, player.getDirection().getOpposite());
+            }
+            access.validateItem();
+            if (level.getBlockState(pos) != state) { throw new IllegalArgumentException("Target changed during validation"); }
+            if (mode == 1) {
+                shapeSelections.clear(player); tool.set(com.deisdev.preserve.item.PreserveItems.SHAPE_SAMPLE.get(), pattern); player.getInventory().setChanged();
+                player.sendOverlayMessage(net.minecraft.network.chat.Component.translatable("item.deisdev.shaping_stylus.sampled"));
+            } else { shapeSelections.put(player, new ShapePreview(level.dimension().identifier(), pos.asLong(), state, pattern)); }
+            return new Result(true, "Shape selected");
+        } catch (RuntimeException error) { return new Result(false, error.getMessage()); }
+        finally { inProgress.remove(pos.asLong()); }
+    }
+
+    /** Native shape write, policy and payment complete together before normal neighbor processing. */
+    public Result commitShape(BlockPos pos, net.minecraft.server.level.ServerPlayer player) {
+        checkThread();
+        if (CleanupJob.get(level.getServer()).blocksApplication()) { return new Result(false, "Uninstall preparation blocks new coatings"); }
+        if (!level.hasChunkAt(pos) || level.isOutsideBuildHeight(pos)) { return new Result(false, "Target is not loaded"); }
+        if (level.isDebug() || !com.deisdev.preserve.platform.Services.PLATFORM.canEditShape(level)
+                || com.deisdev.preserve.platform.Services.PLATFORM.transferInProgress()) { return new Result(false, "Wait for the current transfer to finish"); }
+        if (!inProgress.add(pos.asLong())) { return new Result(false, "Target is busy"); }
+        try {
+            Prepared prepared; BlockState proposed; CompoundCharge.Prepared payment = null;
+            try {
+                var selection = shapeSelections.get(player, pos);
+                if (selection == null || com.deisdev.preserve.item.ShapingStylusItem.mode(player.getMainHandItem()) == 1) { throw new IllegalArgumentException("Preview this shape before committing"); }
+                var before = selection.preview.before(); var pattern = selection.preview.pattern(); proposed = pattern.apply(before);
+                if (proposed == before) { throw new IllegalArgumentException("This shape is unchanged"); }
+                var tool = player.getMainHandItem(); var snapshot = tool.copy();
+                var access = new PlayerAccess(player, () -> shapeSelections.get(player, pos) == selection && tool.is(com.deisdev.preserve.item.PreserveItems.SHAPING_STYLUS.get())
+                        && tool.getCount() == 1 && net.minecraft.world.item.ItemStack.matches(snapshot, tool));
+                var context = new PreservationContext(level, pos, before, Formulation.STRUCTURAL_STASIS, player.getStringUUID());
+                access.validate(context, Change.APPLY);
+                var old = store.get(pos.asLong()); CompoundCharge cost = null;
+                if (old == null) {
+                    cost = CompoundCharge.captureStylus(player);
+                    if (!IntegrationRegistry.targets(context).equals(List.of(pos))) { throw new IllegalArgumentException("This block does not support shaping"); }
+                    prepared = prepare(pos, Formulation.STRUCTURAL_STASIS, player.getStringUUID(), false, java.util.Optional.empty(), access);
+                    if (store.chunkSize(TreatmentStore.chunkKey(pos.asLong())) >= RuleRegistry.get(level.getServer()).policy().chunkLimit()) { throw new IllegalArgumentException("This chunk has reached its coating limit"); }
+                } else {
+                    if (old.formulation() != Formulation.STRUCTURAL_STASIS || !matches(pos, old)) { throw new IllegalArgumentException("Remove the existing coating first"); }
+                    prepared = new Prepared(old, old, context, level.getBlockEntity(pos));
+                }
+                var next = prepared.next();
+                if (!next.adapters().isEmpty() || next.link().isPresent() || prepared.entity() != null) { throw new IllegalArgumentException("This block does not support shaping"); }
+                for (String property : pattern.properties()) {
+                    if (next.protections().stream().noneMatch(protection -> protection.action() == com.deisdev.preserve.api.Action.STRUCTURAL_CHANGE
+                            && protection.properties().contains(property) && protection.source().equals(BlockCondition.ANY) && protection.target().equals(BlockCondition.ANY))) {
+                        throw new IllegalArgumentException("This coating does not preserve the selected shape");
+                    }
+                }
+                RemovalUpdates.validate(level, next);
+                if (!level.isUnobstructed(proposed, pos, net.minecraft.world.phys.shapes.CollisionContext.empty())) { throw new IllegalArgumentException("An entity is in the selected shape"); }
+                access.validate(context, Change.APPLY); validateIdentity(prepared); access.validateItem();
+                if (cost != null) { payment = cost.prepare(1); next = next.withRecovery(cost.recovery()); }
+                var structure = new java.util.HashMap<>(next.structure()); structure.putAll(pattern.values(before));
+                next = next.withStructure(structure);
+                prepared = new Prepared(prepared.old(), next, prepared.context(), prepared.entity());
+            } catch (RuntimeException error) { return new Result(false, error.getMessage()); }
+            // The audited classes have no block entities. Native chunk assignment keeps light/height maps,
+            // while SKIP_ON_PLACE and KNOWN_SHAPE defer all ordinary shape and neighbor callbacks until payment.
+            var previous = level.getChunkAt(pos).setBlockState(pos, proposed, Block.UPDATE_SKIP_ON_PLACE | Block.UPDATE_KNOWN_SHAPE);
+            if (previous == null) { return new Result(false, "This shape is unchanged"); }
+            store.put(prepared.next()); if (payment != null) { payment.commit(); }
+            shapeSelections.clear(player);
+            var before = prepared.context().state();
+            afterCommit(pos, () -> com.deisdev.preserve.platform.Services.PLATFORM.notifyShapeEdit(level, pos, before, proposed));
+            afterCommit(pos, () -> changed(pos));
+            afterCommit(pos, () -> level.playSound(null, pos, net.minecraft.sounds.SoundEvents.AXE_SCRAPE, net.minecraft.sounds.SoundSource.BLOCKS, .25F, 1.5F));
+            return new Result(true, "Shape preserved");
+        } finally { inProgress.remove(pos.asLong()); }
+    }
+
     public Result remove(BlockPos pos) {
-        return remove(pos, null);
+        return remove(pos, null, RemovalCause.ADMINISTRATIVE, null);
     }
 
     public Result removeFromPlayer(BlockPos pos, net.minecraft.server.level.ServerPlayer player, java.util.function.BooleanSupplier itemReady) {
-        return remove(pos, new PlayerAccess(player, itemReady));
+        return remove(pos, new PlayerAccess(player, itemReady), RemovalCause.ADMINISTRATIVE, null);
     }
 
-    private Result remove(BlockPos pos, PlayerAccess access) {
+    public Result removeForUninstall(BlockPos pos) { return remove(pos, null, RemovalCause.UNINSTALL, null); }
+
+    /** Only this server-validated tool entry point can request residue delivery. */
+    public Result scrape(BlockPos pos, net.minecraft.server.level.ServerPlayer player) {
+        checkThread();
+        var tool = player.getMainHandItem().copy();
+        var access = new PlayerAccess(player, () -> player.getMainHandItem().is(com.deisdev.preserve.item.PreserveItems.SCRAPER.get())
+                && player.getMainHandItem().getCount() == 1 && net.minecraft.world.item.ItemStack.matches(tool, player.getMainHandItem()));
+        return remove(pos, access, RemovalCause.CAREFUL_SCRAPING, player);
+    }
+
+    public Result dissolve(BlockPos pos, net.minecraft.server.level.ServerPlayer player) {
+        checkThread();
+        com.deisdev.preserve.item.SolventCharge cost;
+        try { cost = com.deisdev.preserve.item.SolventCharge.capture(player); }
+        catch (RuntimeException error) { return new Result(false, error.getMessage()); }
+        return remove(pos, new PlayerAccess(player, cost::ready), RemovalCause.SOLVENT, null, cost);
+    }
+
+    Result dissolveArea(BlockPos pos, net.minecraft.server.level.ServerPlayer player, com.deisdev.preserve.item.SolventCharge cost, int limit) {
+        return remove(pos, new PlayerAccess(player, cost::ready), RemovalCause.SOLVENT, null, cost, true, limit);
+    }
+
+    /** The actual dispenser and bottle are validated again after all target permissions and adapter checks. */
+    public Result dissolve(net.minecraft.core.dispenser.BlockSource source, net.minecraft.world.item.ItemStack stack) {
+        checkThread();
+        if (source.level() != level) { return new Result(false, "The dispenser or solvent changed"); }
+        com.deisdev.preserve.item.SolventCharge cost;
+        try { cost = com.deisdev.preserve.item.SolventCharge.capture(source, stack); }
+        catch (RuntimeException error) { return new Result(false, error.getMessage()); }
+        if (!cost.ready()) { return new Result(false, "The dispenser or solvent changed"); }
+        var context = new com.deisdev.preserve.api.AutomationContext(level, source.pos(), source.state(), com.deisdev.preserve.api.AutomationContext.Kind.DISPENSER);
+        var target = source.pos().relative(source.state().getValue(net.minecraft.world.level.block.DispenserBlock.FACING));
+        return remove(target, new com.deisdev.preserve.integration.AutomationAccess(context, cost::ready), RemovalCause.SOLVENT, null, cost);
+    }
+
+    private Result remove(BlockPos pos, com.deisdev.preserve.integration.OperationAccess access, RemovalCause cause, net.minecraft.server.level.ServerPlayer collector) {
+        return remove(pos, access, cause, collector, null);
+    }
+
+    private Result remove(BlockPos pos, com.deisdev.preserve.integration.OperationAccess access, RemovalCause cause, net.minecraft.server.level.ServerPlayer collector,
+                          com.deisdev.preserve.item.SolventCharge cost) {
+        return remove(pos, access, cause, collector, cost, false, TargetLink.LIMIT);
+    }
+
+    private Result remove(BlockPos pos, com.deisdev.preserve.integration.OperationAccess access, RemovalCause cause, net.minecraft.server.level.ServerPlayer collector,
+                          com.deisdev.preserve.item.SolventCharge cost, boolean area, int limit) {
         checkThread();
         if (com.deisdev.preserve.platform.Services.PLATFORM.transferInProgress()) { return new Result(false, "Wait for the current transfer to finish"); }
         if (!level.hasChunkAt(pos)) { return new Result(false, "Target is not loaded"); }
@@ -288,9 +450,13 @@ public final class PreservationService {
             Treatment treatment = store.get(pos.asLong());
             if (treatment == null) { return new Result(false, "No coating here"); }
             var prepared = new java.util.ArrayList<Prepared>();
+            var removed = new java.util.ArrayList<RemovalReceipt.Entry>();
+            com.deisdev.preserve.item.ResidueDelivery delivery = null;
+            com.deisdev.preserve.item.SolventCharge.Prepared payment = null;
             try {
                 var targets = treatment.link().map(link -> link.members().stream().map(BlockPos::of).toList()).orElseGet(() -> List.of(pos));
                 lockTargets(targets, locked);
+                if (area && SurfaceTargets.masked(level, targets)) { return new Result(false, "Masked target"); }
                 for (var target : targets) {
                     if (!level.hasChunkAt(target)) { return new Result(false, "Load every member of the linked target before removal"); }
                     var record = store.get(target.asLong());
@@ -304,31 +470,50 @@ public final class PreservationService {
                         RemovalUpdates.validate(level, record);
                     }
                 }
+                if (prepared.size() > limit) { return new Result(false, "Area limit reached"); }
+                // Reserve the entire bottle cost before any adapter starts its idempotent resume preparation.
+                if (cost != null) { payment = cost.prepare((int) prepared.stream().filter(entry -> matches(entry.context().pos(), entry.old())).count()); }
                 for (var entry : prepared) {
                     if (matches(entry.context().pos(), entry.old())) { IntegrationRegistry.resume(entry.context(), entry.old().adapters()); }
                 }
                 for (var entry : prepared) {
                     validateIdentity(entry);
-                    RemovalUpdates.validate(level, entry.old());
+                    if (matches(entry.context().pos(), entry.old())) { RemovalUpdates.validate(level, entry.old()); }
                     if (access != null) { access.validate(entry.context(), Change.REMOVE); }
+                    removed.add(new RemovalReceipt.Entry(entry.old().position(), collector != null && matches(entry.context().pos(), entry.old())
+                            ? entry.old().recovery() : java.util.Optional.empty()));
                 }
                 if (access != null) { access.validateItem(); }
+                for (var entry : prepared) { validateIdentity(entry); }
+                if (collector != null) {
+                    delivery = com.deisdev.preserve.item.ResidueDelivery.prepare(collector, pos, removed);
+                    if (!delivery.ready()) { throw new IllegalArgumentException("Inventory changed during removal"); }
+                }
             } catch (RuntimeException error) { return new Result(false, "Coating retained: " + error.getMessage()); }
             for (var entry : prepared) { store.remove(entry.old().position()); }
+            if (payment != null) { payment.commit(); }
+            if (delivery != null) { delivery.commit(); }
+            var receipt = new RemovalReceipt(cause, removed);
             for (var entry : prepared) {
                 if (matches(entry.context().pos(), entry.old())) {
-                    deferred.start(entry.old());
-                    RemovalUpdates.afterRemoval(level, entry.old());
+                    afterCommit(entry.context().pos(), () -> deferred.start(entry.old()));
+                    afterCommit(entry.context().pos(), () -> RemovalUpdates.afterRemoval(level, entry.old()));
                 }
-                changed(entry.context().pos());
+                afterCommit(entry.context().pos(), () -> changed(entry.context().pos()));
             }
             for (var entry : prepared) {
                 if (matches(entry.context().pos(), entry.old())) { IntegrationRegistry.observed(entry.context(), entry.old().adapters(), false); }
             }
-            return new Result(prepared.size(), "Coating removed");
+            if (delivery != null) { afterCommit(pos, delivery::publishDrops); }
+            return new Result(prepared.size(), "Coating removed", java.util.Optional.of(receipt));
         } finally {
             for (long position : locked) { inProgress.remove(position); }
         }
+    }
+
+    private void afterCommit(BlockPos pos, Runnable notification) {
+        try { notification.run(); }
+        catch (RuntimeException error) { com.deisdev.preserve.Constants.LOG.error("Preserve removal committed at {}, but notification failed", pos, error); }
     }
 
     private void lockTargets(List<BlockPos> targets, LongOpenHashSet locked) {
@@ -360,9 +545,11 @@ public final class PreservationService {
     /** Real removal/replacement discards obsolete work, without invoking any machine lifecycle method. */
     public void destroyed(BlockPos pos) {
         checkThread();
+        shapeSelections.destroyed(pos);
         var removed = store.remove(pos.asLong());
+        var mask = store.removeMask(pos.asLong());
         deferred.cancel(pos.asLong());
-        if (removed != null) { TreatmentSync.changed(level, pos); }
+        if (removed != null || mask != null) { TreatmentSync.changed(level, pos); }
     }
 
     private boolean matches(BlockPos pos, Treatment record) {
@@ -418,6 +605,9 @@ public final class PreservationService {
     }
 
     public void chunkReady(net.minecraft.world.level.chunk.LevelChunk chunk) {
+        for (var mask : store.chunkMasks(chunk.getPos().pack())) {
+            if (!BuiltInRegistries.BLOCK.getKey(chunk.getBlockState(BlockPos.of(mask.position())).getBlock()).equals(mask.block())) { store.removeMask(mask.position()); }
+        }
         for (Treatment record : store.chunkSnapshot(chunk.getPos().pack())) {
             BlockPos pos = BlockPos.of(record.position());
             if (!matches(pos, record)) { store.remove(record.position()); }
@@ -428,5 +618,39 @@ public final class PreservationService {
 
     private void checkThread() {
         if (!level.getServer().isSameThread()) { throw new IllegalStateException("Preserve mutations require the server thread"); }
+    }
+
+    /** A marker changes only area targeting; permission checks and strip payment precede publication. */
+    public Result mask(BlockPos pos, net.minecraft.core.Direction face, net.minecraft.server.level.ServerPlayer player, boolean peel) {
+        checkThread();
+        if (!level.hasChunkAt(pos) || level.isOutsideBuildHeight(pos) || unsafe(level.getBlockState(pos))) { return new Result(false, "Target is not loaded or cannot be masked"); }
+        if (!peel && CleanupJob.get(level.getServer()).blocksApplication()) { return new Result(false, "Uninstall preparation blocks new masks"); }
+        var tool = player.getMainHandItem().copy();
+        boolean strip = tool.is(com.deisdev.preserve.item.PreserveItems.MASKING_STRIPS.get());
+        if (tool.isEmpty() || !(strip || peel && tool.is(com.deisdev.preserve.item.PreserveItems.SCRAPER.get()) && tool.getCount() == 1)) { return new Result(false, "Hold Masking Strips or a scraper"); }
+        if (!inProgress.add(pos.asLong())) { return new Result(false, "Target is busy"); }
+        try {
+            boolean infinite = player.hasInfiniteMaterials();
+            var marker = store.mask(pos.asLong()); var state = level.getBlockState(pos); var entity = level.getBlockEntity(pos);
+            var access = new PlayerAccess(player, () -> net.minecraft.world.item.ItemStack.matches(tool, player.getMainHandItem()) && player.hasInfiniteMaterials() == infinite);
+            var context = new PreservationContext(level, pos, state, null, player.getStringUUID());
+            access.validate(context, peel ? Change.MASK_REMOVE : Change.MASK_APPLY);
+            if (peel ? marker == null : marker != null) { return new Result(false, peel ? "No mask to peel" : "Already masked"); }
+            if (!peel && store.chunkMaskSize(TreatmentStore.chunkKey(pos.asLong())) >= RuleRegistry.get(level.getServer()).policy().chunkLimit()) { return new Result(false, "This chunk has reached its mask limit"); }
+            access.validate(context, peel ? Change.MASK_REMOVE : Change.MASK_APPLY);
+            access.validateItem();
+            if (!level.hasChunkAt(pos) || level.getBlockState(pos) != state || level.getBlockEntity(pos) != entity || store.mask(pos.asLong()) != marker) { return new Result(false, "Target changed during validation"); }
+            var after = tool.copy(); if (!peel && !infinite) { after.shrink(1); }
+            if (peel) { store.removeMask(pos.asLong()); }
+            else { store.putMask(new MaskMark(pos.asLong(), BuiltInRegistries.BLOCK.getKey(state.getBlock()), face)); }
+            if (!peel && !infinite) { player.getInventory().setItem(player.getInventory().getSelectedSlot(), after); player.getInventory().setChanged(); }
+            afterCommit(pos, () -> changed(pos));
+            return new Result(true, peel ? "Mask peeled" : "Mask applied");
+        } catch (RuntimeException error) { return new Result(false, error.getMessage()); }
+        finally { inProgress.remove(pos.asLong()); }
+    }
+
+    void clearMaskForUninstall(BlockPos pos) {
+        checkThread(); if (store.removeMask(pos.asLong()) != null) { afterCommit(pos, () -> changed(pos)); }
     }
 }

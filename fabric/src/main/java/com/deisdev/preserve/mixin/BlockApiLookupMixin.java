@@ -16,6 +16,6 @@ public abstract class BlockApiLookupMixin {
     @ModifyReturnValue(method = "find", at = @At("RETURN"))
     private Object preserve$guard(Object result, Level level, BlockPos pos, BlockState state, BlockEntity entity, Object context) {
         // Wrap even while untreated, so previously returned handles honor a later coating.
-        return FabricTransfers.wrap((BlockApiLookup<?, ?>) this, result, level, pos);
+        return FabricTransfers.wrap((BlockApiLookup<?, ?>) this, result, level, pos, context, entity);
     }
 }

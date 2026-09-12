@@ -34,11 +34,12 @@ public final class ClientTreatments {
         if (payload.snapshot()) { clearRecords(payload.chunk()); }
         for (var entry : payload.entries()) {
             serums.remove(entry.position());
+            store.removeMask(entry.position()); entry.mask().ifPresent(store::putMask);
             if (entry.formulation() == -1) { store.remove(entry.position()); continue; }
             var actions = EnumSet.noneOf(Action.class);
             for (var action : Action.values()) { if ((entry.actions() & (1 << action.ordinal())) != 0) { actions.add(action); } }
             store.put(new Treatment(entry.position(), Formulation.values()[entry.formulation()], Identifier.parse("deisdev:client_marker"),
-                    actions, Map.of(), List.of(), List.of(), Map.of(), ""));
+                    actions, Map.of(), List.of(), List.of(), Map.of(), "", List.of(), List.of(), entry.link(), java.util.Optional.empty(), java.util.Optional.empty(), entry.options()));
             entry.serum().ifPresent(sample -> serums.put(entry.position(), new SerumSample(new SerumStatusPayload(0, payload.dimension(), entry.position(),
                     sample.block(), entry.formulation(), sample.multiplier(), sample.remainingTicks(), sample.ticking()), gameTime)));
         }
@@ -59,6 +60,7 @@ public final class ClientTreatments {
     }
 
     private void clearRecords(long chunkKey) {
+        for (var mask : store.chunkMasks(chunkKey)) { store.removeMask(mask.position()); }
         for (var record : store.chunkSnapshot(chunkKey)) { store.remove(record.position()); serums.remove(record.position()); }
     }
 }
