@@ -1,0 +1,10 @@
+{
+  "type": "alterant:reclaiming",
+  "family": "chronal_dross",
+  "count": 4,
+  "result": {
+    "id": "alterant:stabilizing_lattice",
+    "count": 1
+  },
+  "duration": 100
+}

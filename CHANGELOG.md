@@ -1,6 +1,6 @@
 # Changelog
 
-Preserve is unreleased and under active development.
+Alterant is unreleased and under active development.
 
 ## [Unreleased]
 
@@ -19,6 +19,7 @@ Preserve is unreleased and under active development.
 
 ### Changed
 
+- Renamed the mod to Alterant.
 - Basic display keeps world feedback quiet; detailed panels are available in Advanced.
 - Rebalanced serum durations and Suspicious Serum rolls.
 - Removed the old serum settings format.

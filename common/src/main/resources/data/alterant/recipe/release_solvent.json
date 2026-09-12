@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "minecraft:glass_bottle",
+    "alterant:inert_powder",
+    "minecraft:sugar"
+  ],
+  "result": {
+    "id": "alterant:release_solvent",
+    "count": 1,
+    "components": {
+      "alterant:solvent_doses": 16
+    }
+  }
+}

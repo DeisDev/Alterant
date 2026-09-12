@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "id": "alterant:leaf_decay",
+  "selector": {
+    "blocks": [
+      "minecraft:jungle_leaves",
+      "minecraft:oak_leaves",
+      "minecraft:spruce_leaves",
+      "minecraft:pale_oak_leaves",
+      "minecraft:dark_oak_leaves",
+      "minecraft:acacia_leaves",
+      "minecraft:birch_leaves",
+      "minecraft:azalea_leaves",
+      "minecraft:flowering_azalea_leaves",
+      "minecraft:mangrove_leaves",
+      "minecraft:cherry_leaves"
+    ]
+  },
+  "formulations": [
+    "preserving_sealant",
+    "temporal_stasis"
+  ],
+  "actions": [
+    "environmental_change"
+  ]
+}

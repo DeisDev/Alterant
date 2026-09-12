@@ -1,8 +1,0 @@
-{
-  "schema": 1,
-  "id": "deisdev:structural_movement",
-  "priority": -1000,
-  "selector": {"all": true},
-  "formulations": ["structural_stasis"],
-  "actions": ["piston_movement"]
-}

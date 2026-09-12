@@ -1,7 +1,0 @@
-{
-  "schema": 1,
-  "id": "deisdev:growth_regulation",
-  "selector": {"blocks": ["minecraft:wheat", "minecraft:carrots", "minecraft:potatoes", "minecraft:beetroots", "minecraft:sweet_berry_bush", "minecraft:cocoa", "minecraft:nether_wart", "minecraft:bamboo", "minecraft:sugar_cane"]},
-  "formulations": ["growth_regulator"],
-  "actions": ["natural_growth"]
-}

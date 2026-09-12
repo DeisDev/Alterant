@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "C C",
+    "SPS",
+    " S "
+  ],
+  "key": {
+    "C": "minecraft:copper_ingot",
+    "S": "minecraft:stone",
+    "P": "alterant:binding_paste"
+  },
+  "result": {
+    "id": "alterant:reclaiming_basin",
+    "count": 1
+  }
+}

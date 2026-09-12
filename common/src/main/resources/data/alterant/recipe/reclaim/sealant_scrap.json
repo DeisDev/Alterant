@@ -1,0 +1,12 @@
+{
+  "type": "alterant:reclaiming",
+  "family": "sealant_scrap",
+  "count": 16,
+  "result": {
+    "id": "alterant:waxed_membrane",
+    "count": 1
+  },
+  "duration": 100,
+  "additive": "minecraft:paper",
+  "additive_count": 1
+}

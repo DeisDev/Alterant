@@ -1,117 +1,117 @@
 {
   "definitions": [
     {
-      "image": "deisdev:textures/gui/tooltip_frames.png",
+      "image": "alterant:textures/gui/tooltip_frames.png",
       "index": 0,
       "startColor": "#FF78B763",
       "endColor": "#FF78B763",
       "bgColor": "#F0181C22",
       "priority": 0,
       "selectors": [
-        "deisdev:growth_inhibitor",
-        "deisdev:growth_regulator",
-        "deisdev:dried_compound"
+        "alterant:growth_inhibitor",
+        "alterant:growth_regulator",
+        "alterant:dried_compound"
       ]
     },
     {
-      "image": "deisdev:textures/gui/tooltip_frames.png",
+      "image": "alterant:textures/gui/tooltip_frames.png",
       "index": 1,
       "startColor": "#FFE5B753",
       "endColor": "#FFE5B753",
       "bgColor": "#F0181C22",
       "priority": 0,
       "selectors": [
-        "deisdev:preserving_sealant",
-        "deisdev:sealant_scrap",
-        "deisdev:waxed_membrane",
-        "deisdev:chronal_dust",
-        "deisdev:chronal_alloy",
-        "deisdev:enduring_time_serum"
+        "alterant:preserving_sealant",
+        "alterant:sealant_scrap",
+        "alterant:waxed_membrane",
+        "alterant:chronal_dust",
+        "alterant:chronal_alloy",
+        "alterant:enduring_time_serum"
       ]
     },
     {
-      "image": "deisdev:textures/gui/tooltip_frames.png",
+      "image": "alterant:textures/gui/tooltip_frames.png",
       "index": 2,
       "startColor": "#FF80B4CF",
       "endColor": "#FF80B4CF",
       "bgColor": "#F0181C22",
       "priority": 0,
       "selectors": [
-        "deisdev:structural_stasis",
-        "deisdev:lattice_fragments",
-        "deisdev:refined_time_serum",
-        "deisdev:shaping_stylus"
+        "alterant:structural_stasis",
+        "alterant:lattice_fragments",
+        "alterant:refined_time_serum",
+        "alterant:shaping_stylus"
       ]
     },
     {
-      "image": "deisdev:textures/gui/tooltip_frames.png",
+      "image": "alterant:textures/gui/tooltip_frames.png",
       "index": 3,
       "startColor": "#FFB891DF",
       "endColor": "#FFB891DF",
       "bgColor": "#F0181C22",
       "priority": 0,
       "selectors": [
-        "deisdev:temporal_stasis",
-        "deisdev:chronal_dross"
+        "alterant:temporal_stasis",
+        "alterant:chronal_dross"
       ]
     },
     {
-      "image": "deisdev:textures/gui/tooltip_frames.png",
+      "image": "alterant:textures/gui/tooltip_frames.png",
       "index": 4,
       "startColor": "#FF49DDE0",
       "endColor": "#FF49DDE0",
       "bgColor": "#F0181C22",
       "priority": 0,
       "selectors": [
-        "deisdev:time_serum",
-        "deisdev:temporal_core",
-        "deisdev:resonant_crystal",
-        "deisdev:quantum_lens",
-        "deisdev:quantum_applicator",
-        "deisdev:echo_matrix"
+        "alterant:time_serum",
+        "alterant:temporal_core",
+        "alterant:resonant_crystal",
+        "alterant:quantum_lens",
+        "alterant:quantum_applicator",
+        "alterant:echo_matrix"
       ]
     },
     {
-      "image": "deisdev:textures/gui/tooltip_frames.png",
+      "image": "alterant:textures/gui/tooltip_frames.png",
       "index": 5,
       "startColor": "#FFD568EB",
       "endColor": "#FFD568EB",
       "bgColor": "#F0181C22",
       "priority": 0,
       "selectors": [
-        "deisdev:suspicious_time_serum",
-        "deisdev:dragonbound_catalyst",
-        "deisdev:overcharged_time_serum"
+        "alterant:suspicious_time_serum",
+        "alterant:dragonbound_catalyst",
+        "alterant:overcharged_time_serum"
       ]
     },
     {
-      "image": "deisdev:textures/gui/tooltip_frames.png",
+      "image": "alterant:textures/gui/tooltip_frames.png",
       "index": 6,
       "startColor": "#FFC6AD86",
       "endColor": "#FFC6AD86",
       "bgColor": "#F0181C22",
       "priority": 0,
       "selectors": [
-        "deisdev:binding_paste",
-        "deisdev:preserving_brush",
-        "deisdev:masking_strips"
+        "alterant:binding_paste",
+        "alterant:preserving_brush",
+        "alterant:masking_strips"
       ]
     },
     {
-      "image": "deisdev:textures/gui/tooltip_frames.png",
+      "image": "alterant:textures/gui/tooltip_frames.png",
       "index": 7,
       "startColor": "#FF8A939E",
       "endColor": "#FF8A939E",
       "bgColor": "#F0181C22",
       "priority": 0,
       "selectors": [
-        "deisdev:inert_powder",
-        "deisdev:stabilizing_lattice",
-        "deisdev:scraper",
-        "deisdev:reclamation_jar",
-        "deisdev:reclaiming_basin",
-        "deisdev:release_solvent",
-        "deisdev:transfer_seal"
+        "alterant:inert_powder",
+        "alterant:stabilizing_lattice",
+        "alterant:scraper",
+        "alterant:reclamation_jar",
+        "alterant:reclaiming_basin",
+        "alterant:release_solvent",
+        "alterant:transfer_seal"
       ]
     }
   ]

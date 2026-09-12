@@ -1,0 +1,8 @@
+{
+  "schema": 1,
+  "id": "alterant:transfer_seal",
+  "priority": -1000,
+  "selector": {"all": true},
+  "formulations": ["transfer_seal"],
+  "actions": ["resource_transfer"]
+}

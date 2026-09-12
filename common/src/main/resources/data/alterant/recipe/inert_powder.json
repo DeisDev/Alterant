@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "#alterant:carbon_sources",
+    "minecraft:sand"
+  ],
+  "result": {
+    "id": "alterant:inert_powder",
+    "count": 3
+  }
+}

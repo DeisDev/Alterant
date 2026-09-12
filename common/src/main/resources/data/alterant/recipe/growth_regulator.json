@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "minecraft:glass_bottle",
+    "alterant:binding_paste",
+    "alterant:inert_powder",
+    "minecraft:redstone"
+  ],
+  "result": {
+    "id": "alterant:growth_regulator",
+    "count": 1,
+    "components": {
+      "alterant:jar_contents": {
+        "schema": 1,
+        "formulation": "growth_regulator",
+        "capacity": 16,
+        "remaining": 16
+      }
+    }
+  }
+}

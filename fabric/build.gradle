@@ -12,7 +12,7 @@ dependencies {
         runtimeOnly("maven.modrinth:yacl:${yacl_fabric_version}") { transitive = false }
         runtimeOnly("maven.modrinth:modmenu:${modmenu_version}") { transitive = false }
     }
-    // Optional runtime integration; never bundled or required by Preserve's metadata.
+    // Optional runtime integration; never bundled or required by Alterant's metadata.
     compileOnly('teamreborn:energy:5.0.0') { transitive = false }
 }
 

@@ -3,7 +3,7 @@ plugins {
 }
 
 base {
-    archivesName = "preserve-${project.name}-${minecraft_version}"
+    archivesName = "${mod_id}-${project.name}-${minecraft_version}"
 }
 
 java {

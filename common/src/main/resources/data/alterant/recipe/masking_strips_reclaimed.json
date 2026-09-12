@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "minecraft:paper",
+    "alterant:dried_compound"
+  ],
+  "result": {
+    "id": "alterant:masking_strips",
+    "count": 4
+  }
+}

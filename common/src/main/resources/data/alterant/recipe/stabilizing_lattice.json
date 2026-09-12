@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "minecraft:amethyst_shard",
+    "minecraft:amethyst_shard",
+    "minecraft:copper_ingot",
+    "minecraft:iron_ingot",
+    "minecraft:amethyst_shard",
+    "minecraft:copper_ingot"
+  ],
+  "result": {
+    "id": "alterant:stabilizing_lattice",
+    "count": 2
+  }
+}

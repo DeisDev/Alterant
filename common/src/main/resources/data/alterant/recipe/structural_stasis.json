@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "minecraft:glass_bottle",
+    "alterant:binding_paste",
+    "alterant:inert_powder",
+    "alterant:stabilizing_lattice",
+    "alterant:stabilizing_lattice"
+  ],
+  "result": {
+    "id": "alterant:structural_stasis",
+    "count": 1,
+    "components": {
+      "alterant:jar_contents": {
+        "schema": 1,
+        "formulation": "structural_stasis",
+        "capacity": 8,
+        "remaining": 8
+      }
+    }
+  }
+}

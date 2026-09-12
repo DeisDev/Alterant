@@ -1,0 +1,9 @@
+{
+  "type": "alterant:temporal_stasis",
+  "category": "misc",
+  "additives": [
+    "alterant:stabilizing_lattice",
+    "alterant:stabilizing_lattice",
+    "alterant:temporal_core"
+  ]
+}

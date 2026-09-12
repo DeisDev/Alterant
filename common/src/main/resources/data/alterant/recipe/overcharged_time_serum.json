@@ -1,0 +1,10 @@
+{
+  "type": "alterant:serum_upgrade",
+  "category": "misc",
+  "input": "refined_time_serum",
+  "result": "overcharged_time_serum",
+  "additives": [
+    "alterant:dragonbound_catalyst",
+    "alterant:resonant_crystal"
+  ]
+}

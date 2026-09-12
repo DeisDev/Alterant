@@ -1,0 +1,15 @@
+{
+  "model": {
+    "type": "minecraft:condition",
+    "property": "minecraft:has_component",
+    "component": "alterant:reclamation_contents",
+    "on_true": {
+      "type": "minecraft:model",
+      "model": "alterant:item/reclamation_jar_filled"
+    },
+    "on_false": {
+      "type": "minecraft:model",
+      "model": "alterant:item/reclamation_jar"
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "id": "alterant:natural_growth",
+  "selector": {
+    "blocks": [
+      "minecraft:wheat", "minecraft:carrots", "minecraft:potatoes", "minecraft:beetroots",
+      "minecraft:bamboo", "minecraft:bamboo_sapling", "minecraft:vine", "minecraft:kelp",
+      "minecraft:twisting_vines", "minecraft:weeping_vines", "minecraft:cave_vines"
+    ]
+  },
+  "formulations": ["growth_inhibitor", "temporal_stasis"],
+  "actions": ["natural_growth"]
+}

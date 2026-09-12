@@ -1,0 +1,25 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "minecraft:glass_bottle",
+    "alterant:chronal_dust",
+    "alterant:chronal_dust",
+    "alterant:resonant_crystal",
+    "minecraft:ghast_tear",
+    "minecraft:glowstone_dust",
+    "minecraft:glowstone_dust"
+  ],
+  "result": {
+    "id": "alterant:time_serum",
+    "count": 1,
+    "components": {
+      "alterant:jar_contents": {
+        "schema": 1,
+        "formulation": "time_serum",
+        "capacity": 1,
+        "remaining": 1
+      }
+    }
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "minecraft:end_stone",
+    "minecraft:end_stone",
+    "minecraft:gold_ingot",
+    "minecraft:gold_ingot",
+    "minecraft:redstone",
+    "minecraft:redstone",
+    "minecraft:amethyst_shard",
+    "minecraft:amethyst_shard"
+  ],
+  "result": {
+    "id": "alterant:chronal_dust",
+    "count": 2
+  }
+}

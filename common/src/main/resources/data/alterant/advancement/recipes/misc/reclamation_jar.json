@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_paste": {"trigger": "minecraft:inventory_changed", "conditions": {"items": [{"items": "alterant:binding_paste"}]}},
+    "has_the_recipe": {"trigger": "minecraft:recipe_unlocked", "conditions": {"recipe": "alterant:reclamation_jar"}}
+  },
+  "requirements": [["has_paste", "has_the_recipe"]],
+  "rewards": {"recipes": ["alterant:reclamation_jar"]}
+}

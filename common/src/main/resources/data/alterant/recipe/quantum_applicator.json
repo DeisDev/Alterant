@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "alterant:quantum_lens",
+    "alterant:stabilizing_lattice",
+    "alterant:stabilizing_lattice",
+    "minecraft:copper_ingot",
+    "minecraft:copper_ingot",
+    "minecraft:iron_ingot",
+    "minecraft:iron_ingot",
+    "minecraft:blaze_rod"
+  ],
+  "result": {
+    "id": "alterant:quantum_applicator",
+    "count": 1
+  }
+}

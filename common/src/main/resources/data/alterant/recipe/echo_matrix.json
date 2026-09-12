@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "minecraft:echo_shard",
+    "alterant:chronal_alloy",
+    "minecraft:shulker_shell",
+    "minecraft:shulker_shell",
+    "alterant:temporal_core",
+    "minecraft:amethyst_shard",
+    "minecraft:amethyst_shard"
+  ],
+  "result": {
+    "id": "alterant:echo_matrix",
+    "count": 1
+  }
+}

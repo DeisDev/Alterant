@@ -1,0 +1,112 @@
+{
+  "multipart": [
+    {
+      "when": {
+        "facing": "north"
+      },
+      "apply": {
+        "model": "alterant:block/reclaiming_basin",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "east"
+      },
+      "apply": {
+        "model": "alterant:block/reclaiming_basin",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "south"
+      },
+      "apply": {
+        "model": "alterant:block/reclaiming_basin",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "west"
+      },
+      "apply": {
+        "model": "alterant:block/reclaiming_basin",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "family": "1",
+        "fill": "1"
+      },
+      "apply": {
+        "model": "alterant:block/basin_dried_compound_1"
+      }
+    },
+    {
+      "when": {
+        "family": "1",
+        "fill": "2"
+      },
+      "apply": {
+        "model": "alterant:block/basin_dried_compound_2"
+      }
+    },
+    {
+      "when": {
+        "family": "2",
+        "fill": "1"
+      },
+      "apply": {
+        "model": "alterant:block/basin_sealant_scrap_1"
+      }
+    },
+    {
+      "when": {
+        "family": "2",
+        "fill": "2"
+      },
+      "apply": {
+        "model": "alterant:block/basin_sealant_scrap_2"
+      }
+    },
+    {
+      "when": {
+        "family": "3",
+        "fill": "1"
+      },
+      "apply": {
+        "model": "alterant:block/basin_lattice_fragments_1"
+      }
+    },
+    {
+      "when": {
+        "family": "3",
+        "fill": "2"
+      },
+      "apply": {
+        "model": "alterant:block/basin_lattice_fragments_2"
+      }
+    },
+    {
+      "when": {
+        "family": "4",
+        "fill": "1"
+      },
+      "apply": {
+        "model": "alterant:block/basin_chronal_dross_1"
+      }
+    },
+    {
+      "when": {
+        "family": "4",
+        "fill": "2"
+      },
+      "apply": {
+        "model": "alterant:block/basin_chronal_dross_2"
+      }
+    }
+  ]
+}

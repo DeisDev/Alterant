@@ -1,4 +1,4 @@
-name: Build Preserve
+name: Build Alterant
 on:
   push:
   pull_request:
@@ -22,7 +22,7 @@ jobs:
       - run: ./gradlew build --max-workers=2 --no-parallel --console=plain
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: preserve
+          name: alterant
           path: |
             fabric/build/libs/*.jar
             neoforge/build/libs/*.jar

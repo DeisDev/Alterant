@@ -1,0 +1,10 @@
+{
+  "type": "alterant:reclaiming",
+  "family": "lattice_fragments",
+  "count": 8,
+  "result": {
+    "id": "alterant:stabilizing_lattice",
+    "count": 1
+  },
+  "duration": 100
+}

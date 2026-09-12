@@ -1,0 +1,10 @@
+{
+  "type": "alterant:serum_upgrade",
+  "category": "misc",
+  "input": "time_serum",
+  "result": "refined_time_serum",
+  "additives": [
+    "alterant:chronal_alloy",
+    "alterant:resonant_crystal"
+  ]
+}

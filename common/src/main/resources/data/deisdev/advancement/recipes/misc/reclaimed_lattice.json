@@ -1,9 +1,0 @@
-{
-  "parent": "minecraft:recipes/root",
-  "criteria": {
-    "has_fragments": {"trigger": "minecraft:inventory_changed", "conditions": {"items": [{"items": "deisdev:lattice_fragments"}]}},
-    "has_the_recipe": {"trigger": "minecraft:recipe_unlocked", "conditions": {"recipe": "deisdev:reclaimed_lattice"}}
-  },
-  "requirements": [["has_fragments", "has_the_recipe"]],
-  "rewards": {"recipes": ["deisdev:reclaimed_lattice"]}
-}

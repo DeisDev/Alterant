@@ -1,0 +1,122 @@
+package com.deisdev.alterant.engine;
+
+import com.deisdev.alterant.api.Action;
+import com.deisdev.alterant.api.Formulation;
+import com.deisdev.alterant.integration.AdapterSnapshot;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import net.minecraft.resources.Identifier;
+
+/** Immutable policy snapshot with optional per-target serum progress. Reloads preserve existing behavior. */
+public record Treatment(long position, Formulation formulation, Identifier blockId, Set<Action> actions,
+                        Map<String, String> structure, List<DeferredTick> deferred,
+                        List<String> profiles, Map<String, String> adapterData, String owner,
+                        List<com.deisdev.alterant.rules.Protection> protections, List<AdapterSnapshot> adapters, Optional<TargetLink> link,
+                        Optional<Acceleration> acceleration, Optional<RecoveryEntitlement> recovery, TreatmentOptions options) {
+    public static final Codec<Treatment> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+            Codec.LONG.fieldOf("position").forGetter(Treatment::position),
+            Formulation.CODEC.fieldOf("formulation").forGetter(Treatment::formulation),
+            Identifier.CODEC.fieldOf("block").forGetter(Treatment::blockId),
+            Action.CODEC.listOf().xmap(Set::copyOf, List::copyOf).fieldOf("actions").forGetter(Treatment::actions),
+            Codec.unboundedMap(Codec.STRING, Codec.STRING).fieldOf("structure").forGetter(Treatment::structure),
+            DeferredTick.CODEC.listOf(0, 4).fieldOf("deferred").forGetter(Treatment::deferred),
+            Codec.STRING.listOf().fieldOf("profiles").forGetter(Treatment::profiles),
+            Codec.unboundedMap(Codec.STRING, Codec.STRING).fieldOf("adapter_data").forGetter(Treatment::adapterData),
+            Codec.STRING.fieldOf("owner").forGetter(Treatment::owner),
+            com.deisdev.alterant.rules.Protection.CODEC.listOf(0, Action.values().length).optionalFieldOf("protections", List.of()).forGetter(Treatment::protections),
+            AdapterSnapshot.CODEC.listOf(0, AdapterSnapshot.MAX_ADAPTERS).optionalFieldOf("adapters", List.of()).forGetter(Treatment::adapters),
+            TargetLink.CODEC.optionalFieldOf("link").forGetter(Treatment::link),
+            Acceleration.CODEC.optionalFieldOf("acceleration").forGetter(Treatment::acceleration),
+            RecoveryEntitlement.CODEC.optionalFieldOf("recovery").forGetter(Treatment::recovery),
+            TreatmentOptions.CODEC.optionalFieldOf("options", TreatmentOptions.EMPTY).forGetter(Treatment::options)
+    ).apply(instance, Treatment::new));
+
+    public Treatment {
+        java.util.Objects.requireNonNull(formulation);
+        java.util.Objects.requireNonNull(blockId);
+        java.util.Objects.requireNonNull(owner);
+        java.util.Objects.requireNonNull(recovery);
+        java.util.Objects.requireNonNull(options);
+        if (recovery.isPresent() && recovery.get().family() != com.deisdev.alterant.item.ResidueFamily.forFormulation(formulation)) {
+            throw new IllegalArgumentException("Recovery family does not match formulation");
+        }
+        actions = Set.copyOf(actions);
+        structure = Map.copyOf(structure);
+        deferred = List.copyOf(deferred);
+        profiles = List.copyOf(profiles);
+        adapterData = Map.copyOf(adapterData);
+        protections = List.copyOf(protections);
+        adapters = List.copyOf(adapters);
+        if (link.isPresent() && !link.get().members().contains(position)) { throw new IllegalArgumentException("Linked target does not include this position"); }
+        AdapterSnapshot.validateTarget(adapters);
+        if (adapters.stream().map(AdapterSnapshot::id).distinct().count() != adapters.size()) {
+            throw new IllegalArgumentException("Adapter identities must be unique and bounded");
+        }
+        if (deferred.size() > 4 || deferred.stream().map(tick -> (tick.fluid() ? 2 : 0) + (tick.collected() ? 1 : 0)).distinct().count() != deferred.size()) {
+            throw new IllegalArgumentException("A target can retain collected and queued work for its block and fluid");
+        }
+    }
+
+    public Treatment(long position, Formulation formulation, Identifier blockId, Set<Action> actions,
+                     Map<String, String> structure, List<DeferredTick> deferred, List<String> profiles,
+                     Map<String, String> adapterData, String owner, List<com.deisdev.alterant.rules.Protection> protections,
+                     List<AdapterSnapshot> adapters, Optional<TargetLink> link, Optional<Acceleration> acceleration, Optional<RecoveryEntitlement> recovery) {
+        this(position, formulation, blockId, actions, structure, deferred, profiles, adapterData, owner, protections, adapters, link, acceleration, recovery, TreatmentOptions.EMPTY);
+    }
+
+    public Treatment(long position, Formulation formulation, Identifier blockId, Set<Action> actions,
+                     Map<String, String> structure, List<DeferredTick> deferred, List<String> profiles,
+                     Map<String, String> adapterData, String owner, List<com.deisdev.alterant.rules.Protection> protections,
+                     List<AdapterSnapshot> adapters, Optional<TargetLink> link) {
+        this(position, formulation, blockId, actions, structure, deferred, profiles, adapterData, owner, protections, adapters, link, Optional.empty());
+    }
+
+    public Treatment(long position, Formulation formulation, Identifier blockId, Set<Action> actions,
+                     Map<String, String> structure, List<DeferredTick> deferred, List<String> profiles,
+                     Map<String, String> adapterData, String owner, List<com.deisdev.alterant.rules.Protection> protections,
+                     List<AdapterSnapshot> adapters, Optional<TargetLink> link, Optional<Acceleration> acceleration) {
+        this(position, formulation, blockId, actions, structure, deferred, profiles, adapterData, owner, protections, adapters, link, acceleration, Optional.empty());
+    }
+
+    public Treatment(long position, Formulation formulation, Identifier blockId, Set<Action> actions,
+                     Map<String, String> structure, List<DeferredTick> deferred, List<String> profiles,
+                     Map<String, String> adapterData, String owner) {
+        this(position, formulation, blockId, actions, structure, deferred, profiles, adapterData, owner, List.of(), List.of(), Optional.empty());
+    }
+
+    public Treatment(long position, Formulation formulation, Identifier blockId, Set<Action> actions,
+                     Map<String, String> structure, List<DeferredTick> deferred, List<String> profiles,
+                     Map<String, String> adapterData, String owner, List<com.deisdev.alterant.rules.Protection> protections) {
+        this(position, formulation, blockId, actions, structure, deferred, profiles, adapterData, owner, protections, List.of(), Optional.empty());
+    }
+
+    public Treatment(long position, Formulation formulation, Identifier blockId, Set<Action> actions,
+                     Map<String, String> structure, List<DeferredTick> deferred, List<String> profiles,
+                     Map<String, String> adapterData, String owner, List<com.deisdev.alterant.rules.Protection> protections,
+                     List<AdapterSnapshot> adapters) {
+        this(position, formulation, blockId, actions, structure, deferred, profiles, adapterData, owner, protections, adapters, Optional.empty());
+    }
+
+    public Treatment retain(DeferredTick tick) {
+        // Minecraft deduplicates by type identity and position, keeping the first scheduled tick.
+        if (deferred.stream().anyMatch(previous -> previous.sameIdentity(tick))) { return this; }
+        var next = new ArrayList<>(deferred);
+        next.add(tick);
+        return new Treatment(position, formulation, blockId, actions, structure, next, profiles, adapterData, owner, protections, adapters, link, acceleration, recovery, options);
+    }
+
+    Treatment withRecovery(Optional<RecoveryEntitlement> entitlement) {
+        return new Treatment(position, formulation, blockId, actions, structure, deferred, profiles, adapterData, owner, protections, adapters, link, acceleration, entitlement, options);
+    }
+    Treatment withOptions(TreatmentOptions value) {
+        return new Treatment(position, formulation, blockId, actions, structure, deferred, profiles, adapterData, owner, protections, adapters, link, acceleration, recovery, value);
+    }
+    Treatment withStructure(Map<String, String> value) {
+        return new Treatment(position, formulation, blockId, actions, value, deferred, profiles, adapterData, owner, protections, adapters, link, acceleration, recovery, options);
+    }
+}

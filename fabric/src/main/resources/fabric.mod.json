@@ -10,11 +10,11 @@
   "license": "${license}",
   "environment": "*",
   "entrypoints": {
-    "jade": ["com.deisdev.preserve.integration.jade.PreserveJade"],
-    "modmenu": ["com.deisdev.preserve.client.PreserveModMenu"],
-    "client": ["com.deisdev.preserve.client.PreserveClient"],
+    "jade": ["com.deisdev.alterant.integration.jade.AlterantJade"],
+    "modmenu": ["com.deisdev.alterant.client.AlterantModMenu"],
+    "client": ["com.deisdev.alterant.client.AlterantClient"],
     "main": [
-      "com.deisdev.preserve.PreserveMod"
+      "com.deisdev.alterant.AlterantMod"
     ]
   },
   "mixins": [

@@ -1,0 +1,10 @@
+{
+  "type": "alterant:reclaiming",
+  "family": "dried_compound",
+  "count": 64,
+  "result": {
+    "id": "alterant:binding_paste",
+    "count": 1
+  },
+  "duration": 100
+}
