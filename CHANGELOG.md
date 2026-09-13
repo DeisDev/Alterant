@@ -29,4 +29,5 @@ Alterant is unreleased and under active development.
 
 ### Fixed
 
+- Restored surface coatings and their updates when using Sodium.
 - Restored missing Jade formulation status and serum cards in Basic mode.

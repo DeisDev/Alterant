@@ -32,11 +32,11 @@ public final class CoatingMeshBuilder {
         var p = vertex.source().position().add(surface.normal().scale(CoatingUvMapper.BIAS)).add(offset);
         double u = Math.clamp(vertex.u()-tile.x(), 0, 1), v = Math.clamp(vertex.v()-tile.y(), 0, 1);
         // Atlas sprite padding handles mipmaps. Stay infinitesimally inside the selected sprite at tile edges.
-        float cu = sprite.getU((float)Math.clamp(u, 0.00001, 0.99999));
-        float cv = sprite.getV((float)Math.clamp(v, 0.00001, 0.99999));
+        float cu = (float)Math.clamp(u, 0.00001, 0.99999);
+        float cv = (float)Math.clamp(v, 0.00001, 0.99999);
         int shade = (int)Math.clamp(Math.round(vertex.source().shade()*255), 0, 255);
         int light = (int)Math.round(vertex.source().blockLight()) | ((int)Math.round(vertex.source().skyLight()) << 16);
-        return new CoatingMesh.Vertex((float)p.x, (float)p.y, (float)p.z, cu, cv,
+        return new CoatingMesh.Vertex(sprite.contents().name(), (float)p.x, (float)p.y, (float)p.z, cu, cv,
                 (int)Math.round(Math.clamp(vertex.source().sourceU(), 0, 1)*65535),
                 (int)Math.round(Math.clamp(vertex.source().sourceV(), 0, 1)*65535),
                 0xff000000 | shade*0x010101, light, surface.sourceCutout());

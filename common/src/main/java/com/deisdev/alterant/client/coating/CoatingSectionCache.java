@@ -70,9 +70,7 @@ public final class CoatingSectionCache {
             for (var section : sections.values()) { section.invalidate(); }
         }
         int range = Math.min(settings.renderDistanceBlocks(), Minecraft.getInstance().options.getEffectiveRenderDistance()*16);
-        var visible = Minecraft.getInstance().levelRenderer.visibleSections().stream()
-                .map(terrain -> sections.get(terrain.getSectionNode())).filter(java.util.Objects::nonNull).filter(s -> s.bounds.distanceToSqr(camera.pos) <= (double)range*range
-                && camera.cullFrustum.isVisible(s.bounds)).sorted(Comparator.comparingDouble(s -> s.bounds.distanceToSqr(camera.pos))).toList();
+        var visible = nearbySections(level, camera, range);
         int budget = REBUILDS_PER_FRAME;
         var result = new ArrayList<CoatingRenderState.Batch>();
         for (var section : visible) {
@@ -96,6 +94,28 @@ public final class CoatingSectionCache {
             if (!section.batch.meshes().isEmpty()) { result.add(section.batch); }
         }
         return new CoatingRenderState(result);
+    }
+    private List<Section> nearbySections(ClientLevel level, CameraRenderState camera, int range) {
+        // Replacement terrain renderers need not populate vanilla's visibleSections list.
+        // Probe our sparse index only inside the bounded coating distance, then use the
+        // active renderer's readiness check below and the normal depth-tested draw pass.
+        int minX = SectionPos.blockToSectionCoord(camera.pos.x-range), maxX = SectionPos.blockToSectionCoord(camera.pos.x+range);
+        int minZ = SectionPos.blockToSectionCoord(camera.pos.z-range), maxZ = SectionPos.blockToSectionCoord(camera.pos.z+range);
+        int minY = Math.max(level.getMinSectionY(), SectionPos.blockToSectionCoord(camera.pos.y-range));
+        int maxY = Math.min(level.getMaxSectionY(), SectionPos.blockToSectionCoord(camera.pos.y+range));
+        var result = new ArrayList<Section>();
+        for (int x = minX; x <= maxX; x++) {
+            for (int z = minZ; z <= maxZ; z++) {
+                if (!level.getChunkSource().hasChunk(x,z)) { continue; }
+                for (int y = minY; y <= maxY; y++) {
+                    var section = sections.get(SectionPos.asLong(x,y,z));
+                    if (section != null && section.bounds.distanceToSqr(camera.pos) <= (double)range*range
+                            && camera.cullFrustum.isVisible(section.bounds)) { result.add(section); }
+                }
+            }
+        }
+        result.sort(Comparator.comparingDouble(section -> section.bounds.distanceToSqr(camera.pos)));
+        return result;
     }
     private void evictFarther(Section nearby, Vec3 camera, long needed) {
         double distance = nearby.bounds.distanceToSqr(camera);
