@@ -1,6 +1,7 @@
 package com.deisdev.alterant.api;
 
 import java.util.Optional;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 
@@ -14,9 +15,10 @@ public interface PreservationPermission {
     /** Mask operations have no functional formulation in their context. */
     enum Change { APPLY, REMOVE, MASK_APPLY, MASK_REMOVE }
     Identifier id();
-    Optional<String> denial(ServerPlayer player, PreservationContext context, Change change);
+    /** Return an unresolved translatable refusal so each client uses its own selected language. */
+    Optional<Component> denial(ServerPlayer player, PreservationContext context, Change change);
     /** An integration which has not established automation permissions fails closed. */
-    default Optional<String> denial(AutomationContext source, PreservationContext context, Change change) {
-        return Optional.of("Automation permission is unavailable");
+    default Optional<Component> denial(AutomationContext source, PreservationContext context, Change change) {
+        return Optional.of(Component.translatable("error.alterant.automation_permission"));
     }
 }

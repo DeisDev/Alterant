@@ -3,14 +3,15 @@ package com.deisdev.alterant.engine;
 import com.deisdev.alterant.api.Action;
 import com.deisdev.alterant.api.Formulation;
 import com.deisdev.alterant.api.PreservationContext;
+import com.deisdev.alterant.api.PreservationException;
 import com.deisdev.alterant.api.PreservationPermission.Change;
 import com.deisdev.alterant.integration.IntegrationRegistry;
 import com.deisdev.alterant.integration.PlayerAccess;
 import com.deisdev.alterant.item.CompoundCharge;
-import com.deisdev.alterant.network.TreatmentSync;
-import com.deisdev.alterant.rules.RuleRegistry;
-import com.deisdev.alterant.rules.BlockCondition;
 import com.deisdev.alterant.mixin.SavedDataStorageAccessor;
+import com.deisdev.alterant.network.TreatmentSync;
+import com.deisdev.alterant.rules.BlockCondition;
+import com.deisdev.alterant.rules.RuleRegistry;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import java.nio.file.Files;
 import java.util.EnumSet;
@@ -18,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Block;
@@ -29,10 +31,10 @@ import net.minecraft.world.ticks.ScheduledTick;
 
 /** Authoritative operations, called only on the server thread; tick gates only read the store. */
 public final class PreservationService {
-    public record Result(int changedPositions, String message, java.util.Optional<RemovalReceipt> receipt) {
-        public Result { if (message == null || message.isBlank()) { message = "Preservation could not complete"; } }
-        public Result(int changedPositions, String message) { this(changedPositions, message, java.util.Optional.empty()); }
-        public Result(boolean changed, String message) { this(changed ? 1 : 0, message); }
+    public record Result(int changedPositions, Component message, java.util.Optional<RemovalReceipt> receipt) {
+        public Result { if (message == null || com.deisdev.alterant.text.AlterantText.isBlank(message)) { message = Component.translatable("error.alterant.unavailable"); } }
+        public Result(int changedPositions, Component message) { this(changedPositions, message, java.util.Optional.empty()); }
+        public Result(boolean changed, Component message) { this(changed ? 1 : 0, message); }
         public boolean changed() { return changedPositions > 0; }
     }
     private record Prepared(Treatment old, Treatment next, PreservationContext context,
@@ -135,7 +137,7 @@ public final class PreservationService {
         checkThread();
         CompoundCharge cost;
         try { cost = CompoundCharge.capture(player, true); }
-        catch (IllegalArgumentException error) { return new Result(false, error.getMessage()); }
+        catch (IllegalArgumentException error) { return new Result(false, PreservationException.message(error)); }
         return apply(pos, cost.formulation(), player.getStringUUID(), false, cost.available(), new PlayerAccess(player, cost::ready), cost);
     }
 
@@ -147,7 +149,7 @@ public final class PreservationService {
         checkThread();
         CompoundCharge cost;
         try { cost = CompoundCharge.capture(player); }
-        catch (IllegalArgumentException error) { return new Result(false, error.getMessage()); }
+        catch (IllegalArgumentException error) { return new Result(false, PreservationException.message(error)); }
         return apply(pos, cost.formulation(), player.getStringUUID(), replace, Math.min(limit, cost.available()), new PlayerAccess(player, cost::ready), cost, area);
     }
 
@@ -161,10 +163,10 @@ public final class PreservationService {
 
     private Result apply(BlockPos pos, Formulation formulation, String owner, boolean replace, int available, PlayerAccess access, CompoundCharge cost, boolean area) {
         checkThread();
-        if (CleanupJob.get(level.getServer()).blocksApplication()) { return new Result(false, "Uninstall preparation blocks new coatings; cancel cleanup to continue playing"); }
-        if (com.deisdev.alterant.platform.Services.PLATFORM.transferInProgress()) { return new Result(false, "Wait for the current transfer to finish"); }
-        if (!level.hasChunkAt(pos) || level.isOutsideBuildHeight(pos)) { return new Result(false, "Target is not loaded"); }
-        if (!inProgress.add(pos.asLong())) { return new Result(false, "Target is busy"); }
+        if (CleanupJob.get(level.getServer()).blocksApplication()) { return new Result(false, Component.translatable("error.alterant.cleanup_active")); }
+        if (com.deisdev.alterant.platform.Services.PLATFORM.transferInProgress()) { return new Result(false, Component.translatable("error.alterant.transfer_busy")); }
+        if (!level.hasChunkAt(pos) || level.isOutsideBuildHeight(pos)) { return new Result(false, Component.translatable("error.alterant.target_unloaded")); }
+        if (!inProgress.add(pos.asLong())) { return new Result(false, Component.translatable("error.alterant.target_busy")); }
         var locked = new LongOpenHashSet();
         locked.add(pos.asLong());
         try {
@@ -175,11 +177,11 @@ public final class PreservationService {
                 var entity = level.getBlockEntity(pos);
                 if (access != null) { access.validate(context, Change.APPLY); }
                 var targets = formulation.accelerates() ? List.of(pos) : IntegrationRegistry.targets(context);
-                if (targets.size() > available) { return new Result(false, "Not enough charges for the entire linked target"); }
+                if (targets.size() > available) { return new Result(false, Component.translatable("error.alterant.charges")); }
                 lockTargets(targets, locked);
-                if (area && SurfaceTargets.masked(level, targets)) { return new Result(false, "Masked target"); }
+                if (area && SurfaceTargets.masked(level, targets)) { return new Result(false, Component.translatable("error.alterant.masked_target")); }
                 if (level.getBlockState(pos) != context.state() || level.getBlockEntity(pos) != entity) {
-                    return new Result(false, "Target changed during integration validation");
+                    return new Result(false, Component.translatable("error.alterant.integration_changed"));
                 }
                 var link = targets.size() == 1 ? java.util.Optional.<TargetLink>empty()
                         : java.util.Optional.of(new TargetLink(java.util.UUID.randomUUID(), targets.stream().map(BlockPos::asLong).toList()));
@@ -198,7 +200,7 @@ public final class PreservationService {
                 }
                 int limit = RuleRegistry.get(level.getServer()).policy().chunkLimit();
                 for (var entry : added.entrySet()) {
-                    if (store.chunkSize(entry.getKey()) + entry.getValue() > limit) { return new Result(false, "This chunk has reached its coating limit"); }
+                    if (store.chunkSize(entry.getKey()) + entry.getValue() > limit) { return new Result(false, Component.translatable("error.alterant.coating_limit")); }
                 }
                 if (access != null) { access.validateItem(); }
                 for (var entry : prepared) { validateIdentity(entry); }
@@ -206,7 +208,7 @@ public final class PreservationService {
                     payment = cost.prepare(prepared.size());
                     prepared.replaceAll(entry -> new Prepared(entry.old(), entry.next().withRecovery(cost.recovery()), entry.context(), entry.entity()));
                 }
-            } catch (RuntimeException error) { return new Result(false, error.getMessage()); }
+            } catch (RuntimeException error) { return new Result(false, PreservationException.message(error)); }
             // Publish the whole group before collecting work or notifying integrations; no callback can see half a coating.
             for (var entry : prepared) { store.put(entry.next()); }
             if (payment != null) { payment.commit(); }
@@ -219,41 +221,41 @@ public final class PreservationService {
             boolean complete = prepared.stream().allMatch(entry -> entry.next().adapters().stream().anyMatch(com.deisdev.alterant.integration.AdapterSnapshot::complete));
             if (formulation.accelerates()) {
                 var effect = prepared.getFirst().next().acceleration().orElseThrow();
-                return new Result(prepared.size(), String.format(java.util.Locale.ROOT, "Serum applied: %.2fx for %.1f loaded minutes", effect.multiplier(), effect.remainingTicks() / 1200.0));
+                return new Result(prepared.size(), Component.translatable("result.alterant.serum_applied", com.deisdev.alterant.text.AlterantText.number(effect.multiplier(), 2), com.deisdev.alterant.text.AlterantText.number(effect.remainingTicks() / 1200.0, 1)));
             }
             return new Result(prepared.size(), formulation == Formulation.TEMPORAL_STASIS
-                    ? (complete ? "Machine paused"
-                        : "Standard ticks paused") : "Coating applied");
+                    ? (complete ? Component.translatable("result.alterant.machine_paused")
+                        : Component.translatable("result.alterant.standard_ticks_paused")) : Component.translatable("result.alterant.coating_applied"));
         } finally {
             for (long position : locked) { inProgress.remove(position); }
         }
     }
 
     private Prepared prepare(BlockPos pos, Formulation formulation, String owner, boolean replace, java.util.Optional<TargetLink> link, PlayerAccess access) {
-        if (!level.hasChunkAt(pos) || level.isOutsideBuildHeight(pos)) { throw new IllegalArgumentException("Load every member of the linked target first"); }
+        if (!level.hasChunkAt(pos) || level.isOutsideBuildHeight(pos)) { throw new PreservationException(Component.translatable("error.alterant.linked_load")); }
         BlockState state = level.getBlockState(pos);
         if (unsafe(state)) {
-            throw new IllegalArgumentException("This target cannot be preserved safely");
+            throw new PreservationException(Component.translatable("error.alterant.unsafe_target"));
         }
         var rules = RuleRegistry.get(level.getServer());
         var decision = rules.evaluate(state, formulation);
-        if (!decision.allowed()) { throw new IllegalArgumentException(decision.denial()); }
+        if (!decision.allowed()) { throw new PreservationException(decision.denial()); }
         Treatment old = store.get(pos.asLong());
-        if (store.resuming(pos.asLong()) != null) { throw new IllegalArgumentException("Pending work is resuming; try again shortly"); }
-        if (old != null && old.formulation() == formulation) { throw new IllegalArgumentException("Already treated"); }
-        if (old != null && !replace) { throw new IllegalArgumentException("Remove the existing coating first"); }
+        if (store.resuming(pos.asLong()) != null) { throw new PreservationException(Component.translatable("error.alterant.resuming")); }
+        if (old != null && old.formulation() == formulation) { throw new PreservationException(Component.translatable("error.alterant.already_treated")); }
+        if (old != null && !replace) { throw new PreservationException(Component.translatable("error.alterant.remove_first")); }
         if (old != null && (!old.adapters().isEmpty() || old.link().isPresent())) {
-            throw new IllegalArgumentException("Remove the integrated or linked coating before switching formulations");
+            throw new PreservationException(Component.translatable("error.alterant.remove_integrated_first"));
         }
         var context = new PreservationContext(level, pos, state, formulation, owner);
         var entity = level.getBlockEntity(pos);
         if (access != null) { access.validate(context, Change.APPLY); }
         var integration = formulation.accelerates() ? new IntegrationRegistry.Prepared(List.of(), false) : IntegrationRegistry.prepare(context);
         if (formulation == Formulation.TRANSFER_SEAL && integration.snapshots().isEmpty() && !com.deisdev.alterant.platform.Services.PLATFORM.supportsTransferSeal(level, pos)) {
-            throw new IllegalArgumentException("This target has no supported item or fluid transfer route");
+            throw new PreservationException(Component.translatable("error.alterant.transfer_unsupported"));
         }
         if (formulation == Formulation.TEMPORAL_STASIS && !rules.policy().allowPartial() && !integration.complete()) {
-            throw new IllegalArgumentException("This target requires a verified integration");
+            throw new PreservationException(Component.translatable("error.alterant.integration_required"));
         }
         var actions = EnumSet.noneOf(Action.class);
         var structure = new java.util.HashMap<String, String>();
@@ -269,9 +271,9 @@ public final class PreservationService {
         if (formulation.accelerates() && actions.contains(Action.ACCELERATE_BLOCK_ENTITY) && !hasTicker(state, entity)) {
             actions.remove(Action.ACCELERATE_BLOCK_ENTITY);
         }
-        if (formulation.accelerates() && actions.isEmpty()) { throw new IllegalArgumentException("This block has no supported ticking route to accelerate"); }
+        if (formulation.accelerates() && actions.isEmpty()) { throw new PreservationException(Component.translatable("error.alterant.acceleration_unsupported")); }
         if (old != null && !old.deferred().isEmpty() && !actions.containsAll(old.actions())) {
-            throw new IllegalArgumentException("Remove the existing coating before switching its suspended tick routes");
+            throw new PreservationException(Component.translatable("error.alterant.remove_tick_routes_first"));
         }
         var record = new Treatment(pos.asLong(), formulation, BuiltInRegistries.BLOCK.getKey(state.getBlock()), actions, structure,
                 old == null ? List.of() : old.deferred(), decision.protections().stream().map(protection -> protection.rule().toString()).distinct().toList(),
@@ -298,8 +300,8 @@ public final class PreservationService {
     /** Selection and sampling change only the actual held tool, never the block or its policy. */
     public Result selectShape(BlockPos pos, net.minecraft.core.Direction face, net.minecraft.server.level.ServerPlayer player) {
         checkThread();
-        if (!level.hasChunkAt(pos) || level.isOutsideBuildHeight(pos)) { return new Result(false, "Target is not loaded"); }
-        if (!inProgress.add(pos.asLong())) { return new Result(false, "Target is busy"); }
+        if (!level.hasChunkAt(pos) || level.isOutsideBuildHeight(pos)) { return new Result(false, Component.translatable("error.alterant.target_unloaded")); }
+        if (!inProgress.add(pos.asLong())) { return new Result(false, Component.translatable("error.alterant.target_busy")); }
         try {
             var tool = player.getMainHandItem(); var snapshot = tool.copy(); var state = level.getBlockState(pos);
             var access = new PlayerAccess(player, () -> player.getMainHandItem() == tool && tool.is(com.deisdev.alterant.item.AlterantItems.SHAPING_STYLUS.get())
@@ -308,38 +310,38 @@ public final class PreservationService {
             var pattern = ShapePattern.capture(state); int mode = com.deisdev.alterant.item.ShapingStylusItem.mode(tool);
             if (mode == 2) {
                 pattern = tool.get(com.deisdev.alterant.item.AlterantItems.SHAPE_SAMPLE.get());
-                if (pattern == null) { throw new IllegalArgumentException("Sample a matching block shape first"); }
+                if (pattern == null) { throw new PreservationException(Component.translatable("error.alterant.shape_sample")); }
                 pattern.apply(state);
             } else if (mode == 0) {
                 var previous = shapeSelections.get(player, pos);
                 pattern = (previous == null ? pattern : previous.preview.pattern()).cycle(face, player.getDirection().getOpposite());
             }
             access.validateItem();
-            if (level.getBlockState(pos) != state) { throw new IllegalArgumentException("Target changed during validation"); }
+            if (level.getBlockState(pos) != state) { throw new PreservationException(Component.translatable("error.alterant.target_changed")); }
             if (mode == 1) {
                 shapeSelections.clear(player); tool.set(com.deisdev.alterant.item.AlterantItems.SHAPE_SAMPLE.get(), pattern); player.getInventory().setChanged();
                 player.sendOverlayMessage(net.minecraft.network.chat.Component.translatable("item.alterant.shaping_stylus.sampled"));
             } else { shapeSelections.put(player, new ShapePreview(level.dimension().identifier(), pos.asLong(), state, pattern)); }
-            return new Result(true, "Shape selected");
-        } catch (RuntimeException error) { return new Result(false, error.getMessage()); }
+            return new Result(true, Component.translatable("result.alterant.shape_selected"));
+        } catch (RuntimeException error) { return new Result(false, PreservationException.message(error)); }
         finally { inProgress.remove(pos.asLong()); }
     }
 
     /** Native shape write, policy and payment complete together before normal neighbor processing. */
     public Result commitShape(BlockPos pos, net.minecraft.server.level.ServerPlayer player) {
         checkThread();
-        if (CleanupJob.get(level.getServer()).blocksApplication()) { return new Result(false, "Uninstall preparation blocks new coatings"); }
-        if (!level.hasChunkAt(pos) || level.isOutsideBuildHeight(pos)) { return new Result(false, "Target is not loaded"); }
+        if (CleanupJob.get(level.getServer()).blocksApplication()) { return new Result(false, Component.translatable("error.alterant.cleanup_coatings")); }
+        if (!level.hasChunkAt(pos) || level.isOutsideBuildHeight(pos)) { return new Result(false, Component.translatable("error.alterant.target_unloaded")); }
         if (level.isDebug() || !com.deisdev.alterant.platform.Services.PLATFORM.canEditShape(level)
-                || com.deisdev.alterant.platform.Services.PLATFORM.transferInProgress()) { return new Result(false, "Wait for the current transfer to finish"); }
-        if (!inProgress.add(pos.asLong())) { return new Result(false, "Target is busy"); }
+                || com.deisdev.alterant.platform.Services.PLATFORM.transferInProgress()) { return new Result(false, Component.translatable("error.alterant.transfer_busy")); }
+        if (!inProgress.add(pos.asLong())) { return new Result(false, Component.translatable("error.alterant.target_busy")); }
         try {
             Prepared prepared; BlockState proposed; CompoundCharge.Prepared payment = null;
             try {
                 var selection = shapeSelections.get(player, pos);
-                if (selection == null || com.deisdev.alterant.item.ShapingStylusItem.mode(player.getMainHandItem()) == 1) { throw new IllegalArgumentException("Preview this shape before committing"); }
+                if (selection == null || com.deisdev.alterant.item.ShapingStylusItem.mode(player.getMainHandItem()) == 1) { throw new PreservationException(Component.translatable("error.alterant.shape_preview")); }
                 var before = selection.preview.before(); var pattern = selection.preview.pattern(); proposed = pattern.apply(before);
-                if (proposed == before) { throw new IllegalArgumentException("This shape is unchanged"); }
+                if (proposed == before) { throw new PreservationException(Component.translatable("error.alterant.shape_unchanged")); }
                 var tool = player.getMainHandItem(); var snapshot = tool.copy();
                 var access = new PlayerAccess(player, () -> shapeSelections.get(player, pos) == selection && tool.is(com.deisdev.alterant.item.AlterantItems.SHAPING_STYLUS.get())
                         && tool.getCount() == 1 && net.minecraft.world.item.ItemStack.matches(snapshot, tool));
@@ -348,40 +350,40 @@ public final class PreservationService {
                 var old = store.get(pos.asLong()); CompoundCharge cost = null;
                 if (old == null) {
                     cost = CompoundCharge.captureStylus(player);
-                    if (!IntegrationRegistry.targets(context).equals(List.of(pos))) { throw new IllegalArgumentException("This block does not support shaping"); }
+                    if (!IntegrationRegistry.targets(context).equals(List.of(pos))) { throw new PreservationException(Component.translatable("error.alterant.shape_unsupported")); }
                     prepared = prepare(pos, Formulation.STRUCTURAL_STASIS, player.getStringUUID(), false, java.util.Optional.empty(), access);
-                    if (store.chunkSize(TreatmentStore.chunkKey(pos.asLong())) >= RuleRegistry.get(level.getServer()).policy().chunkLimit()) { throw new IllegalArgumentException("This chunk has reached its coating limit"); }
+                    if (store.chunkSize(TreatmentStore.chunkKey(pos.asLong())) >= RuleRegistry.get(level.getServer()).policy().chunkLimit()) { throw new PreservationException(Component.translatable("error.alterant.coating_limit")); }
                 } else {
-                    if (old.formulation() != Formulation.STRUCTURAL_STASIS || !matches(pos, old)) { throw new IllegalArgumentException("Remove the existing coating first"); }
+                    if (old.formulation() != Formulation.STRUCTURAL_STASIS || !matches(pos, old)) { throw new PreservationException(Component.translatable("error.alterant.remove_first")); }
                     prepared = new Prepared(old, old, context, level.getBlockEntity(pos));
                 }
                 var next = prepared.next();
-                if (!next.adapters().isEmpty() || next.link().isPresent() || prepared.entity() != null) { throw new IllegalArgumentException("This block does not support shaping"); }
+                if (!next.adapters().isEmpty() || next.link().isPresent() || prepared.entity() != null) { throw new PreservationException(Component.translatable("error.alterant.shape_unsupported")); }
                 for (String property : pattern.properties()) {
                     if (next.protections().stream().noneMatch(protection -> protection.action() == com.deisdev.alterant.api.Action.STRUCTURAL_CHANGE
                             && protection.properties().contains(property) && protection.source().equals(BlockCondition.ANY) && protection.target().equals(BlockCondition.ANY))) {
-                        throw new IllegalArgumentException("This coating does not preserve the selected shape");
+                        throw new PreservationException(Component.translatable("error.alterant.shape_policy"));
                     }
                 }
                 RemovalUpdates.validate(level, next);
-                if (!level.isUnobstructed(proposed, pos, net.minecraft.world.phys.shapes.CollisionContext.empty())) { throw new IllegalArgumentException("An entity is in the selected shape"); }
+                if (!level.isUnobstructed(proposed, pos, net.minecraft.world.phys.shapes.CollisionContext.empty())) { throw new PreservationException(Component.translatable("error.alterant.shape_obstructed")); }
                 access.validate(context, Change.APPLY); validateIdentity(prepared); access.validateItem();
                 if (cost != null) { payment = cost.prepare(1); next = next.withRecovery(cost.recovery()); }
                 var structure = new java.util.HashMap<>(next.structure()); structure.putAll(pattern.values(before));
                 next = next.withStructure(structure);
                 prepared = new Prepared(prepared.old(), next, prepared.context(), prepared.entity());
-            } catch (RuntimeException error) { return new Result(false, error.getMessage()); }
+            } catch (RuntimeException error) { return new Result(false, PreservationException.message(error)); }
             // The audited classes have no block entities. Native chunk assignment keeps light/height maps,
             // while SKIP_ON_PLACE and KNOWN_SHAPE defer all ordinary shape and neighbor callbacks until payment.
             var previous = level.getChunkAt(pos).setBlockState(pos, proposed, Block.UPDATE_SKIP_ON_PLACE | Block.UPDATE_KNOWN_SHAPE);
-            if (previous == null) { return new Result(false, "This shape is unchanged"); }
+            if (previous == null) { return new Result(false, Component.translatable("error.alterant.shape_unchanged")); }
             store.put(prepared.next()); if (payment != null) { payment.commit(); }
             shapeSelections.clear(player);
             var before = prepared.context().state();
             afterCommit(pos, () -> com.deisdev.alterant.platform.Services.PLATFORM.notifyShapeEdit(level, pos, before, proposed));
             afterCommit(pos, () -> changed(pos));
             afterCommit(pos, () -> level.playSound(null, pos, net.minecraft.sounds.SoundEvents.AXE_SCRAPE, net.minecraft.sounds.SoundSource.BLOCKS, .25F, 1.5F));
-            return new Result(true, "Shape preserved");
+            return new Result(true, Component.translatable("result.alterant.shape_preserved"));
         } finally { inProgress.remove(pos.asLong()); }
     }
 
@@ -408,7 +410,7 @@ public final class PreservationService {
         checkThread();
         com.deisdev.alterant.item.SolventCharge cost;
         try { cost = com.deisdev.alterant.item.SolventCharge.capture(player); }
-        catch (RuntimeException error) { return new Result(false, error.getMessage()); }
+        catch (RuntimeException error) { return new Result(false, PreservationException.message(error)); }
         return remove(pos, new PlayerAccess(player, cost::ready), RemovalCause.SOLVENT, null, cost);
     }
 
@@ -419,11 +421,11 @@ public final class PreservationService {
     /** The actual dispenser and bottle are validated again after all target permissions and adapter checks. */
     public Result dissolve(net.minecraft.core.dispenser.BlockSource source, net.minecraft.world.item.ItemStack stack) {
         checkThread();
-        if (source.level() != level) { return new Result(false, "The dispenser or solvent changed"); }
+        if (source.level() != level) { return new Result(false, Component.translatable("error.alterant.dispenser_changed")); }
         com.deisdev.alterant.item.SolventCharge cost;
         try { cost = com.deisdev.alterant.item.SolventCharge.capture(source, stack); }
-        catch (RuntimeException error) { return new Result(false, error.getMessage()); }
-        if (!cost.ready()) { return new Result(false, "The dispenser or solvent changed"); }
+        catch (RuntimeException error) { return new Result(false, PreservationException.message(error)); }
+        if (!cost.ready()) { return new Result(false, Component.translatable("error.alterant.dispenser_changed")); }
         var context = new com.deisdev.alterant.api.AutomationContext(level, source.pos(), source.state(), com.deisdev.alterant.api.AutomationContext.Kind.DISPENSER);
         var target = source.pos().relative(source.state().getValue(net.minecraft.world.level.block.DispenserBlock.FACING));
         return remove(target, new com.deisdev.alterant.integration.AutomationAccess(context, cost::ready), RemovalCause.SOLVENT, null, cost);
@@ -441,14 +443,14 @@ public final class PreservationService {
     private Result remove(BlockPos pos, com.deisdev.alterant.integration.OperationAccess access, RemovalCause cause, net.minecraft.server.level.ServerPlayer collector,
                           com.deisdev.alterant.item.SolventCharge cost, boolean area, int limit) {
         checkThread();
-        if (com.deisdev.alterant.platform.Services.PLATFORM.transferInProgress()) { return new Result(false, "Wait for the current transfer to finish"); }
-        if (!level.hasChunkAt(pos)) { return new Result(false, "Target is not loaded"); }
-        if (!inProgress.add(pos.asLong())) { return new Result(false, "Target is busy"); }
+        if (com.deisdev.alterant.platform.Services.PLATFORM.transferInProgress()) { return new Result(false, Component.translatable("error.alterant.transfer_busy")); }
+        if (!level.hasChunkAt(pos)) { return new Result(false, Component.translatable("error.alterant.target_unloaded")); }
+        if (!inProgress.add(pos.asLong())) { return new Result(false, Component.translatable("error.alterant.target_busy")); }
         var locked = new LongOpenHashSet();
         locked.add(pos.asLong());
         try {
             Treatment treatment = store.get(pos.asLong());
-            if (treatment == null) { return new Result(false, "No coating here"); }
+            if (treatment == null) { return new Result(false, Component.translatable("error.alterant.no_coating")); }
             var prepared = new java.util.ArrayList<Prepared>();
             var removed = new java.util.ArrayList<RemovalReceipt.Entry>();
             com.deisdev.alterant.item.ResidueDelivery delivery = null;
@@ -456,9 +458,9 @@ public final class PreservationService {
             try {
                 var targets = treatment.link().map(link -> link.members().stream().map(BlockPos::of).toList()).orElseGet(() -> List.of(pos));
                 lockTargets(targets, locked);
-                if (area && SurfaceTargets.masked(level, targets)) { return new Result(false, "Masked target"); }
+                if (area && SurfaceTargets.masked(level, targets)) { return new Result(false, Component.translatable("error.alterant.masked_target")); }
                 for (var target : targets) {
-                    if (!level.hasChunkAt(target)) { return new Result(false, "Load every member of the linked target before removal"); }
+                    if (!level.hasChunkAt(target)) { return new Result(false, Component.translatable("error.alterant.linked_removal_load")); }
                     var record = store.get(target.asLong());
                     // A broken/replaced member can be absent or belong to a newer group. Never remove that newer coating.
                     if (record == null || !record.link().equals(treatment.link())) { continue; }
@@ -470,7 +472,7 @@ public final class PreservationService {
                         RemovalUpdates.validate(level, record);
                     }
                 }
-                if (prepared.size() > limit) { return new Result(false, "Area limit reached"); }
+                if (prepared.size() > limit) { return new Result(false, Component.translatable("error.alterant.area_limit")); }
                 // Reserve the entire bottle cost before any adapter starts its idempotent resume preparation.
                 if (cost != null) { payment = cost.prepare((int) prepared.stream().filter(entry -> matches(entry.context().pos(), entry.old())).count()); }
                 for (var entry : prepared) {
@@ -487,9 +489,9 @@ public final class PreservationService {
                 for (var entry : prepared) { validateIdentity(entry); }
                 if (collector != null) {
                     delivery = com.deisdev.alterant.item.ResidueDelivery.prepare(collector, pos, removed);
-                    if (!delivery.ready()) { throw new IllegalArgumentException("Inventory changed during removal"); }
+                    if (!delivery.ready()) { throw new PreservationException(Component.translatable("error.alterant.inventory_changed")); }
                 }
-            } catch (RuntimeException error) { return new Result(false, "Coating retained: " + error.getMessage()); }
+            } catch (RuntimeException error) { return new Result(false, Component.translatable("result.alterant.coating_retained", PreservationException.message(error))); }
             for (var entry : prepared) { store.remove(entry.old().position()); }
             if (payment != null) { payment.commit(); }
             if (delivery != null) { delivery.commit(); }
@@ -505,7 +507,7 @@ public final class PreservationService {
                 if (matches(entry.context().pos(), entry.old())) { IntegrationRegistry.observed(entry.context(), entry.old().adapters(), false); }
             }
             if (delivery != null) { afterCommit(pos, delivery::publishDrops); }
-            return new Result(prepared.size(), "Coating removed", java.util.Optional.of(receipt));
+            return new Result(prepared.size(), Component.translatable("result.alterant.coating_removed"), java.util.Optional.of(receipt));
         } finally {
             for (long position : locked) { inProgress.remove(position); }
         }
@@ -519,7 +521,7 @@ public final class PreservationService {
     private void lockTargets(List<BlockPos> targets, LongOpenHashSet locked) {
         for (var target : targets) {
             if (locked.contains(target.asLong())) { continue; }
-            if (!inProgress.add(target.asLong())) { throw new IllegalArgumentException("Linked target is busy"); }
+            if (!inProgress.add(target.asLong())) { throw new PreservationException(Component.translatable("error.alterant.linked_busy")); }
             locked.add(target.asLong());
         }
     }
@@ -528,7 +530,7 @@ public final class PreservationService {
         var pos = entry.context().pos();
         if (!level.hasChunkAt(pos) || level.getBlockState(pos) != entry.context().state()
                 || level.getBlockEntity(pos) != entry.entity() || store.get(pos.asLong()) != entry.old()) {
-            throw new IllegalArgumentException("Target changed during integration validation");
+            throw new PreservationException(Component.translatable("error.alterant.integration_changed"));
         }
     }
 
@@ -623,30 +625,30 @@ public final class PreservationService {
     /** A marker changes only area targeting; permission checks and strip payment precede publication. */
     public Result mask(BlockPos pos, net.minecraft.core.Direction face, net.minecraft.server.level.ServerPlayer player, boolean peel) {
         checkThread();
-        if (!level.hasChunkAt(pos) || level.isOutsideBuildHeight(pos) || unsafe(level.getBlockState(pos))) { return new Result(false, "Target is not loaded or cannot be masked"); }
-        if (!peel && CleanupJob.get(level.getServer()).blocksApplication()) { return new Result(false, "Uninstall preparation blocks new masks"); }
+        if (!level.hasChunkAt(pos) || level.isOutsideBuildHeight(pos) || unsafe(level.getBlockState(pos))) { return new Result(false, Component.translatable("error.alterant.mask_unsupported")); }
+        if (!peel && CleanupJob.get(level.getServer()).blocksApplication()) { return new Result(false, Component.translatable("error.alterant.cleanup_masks")); }
         var tool = player.getMainHandItem().copy();
         boolean strip = tool.is(com.deisdev.alterant.item.AlterantItems.MASKING_STRIPS.get());
-        if (tool.isEmpty() || !(strip || peel && tool.is(com.deisdev.alterant.item.AlterantItems.SCRAPER.get()) && tool.getCount() == 1)) { return new Result(false, "Hold Masking Strips or a scraper"); }
-        if (!inProgress.add(pos.asLong())) { return new Result(false, "Target is busy"); }
+        if (tool.isEmpty() || !(strip || peel && tool.is(com.deisdev.alterant.item.AlterantItems.SCRAPER.get()) && tool.getCount() == 1)) { return new Result(false, Component.translatable("error.alterant.mask_tool")); }
+        if (!inProgress.add(pos.asLong())) { return new Result(false, Component.translatable("error.alterant.target_busy")); }
         try {
             boolean infinite = player.hasInfiniteMaterials();
             var marker = store.mask(pos.asLong()); var state = level.getBlockState(pos); var entity = level.getBlockEntity(pos);
             var access = new PlayerAccess(player, () -> net.minecraft.world.item.ItemStack.matches(tool, player.getMainHandItem()) && player.hasInfiniteMaterials() == infinite);
             var context = new PreservationContext(level, pos, state, null, player.getStringUUID());
             access.validate(context, peel ? Change.MASK_REMOVE : Change.MASK_APPLY);
-            if (peel ? marker == null : marker != null) { return new Result(false, peel ? "No mask to peel" : "Already masked"); }
-            if (!peel && store.chunkMaskSize(TreatmentStore.chunkKey(pos.asLong())) >= RuleRegistry.get(level.getServer()).policy().chunkLimit()) { return new Result(false, "This chunk has reached its mask limit"); }
+            if (peel ? marker == null : marker != null) { return new Result(false, peel ? Component.translatable("error.alterant.no_mask") : Component.translatable("error.alterant.already_masked")); }
+            if (!peel && store.chunkMaskSize(TreatmentStore.chunkKey(pos.asLong())) >= RuleRegistry.get(level.getServer()).policy().chunkLimit()) { return new Result(false, Component.translatable("error.alterant.mask_limit")); }
             access.validate(context, peel ? Change.MASK_REMOVE : Change.MASK_APPLY);
             access.validateItem();
-            if (!level.hasChunkAt(pos) || level.getBlockState(pos) != state || level.getBlockEntity(pos) != entity || store.mask(pos.asLong()) != marker) { return new Result(false, "Target changed during validation"); }
+            if (!level.hasChunkAt(pos) || level.getBlockState(pos) != state || level.getBlockEntity(pos) != entity || store.mask(pos.asLong()) != marker) { return new Result(false, Component.translatable("error.alterant.target_changed")); }
             var after = tool.copy(); if (!peel && !infinite) { after.shrink(1); }
             if (peel) { store.removeMask(pos.asLong()); }
             else { store.putMask(new MaskMark(pos.asLong(), BuiltInRegistries.BLOCK.getKey(state.getBlock()), face)); }
             if (!peel && !infinite) { player.getInventory().setItem(player.getInventory().getSelectedSlot(), after); player.getInventory().setChanged(); }
             afterCommit(pos, () -> changed(pos));
-            return new Result(true, peel ? "Mask peeled" : "Mask applied");
-        } catch (RuntimeException error) { return new Result(false, error.getMessage()); }
+            return new Result(true, peel ? Component.translatable("result.alterant.mask_peeled") : Component.translatable("result.alterant.mask_applied"));
+        } catch (RuntimeException error) { return new Result(false, PreservationException.message(error)); }
         finally { inProgress.remove(pos.asLong()); }
     }
 

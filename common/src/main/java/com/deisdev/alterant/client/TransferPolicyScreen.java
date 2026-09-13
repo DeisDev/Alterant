@@ -30,6 +30,8 @@ public final class TransferPolicyScreen extends AbstractContainerScreen<Transfer
             int id = face.ordinal();
             faces[id] = addRenderableWidget(Button.builder(Component.translatable("menu.alterant.transfer.face." + face.getSerializedName()), ignored -> send(10 + id))
                     .bounds(leftPos + FACE_POS[id][0], topPos + FACE_POS[id][1], 22, 20)
+                    .createNarration(ignored -> Component.translatable("gui.narrate.button", net.minecraft.network.chat.CommonComponents.optionStatus(
+                            Component.translatable("menu.alterant.transfer.direction." + face.getSerializedName()), menu.policy().selects(face))))
                     .tooltip(Tooltip.create(Component.translatable("menu.alterant.transfer.seal_face", Component.translatable("menu.alterant.transfer.direction." + face.getSerializedName())))).build());
         }
         addRenderableWidget(Button.builder(Component.translatable("menu.alterant.transfer.all"), ignored -> send(20)).bounds(leftPos + 132, topPos + 94, 36, 20).build());

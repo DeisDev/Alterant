@@ -1,16 +1,18 @@
 package com.deisdev.alterant.engine;
 
 import com.deisdev.alterant.api.PreservationContext;
+import com.deisdev.alterant.api.PreservationException;
 import com.deisdev.alterant.api.PreservationPermission;
 import com.deisdev.alterant.integration.PlayerAccess;
-import com.deisdev.alterant.item.CompoundCharge;
 import com.deisdev.alterant.item.AlterantItems;
+import com.deisdev.alterant.item.CompoundCharge;
 import com.deisdev.alterant.item.PreservingBrushItem;
 import com.deisdev.alterant.platform.Services;
 import com.deisdev.alterant.rules.RuleRegistry;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 
@@ -21,16 +23,16 @@ public final class SurfaceApplication {
         var level = player.level();
         if (!level.getServer().isSameThread()) { throw new IllegalStateException("Surface application requires the server thread"); }
         if (!PreservingBrushItem.area(player.getMainHandItem()) || player.getCooldowns().isOnCooldown(player.getMainHandItem())) {
-            return new PreservationService.Result(false, "Select surface mode and wait for the brush to be ready");
+            return new PreservationService.Result(false, Component.translatable("error.alterant.surface_brush"));
         }
         CompoundCharge initial;
         try {
             initial = CompoundCharge.capture(player);
             if (!level.hasChunkAt(center) || level.isOutsideBuildHeight(center) || level.getBlockState(center).isAir()) {
-                return new PreservationService.Result(false, "Target is not loaded");
+                return new PreservationService.Result(false, Component.translatable("error.alterant.target_unloaded"));
             }
             new PlayerAccess(player, initial::ready).validate(new PreservationContext(level, center, level.getBlockState(center), initial.formulation(), player.getStringUUID()), PreservationPermission.Change.APPLY);
-        } catch (RuntimeException error) { return new PreservationService.Result(false, error.getMessage()); }
+        } catch (RuntimeException error) { return new PreservationService.Result(false, PreservationException.message(error)); }
         player.getCooldowns().addCooldown(player.getMainHandItem(), 5);
         var tool = player.getMainHandItem().copy();
         var expectedJar = player.getOffhandItem().copy();
@@ -39,22 +41,22 @@ public final class SurfaceApplication {
         int limit = RuleRegistry.get(level.getServer()).policy().areaLimit();
         int changed = 0;
         int skipped = 0;
-        String reason = "";
+        Component reason = Component.empty();
         var visited = new LongOpenHashSet();
         var service = PreservationService.get(level);
         for (var pos : SurfaceTargets.positions(center, face)) {
             if (!visited.add(pos.asLong())) { continue; }
-            if (changed >= limit) { reason = "Area limit reached"; break; }
+            if (changed >= limit) { reason = Component.translatable("error.alterant.area_limit"); break; }
             if (!ItemStack.matches(tool, player.getMainHandItem()) || !ItemStack.matches(expectedJar, player.getOffhandItem()) || player.hasInfiniteMaterials() != infinite) {
-                reason = "Held items changed"; break;
+                reason = Component.translatable("error.alterant.held_items_changed"); break;
             }
-            if (compound.remaining(expectedJar) == 0) { reason = "Compound exhausted"; break; }
+            if (compound.remaining(expectedJar) == 0) { reason = Component.translatable("error.alterant.compound_exhausted"); break; }
             if (!player.isWithinBlockInteractionRange(pos, 0) || !SurfaceTargets.exposed(level, pos, face)) { skipped++; continue; }
             try {
                 // The native click already dispatched the center event. Additional surface targets get their own loader cancellation check.
                 if (!pos.equals(center) && !Services.PLATFORM.allowSurfaceUse(player, SurfaceTargets.hit(pos, face))) { skipped++; continue; }
-            } catch (RuntimeException error) { skipped++; reason = "Interaction permission unavailable"; continue; }
-            if (!ItemStack.matches(tool, player.getMainHandItem()) || !ItemStack.matches(expectedJar, player.getOffhandItem())) { reason = "Held items changed"; break; }
+            } catch (RuntimeException error) { skipped++; reason = Component.translatable("error.alterant.interaction_permission_unavailable"); continue; }
+            if (!ItemStack.matches(tool, player.getMainHandItem()) || !ItemStack.matches(expectedJar, player.getOffhandItem())) { reason = Component.translatable("error.alterant.held_items_changed"); break; }
             var result = service.applyWithBrush(pos, player, replace, limit - changed);
             if (!result.changed()) { skipped++; reason = result.message(); continue; }
             changed += result.changedPositions();
@@ -62,6 +64,6 @@ public final class SurfaceApplication {
             var saved = service.store().get(pos.asLong());
             if (saved != null) { saved.link().ifPresent(link -> link.members().forEach(member -> visited.add(member.longValue()))); }
         }
-        return new PreservationService.Result(changed, "Surface: " + changed + " positions treated, " + skipped + " targets skipped" + (reason.isEmpty() ? "" : "; " + reason));
+        return new PreservationService.Result(changed, Component.translatable("result.alterant.surface", changed, skipped, reason));
     }
 }

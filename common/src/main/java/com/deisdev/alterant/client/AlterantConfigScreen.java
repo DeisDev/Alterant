@@ -1,17 +1,17 @@
 package com.deisdev.alterant.client;
 
-import com.deisdev.alterant.client.ClientConfig.TooltipMode;
 import com.deisdev.alterant.client.ClientConfig.HudAnchor;
+import com.deisdev.alterant.client.ClientConfig.TooltipMode;
 import dev.isxander.yacl3.api.ConfigCategory;
 import dev.isxander.yacl3.api.Option;
 import dev.isxander.yacl3.api.OptionDescription;
 import dev.isxander.yacl3.api.OptionGroup;
 import dev.isxander.yacl3.api.YetAnotherConfigLib;
-import dev.isxander.yacl3.api.controller.EnumControllerBuilder;
-import dev.isxander.yacl3.api.controller.TickBoxControllerBuilder;
 import dev.isxander.yacl3.api.controller.ColorControllerBuilder;
+import dev.isxander.yacl3.api.controller.EnumControllerBuilder;
 import dev.isxander.yacl3.api.controller.IntegerFieldControllerBuilder;
 import dev.isxander.yacl3.api.controller.IntegerSliderControllerBuilder;
+import dev.isxander.yacl3.api.controller.TickBoxControllerBuilder;
 import java.awt.Color;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -116,7 +116,7 @@ public final class AlterantConfigScreen {
     private static Option<Integer> percent(String key, int defaults, Supplier<Integer> get, Consumer<Integer> set, int min, int max, int step) {
         return Option.<Integer>createBuilder().name(text(key)).description(OptionDescription.of(text(key + ".description")))
                 .binding(defaults, get, set).controller(option -> IntegerSliderControllerBuilder.create(option).range(min, max).step(step)
-                        .formatValue(value -> Component.literal(value + "%"))).build();
+                        .formatValue(value -> Component.translatable("text.alterant.percent", value))).build();
     }
     private static final class StyleDraft {
         private int scale, opacity;

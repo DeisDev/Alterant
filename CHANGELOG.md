@@ -19,6 +19,8 @@ Alterant is unreleased and under active development.
 
 ### Changed
 
+- All player-facing text supports translation through language packs.
+- Shorter tooltips and settings descriptions.
 - Treatments leave distinct surface patterns, with optional subtle animation and independent visibility controls.
 - Masking tape and area previews follow block surfaces.
 - Basic now includes a compact tool HUD with doses, modes and controls.

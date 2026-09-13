@@ -3,11 +3,12 @@ package com.deisdev.alterant.client;
 import com.deisdev.alterant.api.Formulation;
 import com.deisdev.alterant.api.PreservationTool;
 import com.deisdev.alterant.engine.PreservationLevel;
-import com.deisdev.alterant.item.CompoundItem;
 import com.deisdev.alterant.item.AlterantItems;
+import com.deisdev.alterant.item.CompoundItem;
 import com.deisdev.alterant.item.PreservingBrushItem;
 import com.deisdev.alterant.item.ReleaseSolventItem;
 import com.deisdev.alterant.item.ShapingStylusItem;
+import com.deisdev.alterant.text.AlterantText;
 import com.mojang.blaze3d.vertex.PoseStack;
 import java.util.ArrayList;
 import java.util.List;
@@ -86,7 +87,7 @@ public final class ToolOverlay {
         var jar = player.getOffhandItem();
         if (brush || applicator) {
             if (jar.getItem() instanceof CompoundItem compound) {
-                lines.add(jar.getHoverName().copy().append(" · ").append(Component.translatable("item.alterant.jar.uses", compound.remaining(jar), compound.formulation().capacity()))
+                lines.add(Component.translatable("overlay.alterant.jar", jar.getHoverName(), Component.translatable("item.alterant.jar.uses", compound.remaining(jar), compound.formulation().capacity()))
                         .withColor(color(compound.formulation()) & 0xFFFFFF));
                 lines.add(description(compound.formulation()).copy().withStyle(net.minecraft.ChatFormatting.GRAY));
             } else { lines.add(Component.translatable(applicator ? "overlay.alterant.need_serum" : "overlay.alterant.need_compound")); }
@@ -104,24 +105,25 @@ public final class ToolOverlay {
                 ? "item.alterant.release_solvent.use" : "overlay.alterant.scraper_controls")); }
         if (mode == ClientConfig.TooltipMode.ADVANCED) { ClientInspection.current(client).ifPresent(report -> {
             lines.add(Component.translatable("overlay.alterant.coverage." + report.coverage().name().toLowerCase(java.util.Locale.ROOT)));
-            if (!report.reason().isBlank()) { lines.add(Component.literal(report.reason())); }
+            if (!report.reason().equals(Component.empty())) { lines.add(report.reason()); }
             else if (report.applicable()) { lines.add(Component.translatable(brush || applicator ? "overlay.alterant.ready_apply" : "overlay.alterant.ready_remove")); }
-            var actions = new ArrayList<String>();
+            var actions = new ArrayList<Component>();
             for (var action : com.deisdev.alterant.api.Action.values()) {
                 if ((report.actions() & (1 << action.ordinal())) != 0) {
-                    actions.add(Component.translatable("overlay.alterant.action." + action.getSerializedName()).getString() + ((report.conditionalActions() & (1 << action.ordinal())) == 0 ? "" : "*"));
+                    Component label = Component.translatable("overlay.alterant.action." + action.getSerializedName());
+                    actions.add((report.conditionalActions() & (1 << action.ordinal())) == 0 ? label : Component.translatable("overlay.alterant.conditional_action", label));
                 }
             }
             if (!actions.isEmpty()) {
-                lines.add(Component.translatable("overlay.alterant.protections", String.join(", ", actions)));
+                lines.add(Component.translatable("overlay.alterant.protections", AlterantText.list(actions)));
             }
             if (report.conditionalActions() != 0) { lines.add(Component.translatable("overlay.alterant.conditional")); }
             if (report.coverage() == com.deisdev.alterant.api.PreservationInspection.Coverage.STANDARD_ROUTES) { lines.add(Component.translatable("overlay.alterant.partial")); }
             if (report.positions() > 1) { lines.add(Component.translatable("overlay.alterant.linked", report.positions())); }
             if (brush && PreservingBrushItem.area(player.getMainHandItem())) { lines.add(Component.translatable("overlay.alterant.area_limit", report.areaLimit())); }
             if (!report.properties().isEmpty()) { lines.add(Component.translatable("overlay.alterant.properties", report.properties())); }
-            for (var limitation : report.limitations()) { lines.add(Component.literal(limitation)); }
-            for (var detail : report.details()) { lines.add(Component.literal(detail)); }
+            for (var limitation : report.limitations()) { lines.add(limitation); }
+            for (var detail : report.details()) { lines.add(detail); }
         }); }
         return List.copyOf(lines);
     }

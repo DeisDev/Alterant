@@ -1,5 +1,6 @@
 package com.deisdev.alterant.engine;
 
+import com.deisdev.alterant.api.PreservationException;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -7,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.BlockState;
@@ -33,16 +35,16 @@ public record ShapePattern(Kind kind, int bits) {
         java.util.Objects.requireNonNull(kind);
         if (bits < 0 || bits > (kind == Kind.FENCE ? 15 : kind == Kind.STAIRS ? 4 : 511)
                 || kind == Kind.WALL && (bits == 0 || java.util.stream.IntStream.range(0, 4).anyMatch(side -> (bits >> (side * 2) & 3) == 3))) {
-            throw new IllegalArgumentException("Unsupported decorative shape");
+            throw new PreservationException(Component.translatable("error.alterant.shape_invalid"));
         }
     }
     public static Kind kind(BlockState state) {
-        if (!BuiltInRegistries.BLOCK.getKey(state.getBlock()).getNamespace().equals("minecraft") || state.hasBlockEntity()) { throw new IllegalArgumentException("This block does not support shaping"); }
+        if (!BuiltInRegistries.BLOCK.getKey(state.getBlock()).getNamespace().equals("minecraft") || state.hasBlockEntity()) { throw new PreservationException(Component.translatable("error.alterant.shape_unsupported")); }
         var type = state.getBlock().getClass();
         if (type == FenceBlock.class) { return Kind.FENCE; }
         if (type == WallBlock.class) { return Kind.WALL; }
         if (type == StairBlock.class) { return Kind.STAIRS; }
-        throw new IllegalArgumentException("This block does not support shaping");
+        throw new PreservationException(Component.translatable("error.alterant.shape_unsupported"));
     }
     public static ShapePattern capture(BlockState state) {
         var kind = kind(state); int bits = 0;
@@ -52,7 +54,7 @@ public record ShapePattern(Kind kind, int bits) {
         return new ShapePattern(kind, bits);
     }
     public BlockState apply(BlockState state) {
-        if (kind(state) != kind) { throw new IllegalArgumentException("Sample a matching block shape first"); }
+        if (kind(state) != kind) { throw new PreservationException(Component.translatable("error.alterant.shape_sample")); }
         if (kind == Kind.STAIRS) { return state.setValue(StairBlock.SHAPE, StairsShape.values()[bits]); }
         for (int side = 0; side < 4; side++) { state = kind == Kind.FENCE ? state.setValue(FENCE.get(side), (bits & 1 << side) != 0) : state.setValue(WALL.get(side), WallSide.values()[bits >> (side * 2) & 3]); }
         return kind == Kind.WALL ? state.setValue(WallBlock.UP, (bits & 256) != 0) : state;

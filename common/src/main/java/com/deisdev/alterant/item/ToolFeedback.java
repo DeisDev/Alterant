@@ -15,37 +15,40 @@ import net.minecraft.sounds.SoundSource;
 public final class ToolFeedback {
     private static final Map<ServerPlayer, Integer> LAST_FAILURE = java.util.Collections.synchronizedMap(new java.util.WeakHashMap<>());
     private static final Map<String, String> REASONS = Map.ofEntries(
-            Map.entry("This target has no supported item or fluid transfer route", "transfer_unsupported"),
-            Map.entry("This block does not support shaping", "unsupported"), Map.entry("Unsupported decorative shape", "unsupported"),
-            Map.entry("Preview this shape before committing", "shape_preview"), Map.entry("Hold Structural Stasis offhand to shape this block", "shape_payment"),
-            Map.entry("Sample a matching block shape first", "shape_sample"), Map.entry("This shape is unchanged", "shape_same"),
-            Map.entry("An entity is in the selected shape", "shape_blocked"), Map.entry("This coating does not preserve the selected shape", "shape_policy"),
-            Map.entry("This chunk has reached its preview limit", "limit"), Map.entry("Remove the existing coating first", "remove_first"),
-            Map.entry("Already masked", "already_masked"), Map.entry("Masked target", "masked"), Map.entry("No mask to peel", "no_mask"),
-            Map.entry("No coating here", "no_coating"), Map.entry("Target is busy", "busy"), Map.entry("Linked target is busy", "busy"),
-            Map.entry("Wait for the current transfer to finish", "busy"), Map.entry("Target is not loaded", "range"),
-            Map.entry("Target is not loaded or cannot be masked", "unsupported"), Map.entry("You cannot modify this target from here", "permission"),
-            Map.entry("This claim does not allow changing preservation", "permission"), Map.entry("Not enough charges for the entire linked target", "charges"),
-            Map.entry("This chunk has reached its coating limit", "limit"), Map.entry("This chunk has reached its mask limit", "limit"),
-            Map.entry("This target cannot be preserved safely", "unsupported"), Map.entry("Load both halves of the chest first", "linked_load"),
-            Map.entry("Load every member of the linked target first", "linked_load"), Map.entry("Load every member of the linked target before removal", "linked_load"),
-            Map.entry("Chest connection is incomplete", "linked_load"), Map.entry("The tool or available compound changed", "changed"),
-            Map.entry("Target changed during integration validation", "changed"), Map.entry("Target changed during validation", "changed"),
-            Map.entry("Remove the integrated or linked coating before switching formulations", "remove_first"),
-            Map.entry("Not enough solvent for the entire linked target", "solvent"), Map.entry("Hold a usable solvent bottle", "solvent"),
-            Map.entry("The solvent bottle changed", "changed"), Map.entry("The dispenser or solvent changed", "changed"),
-            Map.entry("This plant does not support stage regulation", "unsupported"), Map.entry("This plant does not support height regulation", "unsupported"),
-            Map.entry("Choose a stage supported by this plant", "growth_limit"), Map.entry("Choose a height supported by this plant", "growth_limit"),
-            Map.entry("This plant is already beyond the selected limit", "growth_past"), Map.entry("Apply height regulation at the root", "growth_root"),
-            Map.entry("Remove the existing coating before switching its suspended tick routes", "remove_first"),
-            Map.entry("Remove the existing coating before switching formulations", "remove_first")
+            Map.entry("error.alterant.transfer_unsupported", "transfer_unsupported"),
+            Map.entry("error.alterant.shape_unsupported", "unsupported"), Map.entry("error.alterant.shape_invalid", "unsupported"),
+            Map.entry("error.alterant.shape_preview", "shape_preview"), Map.entry("error.alterant.shape_payment", "shape_payment"),
+            Map.entry("error.alterant.shape_sample", "shape_sample"), Map.entry("error.alterant.shape_unchanged", "shape_same"),
+            Map.entry("error.alterant.shape_obstructed", "shape_blocked"), Map.entry("error.alterant.shape_policy", "shape_policy"),
+            Map.entry("error.alterant.preview_limit", "limit"), Map.entry("error.alterant.remove_first", "remove_first"),
+            Map.entry("error.alterant.already_masked", "already_masked"), Map.entry("error.alterant.masked_target", "masked"), Map.entry("error.alterant.no_mask", "no_mask"),
+            Map.entry("error.alterant.no_coating", "no_coating"), Map.entry("error.alterant.target_busy", "busy"), Map.entry("error.alterant.linked_busy", "busy"),
+            Map.entry("error.alterant.transfer_busy", "busy"), Map.entry("error.alterant.target_unloaded", "range"),
+            Map.entry("error.alterant.mask_unsupported", "unsupported"), Map.entry("error.alterant.player_access", "permission"),
+            Map.entry("error.alterant.claim_denied", "permission"), Map.entry("error.alterant.charges", "charges"),
+            Map.entry("error.alterant.coating_limit", "limit"), Map.entry("error.alterant.mask_limit", "limit"),
+            Map.entry("error.alterant.unsafe_target", "unsupported"), Map.entry("error.alterant.chest_load", "linked_load"),
+            Map.entry("error.alterant.linked_load", "linked_load"), Map.entry("error.alterant.linked_removal_load", "linked_load"),
+            Map.entry("error.alterant.chest_incomplete", "linked_load"), Map.entry("error.alterant.tool_changed", "changed"),
+            Map.entry("error.alterant.integration_changed", "changed"), Map.entry("error.alterant.target_changed", "changed"),
+            Map.entry("error.alterant.remove_integrated_first", "remove_first"),
+            Map.entry("error.alterant.solvent_charges", "solvent"), Map.entry("error.alterant.solvent_bottle", "solvent"),
+            Map.entry("error.alterant.solvent_changed", "changed"), Map.entry("error.alterant.dispenser_changed", "changed"),
+            Map.entry("error.alterant.growth_stage_unsupported", "unsupported"), Map.entry("error.alterant.growth_height_unsupported", "unsupported"),
+            Map.entry("error.alterant.growth_stage_limit", "growth_limit"), Map.entry("error.alterant.growth_height_limit", "growth_limit"),
+            Map.entry("error.alterant.growth_past_limit", "growth_past"), Map.entry("error.alterant.growth_root", "growth_root"),
+            Map.entry("error.alterant.remove_tick_routes_first", "remove_first"),
+            Map.entry("error.alterant.remove_formulation_first", "remove_first")
     );
     private ToolFeedback() {}
     public static void failure(ServerPlayer player, PreservationService.Result result) {
         int now = player.level().getServer().getTickCount(); var previous = LAST_FAILURE.get(player);
         if (previous != null && now >= previous && now - previous < 10) { return; }
         LAST_FAILURE.put(player, now);
-        String reason = result.message().startsWith("Coating retained: ") ? result.message().substring("Coating retained: ".length()) : result.message();
+        Component message = result.message();
+        if (message.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents retained
+                && retained.getKey().equals("result.alterant.coating_retained") && retained.getArgs().length == 1 && retained.getArgs()[0] instanceof Component cause) { message = cause; }
+        String reason = message.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents translated ? translated.getKey() : "";
         player.sendOverlayMessage(Component.translatable("feedback.alterant." + REASONS.getOrDefault(reason, "unavailable")).withColor(0xE1BD84));
     }
     public static void scrape(ServerPlayer player, BlockPos pos, Direction face, ResidueFamily family) {

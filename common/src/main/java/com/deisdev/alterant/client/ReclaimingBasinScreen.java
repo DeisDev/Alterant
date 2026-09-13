@@ -12,8 +12,14 @@ public final class ReclaimingBasinScreen extends AbstractContainerScreen<Reclaim
     public ReclaimingBasinScreen(ReclaimingBasinMenu menu, Inventory inventory, Component title) { super(menu, inventory, title, 176, 176); inventoryLabelY = 82; }
     @Override protected void init() {
         super.init();
-        previous = addRenderableWidget(Button.builder(Component.literal("<"), button -> minecraft.gameMode.handleInventoryButtonClick(menu.containerId, 0)).bounds(leftPos + 8, topPos + 59, 18, 18).build());
-        next = addRenderableWidget(Button.builder(Component.literal(">"), button -> minecraft.gameMode.handleInventoryButtonClick(menu.containerId, 1)).bounds(leftPos + 150, topPos + 59, 18, 18).build());
+        previous = addRenderableWidget(Button.builder(Component.translatable("menu.alterant.basin.previous.symbol"), button -> minecraft.gameMode.handleInventoryButtonClick(menu.containerId, 0))
+                .bounds(leftPos + 8, topPos + 59, 18, 18)
+                .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable("menu.alterant.basin.previous")))
+                .createNarration(ignored -> Component.translatable("gui.narrate.button", Component.translatable("menu.alterant.basin.previous"))).build());
+        next = addRenderableWidget(Button.builder(Component.translatable("menu.alterant.basin.next.symbol"), button -> minecraft.gameMode.handleInventoryButtonClick(menu.containerId, 1))
+                .bounds(leftPos + 150, topPos + 59, 18, 18)
+                .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable("menu.alterant.basin.next")))
+                .createNarration(ignored -> Component.translatable("gui.narrate.button", Component.translatable("menu.alterant.basin.next"))).build());
         previous.visible = next.visible = menu.choices() > 4;
     }
     @Override protected void containerTick() {

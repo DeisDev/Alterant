@@ -2,6 +2,7 @@ package com.deisdev.alterant.engine;
 
 import com.deisdev.alterant.Constants;
 import com.deisdev.alterant.api.Action;
+import com.deisdev.alterant.api.PreservationException;
 import com.deisdev.alterant.mixin.SavedDataStorageAccessor;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -41,7 +42,7 @@ public final class CleanupJob {
     private long position;
     private int checkIndex, chunkIndex, removed, maxLeases, loadingSince;
     private long saveFailures;
-    private String detail = "Back up the world before starting";
+    private Component detail = Component.translatable("commands.alterant.cleanup.backup");
     private UUID operator;
     private CompletableFuture<?> work;
     private CompletableFuture<Optional<CompoundTag>> chunkRead;
@@ -61,7 +62,9 @@ public final class CleanupJob {
         }
         return remaining;
     }
-    public String status() { return "Cleanup " + phase.name().toLowerCase(java.util.Locale.ROOT) + ": " + removed + " coatings removed, " + remaining() + " records remaining. " + detail; }
+    public Component status() {
+        return Component.translatable("commands.alterant.cleanup.status", Component.translatable("commands.alterant.cleanup.phase." + phase.name().toLowerCase(java.util.Locale.ROOT)), removed, remaining(), detail);
+    }
 
     public boolean start(UUID operator) {
         requireThread();
@@ -71,7 +74,7 @@ public final class CleanupJob {
         removed = checkIndex = chunkIndex = maxLeases = 0;
         saveFailures = ((CleanupServer) server).alterant$saveFailures();
         phase = Phase.CHECKING_FILES;
-        detail = "Checking every dimension; new coatings are disabled until cancellation or shutdown";
+        detail = Component.translatable("commands.alterant.cleanup.checking_dimensions");
         try {
             var dimensions = new ArrayList<ServerLevel>();
             server.getAllLevels().forEach(dimensions::add);
@@ -96,13 +99,13 @@ public final class CleanupJob {
     public void tick() {
         if (!running() && phase != Phase.COMPLETE) { return; }
         try {
-            if (((CleanupServer) server).alterant$saveFailures() != saveFailures) { throw new IllegalStateException("A chunk save failed; restore a backup before uninstalling"); }
+            if (((CleanupServer) server).alterant$saveFailures() != saveFailures) { throw new PreservationException(Component.translatable("commands.alterant.cleanup.save_failed")); }
             switch (phase) {
                 case CHECKING_FILES -> {
                     if (!work.isDone()) { return; }
                     work.join(); work = null;
                     phase = Phase.CHECKING_CHUNKS;
-                    detail = "Checking existing chunk files before loading any treated area";
+                    detail = Component.translatable("commands.alterant.cleanup.checking_chunks");
                 }
                 case CHECKING_CHUNKS -> checkChunk();
                 case REMOVING -> nextTarget();
@@ -114,7 +117,7 @@ public final class CleanupJob {
                     phase = Phase.REMOVING;
                 }
                 case SAVING -> {
-                    if (remaining() != 0) { throw new IllegalStateException("Records remain; cleanup cannot be certified"); }
+                    if (remaining() != 0) { throw new PreservationException(Component.translatable("commands.alterant.cleanup.records_remain")); }
                     // Force each empty payload into this save so native pending writes are joined, then verify the files.
                     for (var dimension : server.getAllLevels()) { PreservationService.get(dimension).store().setDirty(); }
                     server.saveEverything(false, true, true);
@@ -124,14 +127,14 @@ public final class CleanupJob {
                         catch (IOException error) { throw new CompletionException(error); }
                     }, Util.ioPool());
                     phase = Phase.VERIFYING;
-                    detail = "Checking that native saves contain no retained Alterant work";
+                    detail = Component.translatable("commands.alterant.cleanup.verifying");
                 }
                 case VERIFYING -> {
                     if (!work.isDone()) { return; }
                     work.join();
-                    if (remaining() != 0) { throw new IllegalStateException("Records changed during cleanup verification"); }
+                    if (remaining() != 0) { throw new PreservationException(Component.translatable("commands.alterant.cleanup.records_changed")); }
                     phase = Phase.COMPLETE;
-                    detail = "Saved cleanup verified. Stop the server before removing Alterant";
+                    detail = Component.translatable("commands.alterant.cleanup.complete");
                     clearWork(); announce();
                 }
                 default -> { }
@@ -145,7 +148,7 @@ public final class CleanupJob {
             var data = chunkRead.join(); chunkRead = null;
             if (data.isEmpty() || SerializableChunkData.getChunkStatusFromTag(data.get()).getChunkType() != ChunkType.LEVELCHUNK) {
                 var task = chunks.get(checkIndex);
-                throw new IllegalStateException("A treated chunk is missing or unfinished: " + task.level().dimension().identifier() + " " + ChunkPos.unpack(task.key()));
+                throw new PreservationException(Component.translatable("commands.alterant.cleanup.missing_chunk", task.level().dimension().identifier().toString(), ChunkPos.unpack(task.key()).toString()));
             }
             checkIndex++;
         }
@@ -177,22 +180,22 @@ public final class CleanupJob {
         var needed = new it.unimi.dsi.fastutil.longs.LongLinkedOpenHashSet();
         for (long member : group) {
             var pos = BlockPos.of(member);
-            if (level.isOutsideBuildHeight(pos)) { throw new IllegalStateException("A saved target is outside build height: " + pos); }
+            if (level.isOutsideBuildHeight(pos)) { throw new PreservationException(Component.translatable("commands.alterant.cleanup.outside_height", pos.toShortString())); }
             needed.add(TreatmentStore.chunkKey(member));
             var coating = store.get(member);
             if (coating != null && coating.actions().contains(Action.STRUCTURAL_CHANGE)) {
                 for (int x : new int[] {-2, 2}) { for (int z : new int[] {-2, 2}) { needed.add(TreatmentStore.chunkKey(pos.offset(x, 0, z).asLong())); } }
             }
         }
-        if (needed.size() > 16) { throw new IllegalStateException("Saved linked target exceeds the cleanup chunk bound"); }
+        if (needed.size() > 16) { throw new PreservationException(Component.translatable("commands.alterant.cleanup.chunk_bound")); }
         for (long key : needed) { toLoad.add(ChunkPos.unpack(key)); }
         loadingSince = server.getTickCount();
         phase = Phase.LOADING;
-        detail = "Loading " + level.dimension().identifier() + " near " + BlockPos.of(position).toShortString();
+        detail = Component.translatable("commands.alterant.cleanup.loading", level.dimension().identifier().toString(), BlockPos.of(position).toShortString());
     }
 
     private void loadGroup() {
-        if (server.getTickCount() - loadingSince > 1200) { throw new IllegalStateException("Chunk loading timed out; cleanup is incomplete"); }
+        if (server.getTickCount() - loadingSince > 1200) { throw new PreservationException(Component.translatable("commands.alterant.cleanup.timeout")); }
         if (work != null) {
             if (!work.isDone()) { return; }
             work.join(); work = null;
@@ -208,17 +211,17 @@ public final class CleanupJob {
         var service = PreservationService.get(level);
         if (service.store().get(position) != null) {
             var result = service.removeForUninstall(BlockPos.of(position));
-            if (!result.changed()) { throw new IllegalStateException(result.message()); }
+            if (!result.changed()) { throw new PreservationException(result.message()); }
             removed += result.changedPositions();
         }
         for (long member : group) { service.clearMaskForUninstall(BlockPos.of(member)); }
         phase = Phase.RETURNING_WORK;
-        detail = "Waiting for retained work to enter the normal scheduler; remaining delays are preserved";
+        detail = Component.translatable("commands.alterant.cleanup.returning_work");
     }
 
     public void cancel() {
         requireThread(); clearWork(); phase = Phase.CANCELED;
-        detail = "Cleanup canceled; remaining records are retained and new coatings are enabled";
+        detail = Component.translatable("commands.alterant.cleanup.canceled");
         announce();
     }
     public void close() { clearWork(); }
@@ -234,14 +237,14 @@ public final class CleanupJob {
         clearWork(); phase = Phase.FAILED;
         Throwable cause = error;
         while (cause instanceof CompletionException && cause.getCause() != null) { cause = cause.getCause(); }
-        detail = "Cleanup is incomplete: " + java.util.Objects.toString(cause.getMessage(), cause.getClass().getSimpleName());
+        detail = Component.translatable("commands.alterant.cleanup.incomplete", PreservationException.message(cause));
         Constants.LOG.error("Alterant uninstall cleanup failed", error);
         announce();
     }
     private void announce() {
-        Constants.LOG.info(status());
+        Constants.LOG.info("Alterant cleanup {}: {} coatings removed, {} records remaining", phase, removed, remaining());
         var player = operator == null ? null : server.getPlayerList().getPlayer(operator);
-        if (player != null) { player.sendSystemMessage(Component.literal(status())); }
+        if (player != null) { player.sendSystemMessage(status()); }
     }
     private void requireThread() { if (!server.isSameThread()) { throw new IllegalStateException("Cleanup requires the server thread"); } }
 }

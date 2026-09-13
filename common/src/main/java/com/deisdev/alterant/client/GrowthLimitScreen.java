@@ -22,12 +22,14 @@ public final class GrowthLimitScreen extends AbstractContainerScreen<GrowthLimit
         for (int mode = 0; mode < 2; mode++) {
             int button = mode;
             addRenderableWidget(Button.builder(Component.empty(), ignored -> send(button)).bounds(leftPos + 8 + mode * 26, topPos + 20, 22, 22)
+                    .createNarration(ignored -> Component.translatable("gui.narrate.button", Component.translatable(button == 0 ? "menu.alterant.growth.stage" : "menu.alterant.growth.height")))
                     .tooltip(Tooltip.create(Component.translatable(mode == 0 ? "menu.alterant.growth.stage" : "menu.alterant.growth.height"))).build());
         }
         for (int choice = 0; choice < 16; choice++) {
             int index = choice;
             choices.add(addRenderableWidget(Button.builder(Component.empty(), ignored -> send(10 + value(index)))
-                    .bounds(leftPos + 8 + choice % 8 * 20, topPos + 47 + choice / 8 * 18, 20, 17).build()));
+                    .bounds(leftPos + 8 + choice % 8 * 20, topPos + 47 + choice / 8 * 18, 20, 17)
+                    .createNarration(ignored -> Component.translatable("gui.narrate.button", Component.translatable("item.alterant.growth_regulator." + menu.mode().getSerializedName(), value(index)))).build()));
         }
         updateChoices();
     }

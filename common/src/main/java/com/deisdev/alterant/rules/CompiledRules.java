@@ -14,6 +14,7 @@ import java.util.function.Predicate;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.network.chat.Component;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -22,10 +23,10 @@ import net.minecraft.world.level.block.state.BlockState;
 public final class CompiledRules {
     private record Selector(Set<Block> blocks, BlockCondition condition) {}
     private record Rule(RuleDefinition definition, BlockCondition selector, BlockCondition source, BlockCondition target) {}
-    public record Decision(List<Protection> protections, String denial, boolean requiresIntegration) {
-        public Decision(List<Protection> protections, String denial) { this(protections, denial, false); }
+    public record Decision(List<Protection> protections, Component denial, boolean requiresIntegration) {
+        public Decision(List<Protection> protections, Component denial) { this(protections, denial, false); }
         public Decision { protections = List.copyOf(protections); }
-        public boolean allowed() { return denial.isEmpty() && !protections.isEmpty(); }
+        public boolean allowed() { return denial.equals(Component.empty()) && !protections.isEmpty(); }
     }
     private final ServerPolicy policy;
     private final Map<Block, List<Rule>> byBlock;
@@ -93,7 +94,7 @@ public final class CompiledRules {
     }
 
     public Decision evaluate(BlockState state, Formulation formulation) {
-        if (policy.disabled().contains(formulation)) { return new Decision(List.of(), "This compound is disabled"); }
+        if (policy.disabled().contains(formulation)) { return new Decision(List.of(), Component.translatable("error.alterant.compound_disabled")); }
         var candidates = byBlock.getOrDefault(state.getBlock(), List.of());
         var actions = new EnumMap<Action, Protection>(Action.class);
         for (var rule : candidates) {
@@ -106,7 +107,7 @@ public final class CompiledRules {
         }
         if (!state.isRandomlyTicking()) { actions.remove(Action.ACCELERATE_RANDOM_BLOCK); }
         if (!state.hasBlockEntity()) { actions.remove(Action.ACCELERATE_BLOCK_ENTITY); }
-        return new Decision(List.copyOf(actions.values()), actions.isEmpty() ? "No supported protection applies to this target" : "", actions.isEmpty());
+        return new Decision(List.copyOf(actions.values()), actions.isEmpty() ? Component.translatable("error.alterant.protection_unsupported") : Component.empty(), actions.isEmpty());
     }
 
     private static Selector resolve(BlockSelector selector, HolderLookup.Provider registries,

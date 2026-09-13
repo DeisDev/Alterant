@@ -1,11 +1,13 @@
 package com.deisdev.alterant.engine;
 
+import com.deisdev.alterant.api.PreservationException;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import java.util.List;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
+import net.minecraft.network.chat.Component;
 
 /** One bounded logical target; the identity prevents a replacement from joining an older surviving group. */
 public record TargetLink(UUID id, List<Long> members) {
@@ -18,18 +20,18 @@ public record TargetLink(UUID id, List<Long> members) {
         java.util.Objects.requireNonNull(id);
         members = List.copyOf(members);
         if (members.size() < 2 || members.size() > LIMIT || members.stream().distinct().count() != members.size()) {
-            throw new IllegalArgumentException("Invalid linked target members");
+            throw new PreservationException(Component.translatable("error.alterant.linked_invalid"));
         }
         BlockPos first = BlockPos.of(members.getFirst());
         if (members.stream().map(BlockPos::of).anyMatch(pos -> !near(first, pos))) {
-            throw new IllegalArgumentException("Linked targets must fit within sixteen blocks");
+            throw new PreservationException(Component.translatable("error.alterant.linked_range"));
         }
     }
     public static List<BlockPos> validate(BlockPos origin, List<BlockPos> positions) {
         if (positions.isEmpty() || positions.size() > LIMIT || !positions.contains(origin)
                 || positions.stream().distinct().count() != positions.size()
                 || positions.stream().anyMatch(pos -> !near(origin, pos))) {
-            throw new IllegalArgumentException("Adapter returned an invalid or unbounded target group");
+            throw new PreservationException(Component.translatable("error.alterant.adapter_targets"));
         }
         return positions.stream().map(BlockPos::immutable).sorted(java.util.Comparator.comparingLong(BlockPos::asLong)).toList();
     }

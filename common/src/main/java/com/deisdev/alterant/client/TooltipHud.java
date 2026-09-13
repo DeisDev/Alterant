@@ -44,7 +44,7 @@ public final class TooltipHud {
 
     private static FormattedCharSequence compact(Font font, Component line, int width) {
         if (font.width(line) <= width) { return line.getVisualOrderText(); }
-        var ellipsis = Component.literal("…").withStyle(line.getStyle());
+        var ellipsis = Component.translatable("text.alterant.ellipsis").withStyle(line.getStyle());
         return net.minecraft.locale.Language.getInstance().getVisualOrder(net.minecraft.network.chat.FormattedText.composite(
                 font.substrByWidth(line, width - font.width(ellipsis)), ellipsis));
     }

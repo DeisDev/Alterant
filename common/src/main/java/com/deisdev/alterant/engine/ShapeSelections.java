@@ -1,10 +1,12 @@
 package com.deisdev.alterant.engine;
 
+import com.deisdev.alterant.api.PreservationException;
 import com.deisdev.alterant.item.AlterantItems;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import java.lang.ref.WeakReference;
 import java.util.WeakHashMap;
-import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 
@@ -28,7 +30,7 @@ final class ShapeSelections {
         var chunk = chunks.computeIfAbsent(TreatmentStore.chunkKey(preview.position()), ignored -> new WeakHashMap<>());
         chunk.keySet().removeIf(selection -> !selection.valid || selection.tool.get() == null);
         var previous = players.get(player);
-        if (chunk.size() >= 64 && !chunk.containsKey(previous)) { throw new IllegalArgumentException("This chunk has reached its preview limit"); }
+        if (chunk.size() >= 64 && !chunk.containsKey(previous)) { throw new PreservationException(Component.translatable("error.alterant.preview_limit")); }
         if (previous != null) { previous.valid = false; chunk.remove(previous); }
         var selected = new Selection(preview, player.getMainHandItem()); players.put(player, selected); chunk.put(selected, true);
         player.getMainHandItem().set(AlterantItems.SHAPE_PREVIEW.get(), preview); player.getInventory().setChanged();

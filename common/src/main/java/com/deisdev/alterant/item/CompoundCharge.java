@@ -1,7 +1,9 @@
 package com.deisdev.alterant.item;
 
 import com.deisdev.alterant.api.Formulation;
+import com.deisdev.alterant.api.PreservationException;
 import com.deisdev.alterant.engine.TargetLink;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
@@ -27,20 +29,20 @@ public final class CompoundCharge {
     public static CompoundCharge captureStylus(ServerPlayer player) {
         if (!player.getMainHandItem().is(AlterantItems.SHAPING_STYLUS.get()) || player.getMainHandItem().getCount() != 1
                 || !player.getOffhandItem().is(AlterantItems.STRUCTURAL_STASIS.get()) || AlterantItems.STRUCTURAL_STASIS.get().remaining(player.getOffhandItem()) == 0) {
-            throw new IllegalArgumentException("Hold Structural Stasis offhand to shape this block");
+            throw new PreservationException(Component.translatable("error.alterant.shape_payment"));
         }
         return new CompoundCharge(player, AlterantItems.STRUCTURAL_STASIS.get());
     }
     public static CompoundCharge capture(ServerPlayer player, boolean serum) {
         if (!(serum ? player.getMainHandItem().getItem() instanceof QuantumApplicatorItem
                 : player.getMainHandItem().getItem() instanceof PreservingBrushItem) || player.getMainHandItem().getCount() != 1) {
-            throw new IllegalArgumentException(serum ? "Hold the Quantum Applicator in your main hand" : "Hold the Preserving Brush in your main hand");
+            throw new PreservationException(serum ? Component.translatable("error.alterant.mainhand_applicator") : Component.translatable("error.alterant.mainhand_brush"));
         }
         if (!(player.getOffhandItem().getItem() instanceof CompoundItem compound) || compound.remaining(player.getOffhandItem()) == 0) {
-            throw new IllegalArgumentException("Hold a usable compound jar in your offhand");
+            throw new PreservationException(Component.translatable("error.alterant.offhand_compound"));
         }
         if (compound.formulation().accelerates() != serum) {
-            throw new IllegalArgumentException(serum ? "The Quantum Applicator requires time serum" : "Time serums require the Quantum Applicator");
+            throw new PreservationException(serum ? Component.translatable("error.alterant.applicator_serum") : Component.translatable("error.alterant.serum_applicator"));
         }
         return new CompoundCharge(player, compound);
     }
@@ -62,7 +64,7 @@ public final class CompoundCharge {
         return actual.getCount() == 1 && ItemStack.isSameItemSameComponents(expected, actual);
     }
     public Prepared prepare(int positions) {
-        if (!ready() || positions <= 0 || positions > available()) { throw new IllegalArgumentException("The tool or available compound changed"); }
+        if (!ready() || positions <= 0 || positions > available()) { throw new PreservationException(Component.translatable("error.alterant.tool_changed")); }
         return new Prepared(player, infinite ? null : compound.afterUse(jar, positions));
     }
     public static final class Prepared {

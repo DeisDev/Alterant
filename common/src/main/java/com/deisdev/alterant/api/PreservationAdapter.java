@@ -2,6 +2,7 @@ package com.deisdev.alterant.api;
 
 import java.util.Map;
 import java.util.Optional;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
 /**
@@ -19,12 +20,14 @@ public interface PreservationAdapter {
     default boolean supportsTransferSeal(PreservationContext context) { return false; }
     /** Loaded members of one logical target, including the clicked position; at most sixteen nearby positions. */
     default java.util.List<net.minecraft.core.BlockPos> targets(PreservationContext context) { return java.util.List.of(context.pos()); }
-    default Optional<String> validate(PreservationContext context) { return Optional.empty(); }
+    /** Return an unresolved translatable refusal; unexpected failures should be thrown and logged. */
+    default Optional<Component> validate(PreservationContext context) { return Optional.empty(); }
     default Map<String, String> capture(PreservationContext context) { return Map.of(); }
     default void resume(PreservationContext context, Map<String, String> saved) {}
     default void afterPause(PreservationContext context, Map<String, String> saved) {}
     default void afterResume(PreservationContext context, Map<String, String> saved) {}
     /** A tested integration can cover its own external scheduler, clock and automation beyond standard routes. */
     default boolean completeCoverage(PreservationContext context) { return false; }
-    default String description() { return id().toString(); }
+    /** Translatable inspection text. The identifier is the default when no display name is supplied. */
+    default Component description() { return Component.literal(id().toString()); }
 }

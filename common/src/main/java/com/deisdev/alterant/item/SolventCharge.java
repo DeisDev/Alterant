@@ -1,9 +1,11 @@
 package com.deisdev.alterant.item;
 
+import com.deisdev.alterant.api.PreservationException;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import net.minecraft.core.dispenser.BlockSource;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
@@ -20,7 +22,7 @@ public final class SolventCharge {
     private ItemStack committedSnapshot;
 
     private SolventCharge(ItemStack original, Supplier<ItemStack> current, Consumer<ItemStack> write, BooleanSupplier ownerReady, boolean infinite) {
-        if (ReleaseSolventItem.remaining(original) == 0) { throw new IllegalArgumentException("Hold a usable solvent bottle"); }
+        if (ReleaseSolventItem.remaining(original) == 0) { throw new PreservationException(Component.translatable("error.alterant.solvent_bottle")); }
         this.original = original; this.snapshot = original.copy(); this.current = current; this.write = write;
         this.ownerReady = ownerReady; this.infinite = infinite;
     }
@@ -34,7 +36,7 @@ public final class SolventCharge {
         for (int slot = 0; slot < Math.min(9, source.blockEntity().getContainerSize()); slot++) {
             if (source.blockEntity().getItem(slot) == actual) { return slot; }
         }
-        throw new IllegalArgumentException("The dispenser or solvent changed");
+        throw new PreservationException(Component.translatable("error.alterant.dispenser_changed"));
     }
     public static SolventCharge capture(BlockSource source, ItemStack actual) {
         int slot = slot(source, actual);
@@ -50,9 +52,9 @@ public final class SolventCharge {
         return committedBottle == null ? ready() : ownerReady.getAsBoolean() && current.get() == committedBottle && ItemStack.matches(committedSnapshot, committedBottle);
     }
     public Prepared prepare(int positions) {
-        if (!ready()) { throw new IllegalArgumentException("The solvent bottle changed"); }
+        if (!ready()) { throw new PreservationException(Component.translatable("error.alterant.solvent_changed")); }
         if (positions < 0 || !infinite && positions > ReleaseSolventItem.remaining(snapshot)) {
-            throw new IllegalArgumentException("Not enough solvent for the entire linked target");
+            throw new PreservationException(Component.translatable("error.alterant.solvent_charges"));
         }
         var replacement = positions == 0 || infinite ? null : ReleaseSolventItem.afterUse(snapshot, positions);
         return new Prepared(replacement == null ? () -> {} : () -> {

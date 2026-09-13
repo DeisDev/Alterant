@@ -1,19 +1,21 @@
 package com.deisdev.alterant.engine;
 
 import com.deisdev.alterant.api.Action;
-import net.minecraft.core.BlockPos;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.level.block.CoralBlock;
-import net.minecraft.world.level.block.CoralPlantBlock;
-import net.minecraft.world.level.block.CoralFanBlock;
-import net.minecraft.world.level.block.CoralWallFanBlock;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.FenceBlock;
-import net.minecraft.world.level.block.WallBlock;
-import net.minecraft.world.level.block.StairBlock;
-import net.minecraft.world.level.block.FallingBlock;
-import net.minecraft.world.level.block.TrapDoorBlock;
+import com.deisdev.alterant.api.PreservationException;
 import com.deisdev.alterant.mixin.FallingBlockAccessor;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.CoralBlock;
+import net.minecraft.world.level.block.CoralFanBlock;
+import net.minecraft.world.level.block.CoralPlantBlock;
+import net.minecraft.world.level.block.CoralWallFanBlock;
+import net.minecraft.world.level.block.FallingBlock;
+import net.minecraft.world.level.block.FenceBlock;
+import net.minecraft.world.level.block.StairBlock;
+import net.minecraft.world.level.block.TrapDoorBlock;
+import net.minecraft.world.level.block.WallBlock;
 
 final class RemovalUpdates {
     private RemovalUpdates() {}
@@ -25,7 +27,7 @@ final class RemovalUpdates {
             // A radius below one chunk can span at most two chunks per axis. Include redstone's adjacent conductors.
             for (int x : new int[] {-radius, radius}) {
                 for (int z : new int[] {-radius, radius}) {
-                    if (!level.hasChunkAt(pos.offset(x, 0, z))) { throw new IllegalArgumentException("Load neighboring chunks before restoring this shape"); }
+                    if (!level.hasChunkAt(pos.offset(x, 0, z))) { throw new PreservationException(Component.translatable("error.alterant.shape_neighbor_load")); }
                 }
             }
         }

@@ -66,7 +66,7 @@ public final class ReclaimingBasinMenu extends AbstractContainerMenu {
                 if (recipe.additive().isPresent()) {
                     var names = Component.empty();
                     recipe.additive().get().items().limit(3).forEach(item -> {
-                        if (!names.getSiblings().isEmpty()) { names.append(Component.literal(" / ")); }
+                        if (!names.getSiblings().isEmpty()) { names.append(Component.translatable("text.alterant.alternative_separator")); }
                         names.append(item.value().getDefaultInstance().getHoverName());
                     });
                     lore.add(Component.translatable("menu.alterant.basin.additive", recipe.additiveCount(), names));

@@ -7,12 +7,14 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
-/** Pack path: data/<namespace>/alterant/rules/<path>.json; id must match namespace:path. */
+/** Pack path: data/<namespace>/alterant/rules/<path>.json; id must match namespace:path.
+ * Denial reasons accept vanilla text components; use {"translate":"key"} for localizable pack text. */
 public record RuleDefinition(int schema, Identifier id, int priority, Set<String> requiresMods, boolean optional,
                              BlockSelector selector, Set<Formulation> formulations, Set<Action> actions,
-                             Set<String> structuralProperties, boolean deny, String reason,
+                             Set<String> structuralProperties, boolean deny, Component reason,
                              Optional<BlockSelector> source, Optional<BlockSelector> target) {
     public static final Codec<RuleDefinition> CODEC = RecordCodecBuilder.create(i -> i.group(
             Codec.intRange(1, 1).fieldOf("schema").forGetter(RuleDefinition::schema),
@@ -25,7 +27,7 @@ public record RuleDefinition(int schema, Identifier id, int priority, Set<String
             Action.CODEC.listOf(0, Action.values().length).xmap(Set::copyOf, List::copyOf).optionalFieldOf("actions", Set.of()).forGetter(RuleDefinition::actions),
             Codec.STRING.listOf(0, 16).xmap(Set::copyOf, List::copyOf).optionalFieldOf("structural_properties", Set.of()).forGetter(RuleDefinition::structuralProperties),
             Codec.BOOL.optionalFieldOf("deny", false).forGetter(RuleDefinition::deny),
-            Codec.STRING.optionalFieldOf("reason", "").forGetter(RuleDefinition::reason),
+            net.minecraft.network.chat.ComponentSerialization.CODEC.optionalFieldOf("reason", Component.empty()).forGetter(RuleDefinition::reason),
             BlockSelector.CODEC.optionalFieldOf("source").forGetter(RuleDefinition::source),
             BlockSelector.CODEC.optionalFieldOf("target").forGetter(RuleDefinition::target)
     ).apply(i, RuleDefinition::new));
@@ -38,7 +40,7 @@ public record RuleDefinition(int schema, Identifier id, int priority, Set<String
         if (schema != 1 || formulations.isEmpty()) { throw new IllegalArgumentException("Unsupported schema or empty formulations"); }
         if (optional && requiresMods.isEmpty()) { throw new IllegalArgumentException("Optional rules must declare their required mods"); }
         if (requiresMods.stream().anyMatch(mod -> !mod.matches("[a-z][a-z0-9_-]{1,63}"))) { throw new IllegalArgumentException("Invalid required mod ID"); }
-        if (deny && (reason.isBlank() || !actions.isEmpty() || source.isPresent() || target.isPresent())) {
+        if (deny && (com.deisdev.alterant.text.AlterantText.isBlank(reason) || !actions.isEmpty() || source.isPresent() || target.isPresent())) {
             throw new IllegalArgumentException("Hard denials need a reason and cannot declare actions or operation conditions");
         }
         if (!deny && actions.isEmpty()) { throw new IllegalArgumentException("A protection rule needs actions"); }

@@ -79,11 +79,14 @@ public final class SerumFeedback {
         }
         return Optional.of(report);
     }
-    public static String multiplier(double value) { return String.format(Locale.ROOT, "%.2f", value).replaceFirst("\\.?0+$", "") + "×"; }
-    public static String time(int ticks) {
+    public static Component multiplier(double value) {
+        return Component.translatable("text.alterant.multiplier", com.deisdev.alterant.text.AlterantText.number(value, 2));
+    }
+    public static Component time(int ticks) {
         int seconds = (Math.max(0, ticks) + 19) / 20;
-        return seconds >= 3600 ? String.format(Locale.ROOT, "%d:%02d:%02d", seconds / 3600, seconds / 60 % 60, seconds % 60)
-                : String.format(Locale.ROOT, "%d:%02d", seconds / 60, seconds % 60);
+        return seconds >= 3600 ? Component.translatable("text.alterant.time.hours", seconds / 3600,
+                String.format(Locale.ROOT, "%02d", seconds / 60 % 60), String.format(Locale.ROOT, "%02d", seconds % 60))
+                : Component.translatable("text.alterant.time.minutes", seconds / 60, String.format(Locale.ROOT, "%02d", seconds % 60));
     }
     public static Component detail(SerumStatusPayload value) {
         return Component.translatable(value.ticking() ? "overlay.alterant.serum_running" : "overlay.alterant.serum_paused",

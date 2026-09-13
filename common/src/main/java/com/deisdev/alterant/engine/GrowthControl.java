@@ -2,9 +2,11 @@ package com.deisdev.alterant.engine;
 
 import com.deisdev.alterant.api.Action;
 import com.deisdev.alterant.api.Formulation;
+import com.deisdev.alterant.api.PreservationException;
 import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.*;
@@ -26,16 +28,16 @@ public final class GrowthControl {
     public static void validate(Level level, BlockPos pos, BlockState state, GrowthLimit limit) {
         if (limit.mode() == GrowthLimit.Mode.STAGE) {
             int max = maximumStage(state);
-            if (max < 0) { throw new IllegalArgumentException("This plant does not support stage regulation"); }
-            if (limit.target() > max) { throw new IllegalArgumentException("Choose a stage supported by this plant"); }
-            if (state.getValue(AGES.get(state.getBlock())) > limit.target()) { throw new IllegalArgumentException("This plant is already beyond the selected limit"); }
+            if (max < 0) { throw new PreservationException(Component.translatable("error.alterant.growth_stage_unsupported")); }
+            if (limit.target() > max) { throw new PreservationException(Component.translatable("error.alterant.growth_stage_limit")); }
+            if (state.getValue(AGES.get(state.getBlock())) > limit.target()) { throw new PreservationException(Component.translatable("error.alterant.growth_past_limit")); }
         } else {
             int max = maximumHeight(state);
-            if (max == 0) { throw new IllegalArgumentException("This plant does not support height regulation"); }
-            if (limit.target() > max) { throw new IllegalArgumentException("Choose a height supported by this plant"); }
-            if (!loaded(level, pos.below())) { throw new IllegalArgumentException("Target is not loaded"); }
-            if (level.getBlockState(pos.below()).is(state.getBlock())) { throw new IllegalArgumentException("Apply height regulation at the root"); }
-            if (height(level, pos, state.getBlock(), max) > limit.target()) { throw new IllegalArgumentException("This plant is already beyond the selected limit"); }
+            if (max == 0) { throw new PreservationException(Component.translatable("error.alterant.growth_height_unsupported")); }
+            if (limit.target() > max) { throw new PreservationException(Component.translatable("error.alterant.growth_height_limit")); }
+            if (!loaded(level, pos.below())) { throw new PreservationException(Component.translatable("error.alterant.target_unloaded")); }
+            if (level.getBlockState(pos.below()).is(state.getBlock())) { throw new PreservationException(Component.translatable("error.alterant.growth_root")); }
+            if (height(level, pos, state.getBlock(), max) > limit.target()) { throw new PreservationException(Component.translatable("error.alterant.growth_past_limit")); }
         }
     }
     private static int height(LevelReader level, BlockPos root, Block block, int max) {
