@@ -1,0 +1,50 @@
+{
+  "schema": 1,
+  "formulation": "alterant:suspicious_time_serum",
+  "pixels_per_block": 16,
+  "surface_profile": "alterant:generic",
+  "rotation_safe": false,
+  "motifs": {
+    "broad": [
+      {
+        "static": "alterant:coating/suspicious_time_serum/broad_0_static",
+        "animated_phases": [
+          "alterant:coating/suspicious_time_serum/broad_0_phase_0",
+          "alterant:coating/suspicious_time_serum/broad_0_phase_1"
+        ]
+      },
+      {
+        "static": "alterant:coating/suspicious_time_serum/broad_1_static",
+        "animated_phases": [
+          "alterant:coating/suspicious_time_serum/broad_1_phase_0",
+          "alterant:coating/suspicious_time_serum/broad_1_phase_1"
+        ]
+      },
+      {
+        "static": "alterant:coating/suspicious_time_serum/broad_2_static",
+        "animated_phases": [
+          "alterant:coating/suspicious_time_serum/broad_2_phase_0",
+          "alterant:coating/suspicious_time_serum/broad_2_phase_1"
+        ]
+      }
+    ],
+    "narrow": [
+      {
+        "static": "alterant:coating/suspicious_time_serum/narrow_static",
+        "animated_phases": [
+          "alterant:coating/suspicious_time_serum/narrow_phase_0",
+          "alterant:coating/suspicious_time_serum/narrow_phase_1"
+        ]
+      }
+    ],
+    "organic": [
+      {
+        "static": "alterant:coating/suspicious_time_serum/organic_static",
+        "animated_phases": [
+          "alterant:coating/suspicious_time_serum/organic_phase_0",
+          "alterant:coating/suspicious_time_serum/organic_phase_1"
+        ]
+      }
+    ]
+  }
+}

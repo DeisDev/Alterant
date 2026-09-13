@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "priority": 0,
+  "motif": "auto",
+  "mask": "material",
+  "orientation": "surface",
+  "tags": [
+    "minecraft:base_stone_overworld"
+  ]
+}

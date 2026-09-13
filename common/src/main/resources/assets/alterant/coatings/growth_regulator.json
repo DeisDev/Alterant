@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "formulation": "alterant:growth_regulator",
+  "pixels_per_block": 16,
+  "surface_profile": "alterant:generic",
+  "rotation_safe": false,
+  "motifs": {
+    "broad": [
+      {
+        "static": "alterant:coating/growth_regulator/broad_0_static",
+        "animated_phases": []
+      },
+      {
+        "static": "alterant:coating/growth_regulator/broad_1_static",
+        "animated_phases": []
+      },
+      {
+        "static": "alterant:coating/growth_regulator/broad_2_static",
+        "animated_phases": []
+      }
+    ],
+    "narrow": [
+      {
+        "static": "alterant:coating/growth_regulator/narrow_static",
+        "animated_phases": []
+      }
+    ],
+    "organic": [
+      {
+        "static": "alterant:coating/growth_regulator/organic_static",
+        "animated_phases": []
+      }
+    ]
+  }
+}

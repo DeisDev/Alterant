@@ -1,0 +1,5 @@
+{
+  "sources": [
+    { "type": "minecraft:directory", "source": "coating", "prefix": "coating/" }
+  ]
+}

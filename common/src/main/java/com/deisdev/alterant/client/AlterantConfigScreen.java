@@ -35,10 +35,19 @@ public final class AlterantConfigScreen {
                                 .controller(option -> EnumControllerBuilder.create(option).enumClass(TooltipMode.class)
                                         .formatValue(value -> text("tooltip." + value.getSerializedName())))
                                 .build())
+                        .option(Option.<ClientConfig.CoatingVisibility>createBuilder()
+                                .name(text("coatings.visibility")).description(OptionDescription.of(text("coatings.visibility.description")))
+                                .binding(ClientConfig.Coatings.DEFAULT.visibility(), () -> draft.visibility, value -> draft.visibility = value)
+                                .controller(option -> EnumControllerBuilder.create(option).enumClass(ClientConfig.CoatingVisibility.class)
+                                        .formatValue(value -> text("coatings.visibility." + value.getSerializedName()))).build())
                         .option(Option.<Boolean>createBuilder()
-                                .name(text("coating_outlines")).description(OptionDescription.of(text("coating_outlines.description")))
-                                .binding(ClientConfig.DEFAULTS.coatingOutlines(), () -> draft.outlines, value -> draft.outlines = value)
+                                .name(text("coatings.animations")).description(OptionDescription.of(text("coatings.animations.description")))
+                                .binding(true, () -> draft.animations, value -> draft.animations = value)
                                 .controller(TickBoxControllerBuilder::create).build())
+                        .option(Option.<Integer>createBuilder()
+                                .name(text("coatings.distance")).description(OptionDescription.of(text("coatings.distance.description")))
+                                .binding(64, () -> draft.distance, value -> draft.distance = value)
+                                .controller(option -> IntegerSliderControllerBuilder.create(option).range(16,128).step(16)).build())
                         .option(Option.<Boolean>createBuilder()
                                 .name(text("surface_preview")).description(OptionDescription.of(text("surface_preview.description")))
                                 .binding(ClientConfig.DEFAULTS.surfacePreview(), () -> draft.preview, value -> draft.preview = value)
@@ -61,18 +70,22 @@ public final class AlterantConfigScreen {
     private static Component text(String key) { return Component.translatable("config.alterant." + key); }
     private static final class Draft {
         private TooltipMode tooltip;
-        private boolean outlines, preview;
+        private boolean animations, debugGeometry, preview;
+        private ClientConfig.CoatingVisibility visibility;
+        private int distance;
         private HudAnchor anchor;
         private int hudX, hudY, serumX, serumY;
         private final StyleDraft hudStyle, serumStyle;
         private Draft(ClientConfig.Settings settings) {
-            tooltip = settings.tooltip(); outlines = settings.coatingOutlines(); preview = settings.surfacePreview();
+            tooltip = settings.tooltip(); preview = settings.surfacePreview();
+            visibility = settings.coatings().visibility(); animations = settings.coatings().animations();
+            distance = settings.coatings().renderDistanceBlocks(); debugGeometry = settings.coatings().debugGeometry();
             anchor = settings.hud().anchor(); hudX = settings.hud().x(); hudY = settings.hud().y();
             serumX = settings.serum().x(); serumY = settings.serum().y();
             hudStyle = new StyleDraft(settings.hud().style()); serumStyle = new StyleDraft(settings.serum().style());
         }
         private ClientConfig.Settings settings() {
-            return new ClientConfig.Settings(tooltip, outlines, preview,
+            return new ClientConfig.Settings(tooltip, new ClientConfig.Coatings(visibility, animations, distance, debugGeometry), preview,
                     new ClientConfig.Hud(anchor, hudX, hudY, hudStyle.style()),
                     new ClientConfig.SerumDisplay(serumX, serumY, serumStyle.style()));
         }

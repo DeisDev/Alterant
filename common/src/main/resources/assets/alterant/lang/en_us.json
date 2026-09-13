@@ -37,8 +37,6 @@
   "config.alterant.tooltip.basic": "Basic",
   "config.alterant.tooltip.advanced": "Advanced",
   "config.alterant.tooltip.hidden": "Hidden",
-  "config.alterant.coating_outlines": "Coating outlines",
-  "config.alterant.coating_outlines.description": "Mark nearby coated blocks while holding a brush or scraper.",
   "config.alterant.surface_preview": "Surface preview",
   "config.alterant.surface_preview.description": "Outline the brush's 3×3 surface before applying.",
   "config.alterant.save_failed": "Could not save display settings.",
@@ -89,7 +87,6 @@
   "overlay.alterant.basic.peel": "Use: peel mask",
   "overlay.alterant.basic.scrape": "Use: scrape · Sneak: peel mask",
   "overlay.alterant.surface_preview": "Center first · Some targets may be skipped",
-  "overlay.alterant.treated": "%s coating · %s bars",
   "item.alterant.scraper.use": "Use to scrape a coating. Sneak-use to peel a mask.",
   "overlay.alterant.action.block_entity_tick": "machine work",
   "overlay.alterant.action.scheduled_block_tick": "scheduled block work",
@@ -322,5 +319,14 @@
   "menu.alterant.transfer.face.west": "W",
   "menu.alterant.transfer.direction.west": "West",
   "menu.alterant.transfer.face.east": "E",
-  "menu.alterant.transfer.direction.east": "East"
+  "menu.alterant.transfer.direction.east": "East",
+  "config.alterant.coatings.visibility": "Surface coatings",
+  "config.alterant.coatings.visibility.description": "Show confirmed treatments on block surfaces, independently of the HUD.",
+  "config.alterant.coatings.visibility.always": "Always",
+  "config.alterant.coatings.visibility.tools_only": "Tools only",
+  "config.alterant.coatings.visibility.hidden": "Hidden",
+  "config.alterant.coatings.animations": "Animate coatings",
+  "config.alterant.coatings.animations.description": "Use subtle cosmetic motion. Turning this off keeps complete static patterns.",
+  "config.alterant.coatings.distance": "Coating distance",
+  "config.alterant.coatings.distance.description": "Maximum distance in blocks, limited by loaded terrain."
 }

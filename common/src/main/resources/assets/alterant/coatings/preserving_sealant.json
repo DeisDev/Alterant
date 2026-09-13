@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "formulation": "alterant:preserving_sealant",
+  "pixels_per_block": 16,
+  "surface_profile": "alterant:generic",
+  "rotation_safe": false,
+  "motifs": {
+    "broad": [
+      {
+        "static": "alterant:coating/preserving_sealant/broad_0_static",
+        "animated_phases": []
+      },
+      {
+        "static": "alterant:coating/preserving_sealant/broad_1_static",
+        "animated_phases": []
+      },
+      {
+        "static": "alterant:coating/preserving_sealant/broad_2_static",
+        "animated_phases": []
+      }
+    ],
+    "narrow": [
+      {
+        "static": "alterant:coating/preserving_sealant/narrow_static",
+        "animated_phases": []
+      }
+    ],
+    "organic": [
+      {
+        "static": "alterant:coating/preserving_sealant/organic_static",
+        "animated_phases": []
+      }
+    ]
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "priority": 0,
+  "motif": "organic",
+  "mask": "source_cutout",
+  "orientation": "surface",
+  "tags": [
+    "minecraft:leaves"
+  ]
+}

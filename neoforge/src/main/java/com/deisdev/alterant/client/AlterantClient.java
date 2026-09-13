@@ -11,6 +11,10 @@ import net.neoforged.neoforge.client.network.event.RegisterClientPayloadHandlers
 @EventBusSubscriber(modid = "alterant", value = Dist.CLIENT)
 public final class AlterantClient {
     @SubscribeEvent
+    public static void coatingPipeline(net.neoforged.neoforge.client.event.RegisterRenderPipelinesEvent event) {
+        event.registerPipeline(com.deisdev.alterant.client.coating.CoatingPipeline.PIPELINE);
+    }
+    @SubscribeEvent
     public static void menus(net.neoforged.neoforge.client.event.RegisterMenuScreensEvent event) {
         event.register(com.deisdev.alterant.item.AlterantMenus.RECLAMATION.get(), ReclamationScreen::new);
         event.register(com.deisdev.alterant.item.AlterantMenus.GROWTH_LIMIT.get(), GrowthLimitScreen::new);
@@ -19,6 +23,7 @@ public final class AlterantClient {
     }
     @SubscribeEvent
     public static void setup(net.neoforged.fml.event.lifecycle.FMLClientSetupEvent event) {
+        com.deisdev.alterant.client.coating.CoatingModelBridge.initialize(NeoForgeCoatingModels::resolve);
         ClientConfig.initialize(net.neoforged.fml.loading.FMLPaths.CONFIGDIR.get());
         if (net.neoforged.fml.ModList.get().isLoaded("yet_another_config_lib_v3")) {
             net.neoforged.fml.ModList.get().getModContainerById("alterant").orElseThrow().registerExtensionPoint(
@@ -35,11 +40,13 @@ public final class AlterantClient {
     }
     @SubscribeEvent
     public static void extract(net.neoforged.neoforge.client.event.ExtractLevelRenderStateEvent event) {
+        ((OverlayRenderState) event.getRenderState()).alterant$coatings(com.deisdev.alterant.client.coating.CoatingRenderer.extract(event.getLevel(), event.getRenderState()));
         ((OverlayRenderState) event.getRenderState()).alterant$overlay(ToolOverlay.extract(event.getLevel()));
         ((OverlayRenderState) event.getRenderState()).alterant$serumCard(SerumFeedback.extract(Minecraft.getInstance()));
     }
     @SubscribeEvent
     public static void submit(net.neoforged.neoforge.client.event.SubmitCustomGeometryEvent event) {
+        com.deisdev.alterant.client.coating.CoatingRenderer.submit(event.getLevelRenderState(), event.getPoseStack(), event.getSubmitNodeCollector());
         ToolOverlay.submit(event.getLevelRenderState(), event.getPoseStack(), event.getSubmitNodeCollector());
     }
     @SubscribeEvent

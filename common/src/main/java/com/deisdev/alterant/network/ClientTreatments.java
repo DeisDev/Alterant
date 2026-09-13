@@ -17,6 +17,15 @@ public final class ClientTreatments {
     private final Long2ObjectOpenHashMap<SerumSample> serums = new Long2ObjectOpenHashMap<>();
     private final Long2LongOpenHashMap revisions = new Long2LongOpenHashMap();
     private final TreatmentStore store;
+    private java.util.function.Consumer<long[]> observer = positions -> {};
+
+    /** One level-owned visual observer. Replays only accepted positions, including when visuals are enabled later. */
+    public void observe(java.util.function.Consumer<long[]> observer) {
+        this.observer = java.util.Objects.requireNonNull(observer);
+        var positions = new it.unimi.dsi.fastutil.longs.LongOpenHashSet();
+        for (long chunk : revisions.keySet()) { collectPositions(chunk, positions); }
+        observer.accept(positions.toLongArray());
+    }
     public ClientTreatments(TreatmentStore store) {
         this.store = store;
         revisions.defaultReturnValue(-1);
@@ -31,8 +40,11 @@ public final class ClientTreatments {
     public void accept(ChunkTreatmentsPayload payload, long gameTime) {
         if (!payload.snapshot() && revisions.get(payload.chunk()) == -1) { return; }
         if (payload.revision() <= revisions.get(payload.chunk())) { return; }
+        var changed = new it.unimi.dsi.fastutil.longs.LongOpenHashSet();
+        if (payload.snapshot()) { collectPositions(payload.chunk(), changed); }
         if (payload.snapshot()) { clearRecords(payload.chunk()); }
         for (var entry : payload.entries()) {
+            changed.add(entry.position());
             serums.remove(entry.position());
             store.removeMask(entry.position()); entry.mask().ifPresent(store::putMask);
             if (entry.formulation() == -1) { store.remove(entry.position()); continue; }
@@ -44,23 +56,36 @@ public final class ClientTreatments {
                     sample.block(), entry.formulation(), sample.multiplier(), sample.remainingTicks(), sample.ticking()), gameTime)));
         }
         revisions.put(payload.chunk(), payload.revision());
+        observer.accept(changed.toLongArray());
     }
 
     public void unload(long chunkKey) {
+        var removed = new it.unimi.dsi.fastutil.longs.LongOpenHashSet();
+        collectPositions(chunkKey, removed);
         clearRecords(chunkKey);
         revisions.remove(chunkKey);
+        observer.accept(removed.toLongArray());
     }
 
     public void retainChunks(java.util.function.LongPredicate loaded) {
         var iterator = revisions.keySet().iterator();
         while (iterator.hasNext()) {
             long chunk = iterator.nextLong();
-            if (!loaded.test(chunk)) { clearRecords(chunk); iterator.remove(); }
+            if (!loaded.test(chunk)) {
+                var removed = new it.unimi.dsi.fastutil.longs.LongOpenHashSet();
+                collectPositions(chunk, removed);
+                clearRecords(chunk); iterator.remove(); observer.accept(removed.toLongArray());
+            }
         }
     }
 
     private void clearRecords(long chunkKey) {
         for (var mask : store.chunkMasks(chunkKey)) { store.removeMask(mask.position()); }
         for (var record : store.chunkSnapshot(chunkKey)) { store.remove(record.position()); serums.remove(record.position()); }
+    }
+
+    private void collectPositions(long chunk, it.unimi.dsi.fastutil.longs.LongSet positions) {
+        for (var record : store.chunkSnapshot(chunk)) { positions.add(record.position()); }
+        for (var mask : store.chunkMasks(chunk)) { positions.add(mask.position()); }
     }
 }

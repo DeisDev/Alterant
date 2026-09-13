@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "priority": 0,
+  "motif": "auto",
+  "mask": "material",
+  "orientation": "surface",
+  "blocks": [
+    "minecraft:smooth_stone",
+    "minecraft:smooth_quartz",
+    "minecraft:smooth_sandstone"
+  ]
+}

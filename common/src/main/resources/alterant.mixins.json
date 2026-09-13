@@ -49,6 +49,10 @@
     "EnchantmentMenuMixin"
   ],
   "client": [
+    "client.CoatingWorldMixin",
+    "client.CoatingTagsMixin",
+    "client.CoatingInvalidationMixin",
+    "client.CoatingRenderTypeInvoker",
     "client.ClientLevelMixin",
     "client.ClientChunkCacheMixin",
     "client.ToolUseMixin",

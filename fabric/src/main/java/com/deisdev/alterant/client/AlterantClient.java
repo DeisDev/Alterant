@@ -7,6 +7,8 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 
 public final class AlterantClient implements ClientModInitializer {
     @Override public void onInitializeClient() {
+        com.deisdev.alterant.client.coating.CoatingModelBridge.initialize(FabricCoatingModels::resolve);
+        com.deisdev.alterant.mixin.client.CoatingPipelineInvoker.alterant$register(com.deisdev.alterant.client.coating.CoatingPipeline.PIPELINE);
         net.minecraft.client.gui.screens.MenuScreens.register(com.deisdev.alterant.item.AlterantMenus.RECLAMATION.get(), ReclamationScreen::new);
         net.minecraft.client.gui.screens.MenuScreens.register(com.deisdev.alterant.item.AlterantMenus.GROWTH_LIMIT.get(), GrowthLimitScreen::new);
         net.minecraft.client.gui.screens.MenuScreens.register(com.deisdev.alterant.item.AlterantMenus.TRANSFER_POLICY.get(), TransferPolicyScreen::new);
@@ -26,11 +28,14 @@ public final class AlterantClient implements ClientModInitializer {
         net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry.attachElementBefore(net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements.CHAT,
                 net.minecraft.resources.Identifier.parse("alterant:inspection"), ToolOverlay::hud);
         net.fabricmc.fabric.api.client.rendering.v1.level.LevelExtractionEvents.END_EXTRACTION.register(context -> {
+            ((OverlayRenderState) context.levelState()).alterant$coatings(com.deisdev.alterant.client.coating.CoatingRenderer.extract(context.level(), context.levelState()));
             ((OverlayRenderState) context.levelState()).alterant$overlay(ToolOverlay.extract(context.level()));
             ((OverlayRenderState) context.levelState()).alterant$serumCard(SerumFeedback.extract(net.minecraft.client.Minecraft.getInstance()));
         });
-        net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents.COLLECT_SUBMITS.register(context ->
-                ToolOverlay.submit(context.levelState(), context.poseStack(), context.submitNodeCollector()));
+        net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents.COLLECT_SUBMITS.register(context -> {
+            ToolOverlay.submit(context.levelState(), context.poseStack(), context.submitNodeCollector());
+            com.deisdev.alterant.client.coating.CoatingRenderer.submit(context.levelState(), context.poseStack(), context.submitNodeCollector());
+        });
         ClientPlayNetworking.registerGlobalReceiver(ChunkTreatmentsPayload.TYPE,
                 (payload, context) -> TreatmentSync.receive(context.client().level, payload));
     }

@@ -56,20 +56,37 @@ public final class ClientConfig {
                 DisplayStyle.codec(DisplayStyle.SERUM).optionalFieldOf("style", DisplayStyle.SERUM).forGetter(SerumDisplay::style)
         ).apply(instance, SerumDisplay::new));
     }
-    public record Settings(TooltipMode tooltip, boolean coatingOutlines, boolean surfacePreview, Hud hud, SerumDisplay serum) {
-        public Settings { Objects.requireNonNull(tooltip); Objects.requireNonNull(hud); Objects.requireNonNull(serum); }
-        public Settings(TooltipMode tooltip, boolean coatingOutlines, boolean surfacePreview) {
-            this(tooltip, coatingOutlines, surfacePreview, Hud.DEFAULT, SerumDisplay.DEFAULT);
+    public enum CoatingVisibility implements StringRepresentable {
+        ALWAYS, TOOLS_ONLY, HIDDEN;
+        @Override public String getSerializedName() { return name().toLowerCase(java.util.Locale.ROOT); }
+    }
+    public record Coatings(CoatingVisibility visibility, boolean animations, int renderDistanceBlocks, boolean debugGeometry) {
+        public static final Coatings DEFAULT = new Coatings(CoatingVisibility.ALWAYS, true, 64, false);
+        public Coatings {
+            Objects.requireNonNull(visibility);
+            if (renderDistanceBlocks < 16 || renderDistanceBlocks > 128) { throw new IllegalArgumentException("Coating distance must be 16..128 blocks"); }
+        }
+        public static final Codec<Coatings> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+                StringRepresentable.fromEnum(CoatingVisibility::values).optionalFieldOf("visibility", DEFAULT.visibility()).forGetter(Coatings::visibility),
+                Codec.BOOL.optionalFieldOf("animations", true).forGetter(Coatings::animations),
+                Codec.intRange(16,128).optionalFieldOf("render_distance_blocks", 64).forGetter(Coatings::renderDistanceBlocks),
+                Codec.BOOL.optionalFieldOf("debug_geometry", false).forGetter(Coatings::debugGeometry)
+        ).apply(instance, Coatings::new));
+    }
+    public record Settings(TooltipMode tooltip, Coatings coatings, boolean surfacePreview, Hud hud, SerumDisplay serum) {
+        public Settings { Objects.requireNonNull(tooltip); Objects.requireNonNull(coatings); Objects.requireNonNull(hud); Objects.requireNonNull(serum); }
+        public Settings(TooltipMode tooltip, Coatings coatings, boolean surfacePreview) {
+            this(tooltip, coatings, surfacePreview, Hud.DEFAULT, SerumDisplay.DEFAULT);
         }
         public static final Codec<Settings> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 StringRepresentable.fromEnum(TooltipMode::values).optionalFieldOf("tooltip", TooltipMode.BASIC).forGetter(Settings::tooltip),
-                Codec.BOOL.optionalFieldOf("coating_outlines", true).forGetter(Settings::coatingOutlines),
+                Coatings.CODEC.optionalFieldOf("coatings", Coatings.DEFAULT).forGetter(Settings::coatings),
                 Codec.BOOL.optionalFieldOf("surface_preview", true).forGetter(Settings::surfacePreview),
                 Hud.CODEC.optionalFieldOf("hud", Hud.DEFAULT).forGetter(Settings::hud),
                 SerumDisplay.CODEC.optionalFieldOf("serum", SerumDisplay.DEFAULT).forGetter(Settings::serum)
         ).apply(instance, Settings::new));
     }
-    public static final Settings DEFAULTS = new Settings(TooltipMode.BASIC, true, true);
+    public static final Settings DEFAULTS = new Settings(TooltipMode.BASIC, Coatings.DEFAULT, true);
     private static ClientConfig instance = new ClientConfig(Path.of("config", "alterant-client.json"));
     private final Path path;
     private Settings settings = DEFAULTS;
@@ -97,7 +114,7 @@ public final class ClientConfig {
         try {
             var json = new JsonObject();
             json.addProperty("tooltip", next.tooltip().getSerializedName());
-            json.addProperty("coating_outlines", next.coatingOutlines());
+            json.add("coatings", Coatings.CODEC.encodeStart(JsonOps.INSTANCE, next.coatings()).getOrThrow());
             json.addProperty("surface_preview", next.surfacePreview());
             json.add("hud", Hud.CODEC.encodeStart(JsonOps.INSTANCE, next.hud()).getOrThrow());
             json.add("serum", SerumDisplay.CODEC.encodeStart(JsonOps.INSTANCE, next.serum()).getOrThrow());

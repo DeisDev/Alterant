@@ -4,7 +4,7 @@
   "package": "com.deisdev.alterant.mixin",
   "compatibilityLevel": "JAVA_25",
   "mixins": ["BlockApiLookupMixin", "BlockApiCacheMixin"],
-  "client": [],
+  "client": ["client.CoatingPipelineInvoker"],
   "server": [],
   "injectors": {
     "defaultRequire": 1
