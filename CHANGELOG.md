@@ -6,7 +6,7 @@ Alterant is unreleased and under active development.
 
 ### Added
 
-- A pixel-art mod icon for the mod list.
+- A pixel-art mod icon for in-game mod lists and Prism Launcher.
 - Recover residue from paid coatings with careful scraping.
 - Collect residue in Reclamation Jars and reclaim ingredients in the Reclaiming Basin or crafting grid.
 - Mark decorative patterns with Masking Strips to skip area treatments.
