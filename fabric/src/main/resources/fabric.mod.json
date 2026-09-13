@@ -3,6 +3,7 @@
   "id": "${mod_id}",
   "version": "${version}",
   "name": "${mod_name}",
+  "icon": "assets/alterant/icon.png",
   "description": "${description}",
   "authors": [
     "${mod_author}"
